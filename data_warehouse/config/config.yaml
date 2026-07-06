@@ -1,0 +1,52 @@
+# Football Data Warehouse configuration.
+#
+# All paths, URLs, league codes, seasons and HTTP behaviour live here so that
+# adding a league/season or tuning HTTP behaviour never requires a code change.
+
+storage:
+  # Relative to the repository root.
+  raw_data_dir: "data/raw"
+
+logging:
+  # Relative to the repository root.
+  log_dir: "logs"
+  filename: "data_warehouse.log"
+  level: "INFO"
+  max_bytes: 5242880
+  backup_count: 3
+
+http:
+  timeout_seconds: 30
+  max_retries: 3
+  backoff_factor: 0.5
+  # Minimum delay enforced between consecutive requests to the same source,
+  # to avoid hammering a small, free, volunteer-run site.
+  request_delay_seconds: 1.0
+  user_agent: "football-prediction-engine-data-warehouse/1.0 (+https://github.com/)"
+
+sources:
+  football_data_co_uk:
+    base_url: "https://www.football-data.co.uk/mmz4281"
+    leagues:
+      E0: "England - Premier League"
+      E1: "England - Championship"
+      SP1: "Spain - La Liga"
+      SP2: "Spain - Segunda Division"
+      D1: "Germany - Bundesliga"
+      D2: "Germany - Bundesliga 2"
+      I1: "Italy - Serie A"
+      I2: "Italy - Serie B"
+      F1: "France - Ligue 1"
+      F2: "France - Ligue 2"
+      N1: "Netherlands - Eredivisie"
+      B1: "Belgium - First Division A"
+      P1: "Portugal - Primeira Liga"
+      T1: "Turkey - Super Lig"
+      G1: "Greece - Super League"
+      SC0: "Scotland - Premiership"
+    seasons:
+      - "2324"
+      - "2223"
+      - "2122"
+      - "2021"
+      - "1920"
