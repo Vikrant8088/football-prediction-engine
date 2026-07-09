@@ -56,6 +56,14 @@ class BaseDataSource(ABC):
     def resolve_dataset_dir(self, ref: DatasetRef) -> Path:
         return self._raw_data_dir / self.name / ref.dataset_dir_relative
 
+    def _fetch_content(self, ref: DatasetRef) -> bytes:
+        """Fetch the raw bytes for one dataset. The default is a single GET;
+        sources whose payload spans multiple requests (e.g. a paginated JSON
+        API) override this to fetch and combine all pages into one payload."""
+        return self._http_client.get_bytes(
+            ref.source_url, extra_headers=self.request_headers
+        )
+
     def download(self, ref: DatasetRef, force: bool = False) -> DownloadOutcome:
         """Fetch a dataset into the versioned raw lake.
 
@@ -78,9 +86,7 @@ class BaseDataSource(ABC):
 
         try:
             logger.info("Fetching '%s' from %s", ref.identifier, ref.source_url)
-            content = self._http_client.get_bytes(
-                ref.source_url, extra_headers=self.request_headers
-            )
+            content = self._fetch_content(ref)
 
             checksum = sha256_bytes(content)
             previous = latest_version_metadata(dataset_dir, ref.filename)

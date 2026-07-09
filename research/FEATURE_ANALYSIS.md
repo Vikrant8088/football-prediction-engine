@@ -74,7 +74,7 @@ backtest, never a licence to ship the feature unproven.
 | 3 | **Attack / Defense strength (Poisson)** | ★★★★☆ | Requires Modelling | Low | derived from goals | 0 ✅ |
 | 4 | **Home advantage** | ★★★★☆ | Requires Modelling | Low | derived | 0 ✅ |
 | 5 | **xG-based form (rolling, time-decayed)** | ★★★★☆ | Requires Collection | Medium | derived from xG | 1 |
-| 6 | **Key player injuries / suspensions** | ★★★★☆ | Paid | Medium–High | API-Football | 3 |
+| 6 | **Key player injuries / suspensions** | ★★★★☆ *(raw count tested & rejected; see log)* | Paid (free tier: 2022+) | Medium–High | API-Football | 3b ⚠️ |
 | 7 | **Confirmed pre-match lineups** | ★★★★☆ | Paid | High (timing: ~1h pre-kickoff) | API-Football | 3 |
 | 8 | **Recent results form** | ★★★☆☆ | Free | Low | derived from results | 3a ✅ built |
 | 9 | **Squad market value** | ★★★☆☆ | Free · Requires Collection | Medium | Transfermarkt (scrape) | 2 |
@@ -124,6 +124,21 @@ best scoreline model does **not** beat the Elo champion (0.9956) on this window.
 Conclusion: xG is a validated input, carried into the Phase 2 ensemble
 alongside Elo (a strong, structurally different model) rather than crowned a
 standalone champion.
+
+### Evidence log — Injuries, raw count (Phase 3b, run `injuries_report_20260709T124657Z`)
+
+Real injury data (API-Football free tier, 2022/23-2024/25) joined onto matches
+(100% join accuracy). Controlled test on 760 matches: logistic model on form
+(1.0268) vs form + injury-count (1.0392) — the raw count made prediction
+**worse** and not significantly different. **Rejected as tested**, but with two
+big asterisks that keep the ★★★★☆ prior alive: (1) only 2 seasons — underpowered;
+(2) a raw count is blunt — it weights a missing star equally with a reserve, and
+~3.7 flagged absences/side are mostly long-term ones already reflected in form
+and ratings (the signal that matters — a *fresh* key absence — is drowned out).
+The real test needs player-importance weighting (squad market value), a focus on
+recent absences, and confirmed line-ups, over more seasons (paid plan). See
+[[player-importance]] follow-up. Do not conclude "injuries don't matter" from
+this — only "a raw count of absences, on 2 seasons, doesn't".
 
 ### Evidence log — Tiredness / rest & congestion (Phase 3a, run `features_report_20260709T114814Z`)
 

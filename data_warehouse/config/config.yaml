@@ -95,3 +95,18 @@ sources:
       - "2023"
       - "2024"
       - "2025"
+
+  api_football:
+    # Injuries / line-ups source (api-sports.io direct endpoint). The API key is
+    # a SECRET: it is read from the APIFOOTBALL_KEY environment variable at
+    # runtime and is NEVER stored in this file or committed to git.
+    base_url: "https://v3.football.api-sports.io"
+    # Numeric league ids as API-Football defines them (39 = Premier League).
+    leagues:
+      "39": "England - Premier League"
+    # Seasons the FREE plan grants injury access to (empirically confirmed;
+    # older seasons return a plan-restriction error). Paid plans reach further.
+    seasons:
+      - "2022"
+      - "2023"
+      - "2024"

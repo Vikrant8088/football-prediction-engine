@@ -166,16 +166,51 @@ signal plugs into) and used it to test the *free* half of Phase 3: tiredness.
   confirmed line-ups are.** That is the paid half of Phase 3, and this negative
   result sharpens the case for it.
 
-### Phase 3b — Injuries + line-ups *(pending — needs an API-Football key)*
+### Phase 3b — Injuries (raw count) 🔄 *(tested on free data — count rejected; needs a smarter feature)*
 
-- `data_warehouse/sources/api_football.py` — fixtures, **injuries/suspensions**,
-  **confirmed pre-match line-ups** (available ~1h before kickoff). **Requires a
-  paid API-Football key the user must supply.**
-- Availability features (key-player-out, line-up strength) → new builders in the
-  existing feature store → tested via the same controlled method.
+Wired up real injury data (free API-Football tier) and tested the simplest
+possible availability feature: how many players each side is missing.
 
-**Success criterion:** each signal is added *only if* it beats the ensemble
-champion; ones that don't are documented as rejected (as tiredness now is).
+- ✅ `data_warehouse/sources/api_football.py` — authenticated, paginated source
+  (secret key via `APIFOOTBALL_KEY` env var, never committed); injuries stored
+  in the versioned lake. `BaseDataSource` gained a `_fetch_content` hook so
+  paginated APIs reuse all the versioning/skip logic.
+- ✅ `research/data/injury_loader.py` — joins injuries onto matches (100% of
+  2,184 injury keys matched a real match; 3-team name map), producing
+  home/away missing-player counts, leakage-safe (NaN outside covered seasons).
+
+**Result** *(run `injuries_report_20260709T124657Z`, 2 seasons, 760 matches)*
+
+| model | log loss | note |
+|---|---|---|
+| elo | 0.9789 | (context, best on this small window) |
+| ensemble | 0.9824 | (context) |
+| logistic_form | 1.0268 | form features only |
+| logistic_form_injuries | 1.0392 | form + **injury count** — *worse* |
+
+- ❌ **Raw injury COUNT rejected.** Adding "number of players missing" to form
+  did not improve prediction (1.0392 vs 1.0268; not significant). Same shape as
+  the tiredness result.
+- ⚠️ **But this is a deliberately blunt test, not a verdict on injuries.** Two
+  real limitations: (1) only **2 seasons / 760 matches** (all the free plan
+  allows) — underpowered; (2) a raw count treats a missing **star striker** the
+  same as a missing **3rd-choice full-back**, and ~3.7 players/side are flagged
+  per match — most are long-term absentees **already absorbed into form and
+  ratings**. The count is dominated by noise; the real signal (a key player
+  *freshly* out) is buried in it.
+- 💡 **What would actually test injuries properly:** weight absences by **player
+  importance** (minutes played / market value), focus on *recent* absences, and
+  add **confirmed line-ups** (who actually starts). That needs player-value data
+  and more seasons (paid plan). Until then, the blunt count stays out.
+
+**Champion after Phase 3b:** unchanged — **ensemble** (0.9925 on the full
+window). No new signal has beaten it yet.
+
+### Phase 3c — Smarter availability *(pending)*
+
+- Player-importance-weighted absences (needs squad market values, e.g.
+  Transfermarkt) + confirmed line-ups (needs paid API tier).
+- Re-test with the same controlled method on a larger (paid) injury window.
 
 ---
 
