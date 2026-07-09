@@ -57,3 +57,80 @@ Requires Modelling
 ---
 
 Every feature introduced into the prediction engine should justify its existence through measurable improvements during backtesting.
+
+---
+
+## Scored Feature Table
+
+Ordered by predictive power, then by effort. "Phase" maps to
+[../docs/02_FEATURE_ROADMAP.md](../docs/02_FEATURE_ROADMAP.md). A ★-rating here
+is a *prior* — an expectation to be confirmed or refuted by the walk-forward
+backtest, never a licence to ship the feature unproven.
+
+| # | Feature | Predictive Power | Data Availability | Complexity | Source | Phase |
+|---|---|---|---|---|---|---|
+| 1 | **Team strength rating (Elo)** | ★★★★★ | Requires Modelling | Low | derived from results (+ ClubElo) | 0 ✅ |
+| 2 | **Expected Goals (xG / xGA)** | ★★★★★ *(evidence: better input than goals; see note)* | Free · Understat JSON endpoint | Medium | Understat | 1 ✅ |
+| 3 | **Attack / Defense strength (Poisson)** | ★★★★☆ | Requires Modelling | Low | derived from goals | 0 ✅ |
+| 4 | **Home advantage** | ★★★★☆ | Requires Modelling | Low | derived | 0 ✅ |
+| 5 | **xG-based form (rolling, time-decayed)** | ★★★★☆ | Requires Collection | Medium | derived from xG | 1 |
+| 6 | **Key player injuries / suspensions** | ★★★★☆ | Paid | Medium–High | API-Football | 3 |
+| 7 | **Confirmed pre-match lineups** | ★★★★☆ | Paid | High (timing: ~1h pre-kickoff) | API-Football | 3 |
+| 8 | **Recent results form** | ★★★☆☆ | Free | Low | derived from results | 2 |
+| 9 | **Squad market value** | ★★★☆☆ | Free · Requires Collection | Medium | Transfermarkt (scrape) | 2 |
+| 10 | **Rest days / fixture congestion** | ★★★☆☆ | Free | Low | derived from fixture calendar | 2 |
+| 11 | **Newly-promoted team handling (cold start)** | ★★★☆☆ | Requires Modelling | Medium | derived | 2 |
+| 12 | **European / cup competition load** | ★★☆☆☆ | Paid | Medium | API-Football | 3 |
+| 13 | **Match stakes / motivation (table context)** | ★★☆☆☆ | Free | Medium | derived from standings | 3 |
+| 14 | **Head-to-head history** | ★★☆☆☆ | Free | Low | derived | 2 |
+| 15 | **Referee tendencies** | ★★☆☆☆ | Free · Requires Collection | Medium | football-data.co.uk / FBref | later |
+| 16 | **Manager change** | ★★☆☆☆ | Free · Requires Collection | Medium | Transfermarkt / news | 3 |
+| 17 | **Travel distance** | ★☆☆☆☆ | Free | Low | derived from geo | later |
+| 18 | **Weather** | ★☆☆☆☆ | Free | Low | weather API | later |
+
+---
+
+## Special case: bookmaker / market odds
+
+| Feature | Predictive Power | Role |
+|---|---|---|
+| **Closing bookmaker odds** | ★★★★★ | **Benchmark only — never a model input** |
+
+The betting market is the single strongest predictor of match outcomes because
+it aggregates the information of everyone betting. But the project's vision
+lists "copy bookmaker predictions" as an explicit **non-goal**. The resolution:
+
+- ❌ Never feed odds into a model — that is copying, not predicting.
+- ✅ Use closing odds as the **yardstick to beat**. If the engine cannot beat
+  the closing line, that is the clearest possible signal that more real
+  predictive work remains.
+
+Opening-vs-closing line movement is itself a data point (it reveals where
+sharp money went), but the same non-goal applies: measure against it, don't
+ingest it.
+
+---
+
+### Evidence log — Expected Goals (Phase 1, run `xg_report_20260709T103551Z`)
+
+On 8 walk-forward EPL seasons (3040 matches), fitting team strength on **xG
+beats fitting on actual goals** within identical Poisson machinery (log loss
+1.0198 vs 1.0254, significant on the paired t-test p=0.006), and the xG model
+is better *calibrated* (lower ECE) than every goal-based model — confirming the
+★★★★★ prior that xG is a superior input signal. However, the pure xG-Poisson
+does **not** beat the Elo champion (0.9956): a better input inside a weaker
+model structure is not enough on its own. xG is therefore promoted as a signal
+for the Phase 2 ensemble, not crowned a standalone champion. Next test: an
+xG-aware Dixon-Coles (xG strengths + time decay + low-score correction).
+
+## How this table is used
+
+1. Features are built in **predictive-power order, gated by effort** — Phase 1
+   xG before Phase 3 lineups, even though both are highly rated, because xG is
+   cheaper to acquire and validate.
+2. A ★-rating is a **hypothesis**. When a feature is built, the walk-forward
+   backtest either confirms it (promote, document the win) or refutes it
+   (reject, document the null result — and update this table's rating to reflect
+   what the data actually showed).
+3. This document is **living**: every confirmed or rejected feature updates the
+   relevant row, so the table always reflects evidence, not initial intuition.
