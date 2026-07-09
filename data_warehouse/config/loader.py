@@ -47,11 +47,20 @@ class FootballDataCoUkConfig:
 
 
 @dataclass(frozen=True)
+class UnderstatConfig:
+    base_url: str
+    request_headers: Dict[str, str]
+    leagues: Dict[str, str]
+    seasons: List[str]
+
+
+@dataclass(frozen=True)
 class AppConfig:
     storage: StorageConfig
     logging: LoggingConfig
     http: HttpConfig
     football_data_co_uk: FootballDataCoUkConfig
+    understat: UnderstatConfig
     repo_root: Path
 
     @property
@@ -87,6 +96,7 @@ def load_config(
     http_raw = _require(raw, "http", "config.yaml")
     sources_raw = _require(raw, "sources", "config.yaml")
     fdc_raw = _require(sources_raw, "football_data_co_uk", "sources")
+    understat_raw = _require(sources_raw, "understat", "sources")
 
     storage = StorageConfig(
         raw_data_dir=Path(_require(storage_raw, "raw_data_dir", "storage")),
@@ -112,6 +122,14 @@ def load_config(
         leagues=dict(_require(fdc_raw, "leagues", "sources.football_data_co_uk")),
         seasons=list(_require(fdc_raw, "seasons", "sources.football_data_co_uk")),
     )
+    understat = UnderstatConfig(
+        base_url=str(_require(understat_raw, "base_url", "sources.understat")),
+        request_headers=dict(
+            _require(understat_raw, "request_headers", "sources.understat")
+        ),
+        leagues=dict(_require(understat_raw, "leagues", "sources.understat")),
+        seasons=list(_require(understat_raw, "seasons", "sources.understat")),
+    )
 
     resolved_root = repo_root if repo_root is not None else config_path.parents[2]
 
@@ -120,5 +138,6 @@ def load_config(
         logging=logging_config,
         http=http,
         football_data_co_uk=football_data_co_uk,
+        understat=understat,
         repo_root=resolved_root,
     )

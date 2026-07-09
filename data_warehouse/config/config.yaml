@@ -45,8 +45,53 @@ sources:
       G1: "Greece - Super League"
       SC0: "Scotland - Premiership"
     seasons:
-      - "2324"
-      - "2223"
-      - "2122"
-      - "2021"
+      - "0910"
+      - "1011"
+      - "1112"
+      - "1213"
+      - "1314"
+      - "1415"
+      - "1516"
+      - "1617"
+      - "1718"
+      - "1819"
       - "1920"
+      - "2021"
+      - "2122"
+      - "2223"
+      - "2324"
+      - "2425"
+      - "2526"
+
+  understat:
+    # Understat serves per-league-season match data (including Expected Goals,
+    # xG) as JSON from an XHR endpoint: {base_url}/{league}/{start_year}.
+    # The endpoint returns 404 unless the X-Requested-With header is present,
+    # so it is declared here rather than hardcoded in the source module.
+    base_url: "https://understat.com/getLeagueData"
+    request_headers:
+      X-Requested-With: "XMLHttpRequest"
+    # Understat's own league identifiers (not football-data.co.uk's codes).
+    # Understat covers Europe's top five leagues plus the Russian Premier League.
+    leagues:
+      EPL: "England - Premier League"
+      La_liga: "Spain - La Liga"
+      Bundesliga: "Germany - Bundesliga"
+      Serie_A: "Italy - Serie A"
+      Ligue_1: "France - Ligue 1"
+      RFPL: "Russia - Premier League"
+    # A season is identified by the calendar year it STARTED (2014 = 2014/15).
+    # Understat's xG data begins with the 2014/15 season.
+    seasons:
+      - "2014"
+      - "2015"
+      - "2016"
+      - "2017"
+      - "2018"
+      - "2019"
+      - "2020"
+      - "2021"
+      - "2022"
+      - "2023"
+      - "2024"
+      - "2025"

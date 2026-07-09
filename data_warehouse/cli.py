@@ -37,7 +37,10 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         prog="data_warehouse",
         description="Download historical football datasets into data/raw/.",
     )
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers = parser.add_subparsers(dest="command")
+    # Set as an attribute rather than via add_subparsers(required=True), which
+    # is only accepted from Python 3.7 onward; this form works on 3.6 too.
+    subparsers.required = True
 
     download_parser = subparsers.add_parser(
         "download", help="Download datasets from a configured source."

@@ -57,7 +57,9 @@ class TestFootballDataCoUkSource(unittest.TestCase):
         version_data_path = dataset_dir / outcome.metadata.version / "2324.csv"
         self.assertTrue(version_data_path.exists())
         self.assertEqual(version_data_path.read_bytes(), b"Div,Date\nE0,01/01/2024\n")
-        self.http_client.get_bytes.assert_called_once_with(ref.source_url)
+        self.http_client.get_bytes.assert_called_once_with(
+            ref.source_url, extra_headers={}
+        )
 
         # The recorded local_path must point at the actual version directory,
         # not the dataset directory (which never itself holds the data file).

@@ -7,7 +7,7 @@ across every source and only need to be tuned in one place.
 
 import logging
 import time
-from typing import Optional
+from typing import Dict, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -48,15 +48,23 @@ class RateLimitedHttpClient:
         if remaining > 0:
             time.sleep(remaining)
 
-    def get_bytes(self, url: str) -> bytes:
+    def get_bytes(self, url: str, extra_headers: Optional[Dict[str, str]] = None) -> bytes:
         """Fetch a URL and return its raw response body as bytes.
+
+        `extra_headers` are merged over the session defaults for this single
+        request only - used by sources that require source-specific headers
+        (e.g. an `X-Requested-With` an XHR-only JSON endpoint demands).
 
         Raises `DownloadError` on any network failure or non-2xx response,
         after the underlying session has already retried transient failures.
         """
         self._enforce_rate_limit()
         try:
-            response = self._session.get(url, timeout=self._config.timeout_seconds)
+            response = self._session.get(
+                url,
+                timeout=self._config.timeout_seconds,
+                headers=extra_headers or None,
+            )
             self._last_request_monotonic = time.monotonic()
         except requests.RequestException as exc:
             self._last_request_monotonic = time.monotonic()

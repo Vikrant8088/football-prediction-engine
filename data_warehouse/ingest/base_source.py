@@ -9,7 +9,7 @@ only need to describe *what* is downloadable and *how* to reach it.
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 from data_warehouse.ingest.exceptions import DownloadError
 from data_warehouse.ingest.http_client import RateLimitedHttpClient
@@ -34,6 +34,13 @@ class BaseDataSource(ABC):
     def __init__(self, raw_data_dir: Path, http_client: RateLimitedHttpClient):
         self._raw_data_dir = raw_data_dir
         self._http_client = http_client
+
+    @property
+    def request_headers(self) -> Dict[str, str]:
+        """Extra HTTP headers this source requires on every request, merged
+        over the shared client defaults. Empty for sources that need none;
+        overridden by sources whose endpoint demands specific headers."""
+        return {}
 
     @abstractmethod
     def list_available_datasets(self, **filters) -> List[DatasetRef]:
@@ -71,7 +78,9 @@ class BaseDataSource(ABC):
 
         try:
             logger.info("Fetching '%s' from %s", ref.identifier, ref.source_url)
-            content = self._http_client.get_bytes(ref.source_url)
+            content = self._http_client.get_bytes(
+                ref.source_url, extra_headers=self.request_headers
+            )
 
             checksum = sha256_bytes(content)
             previous = latest_version_metadata(dataset_dir, ref.filename)
