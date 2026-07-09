@@ -80,22 +80,53 @@ dixon_coles_xg (1.0107). Both carried into Phase 2 as ensemble components.
 
 ---
 
-## Phase 2 — Feature store + ML model + ensemble
+## Phase 2 — Feature store + ML model + ensemble 🔄 *(in progress — ensemble done, new champion)*
 
 **Goal:** absorb many weak signals at once, and blend models.
 
-**Deliverables**
-- `prediction-engine/features/` — the **feature store**: point-in-time-correct
-  feature builders (ratings, xG-form, rest days, congestion, promotion cold-
-  start, head-to-head), with leakage tests.
-- `data_warehouse/sources/transfermarkt.py` — squad market values.
-- An **ML model** (LightGBM) predicting goal rates / scoreline grid from the
-  feature store, added as a candidate in `research/experiments/`.
-- `prediction-engine/ensemble/` — blend the statistical, rating, and ML grids
-  (weights fit by walk-forward CV) + final **calibration** pass.
+### Phase 2a — Ensemble ✅ *(done — new champion)*
 
-**Success criterion:** the calibrated ensemble beats the best single model from
-Phase 1, and is better-calibrated (lower ECE) than any component alone.
+- ✅ `research/experiments/ensemble.py` — weighted blend of the strong, diverse
+  base models (Elo + Poisson-xG + Dixon-Coles-xG). Weights minimise log loss
+  via a softmax parameterisation, fit **only on an inner temporal split of each
+  fold's training data** (no leakage); weights are inspectable and logged.
+- ✅ `research/evaluation/benchmark_ensemble.py` — Phase 2 benchmark + report.
+
+**Result** *(run `ensemble_report_20260709T112538Z`, 8 seasons, 3040 matches)*
+
+| model | log loss | RPS | Brier | ECE(draw) |
+|---|---|---|---|---|
+| **ensemble** 👑 | **0.9925** | **0.2077** | **0.5912** | **0.0022** |
+| elo (prev champion) | 0.9956 | 0.2083 | 0.5926 | 0.0072 |
+| dixon_coles_xg | 1.0107 | 0.2130 | 0.6031 | 0.0071 |
+| poisson_xg | 1.0198 | 0.2171 | 0.6101 | 0.0093 |
+
+- ✅ **Ensemble is the new champion** — best on *every* proper scoring rule
+  (log loss, RPS, Brier) **and** better calibrated than Elo on all three
+  outcomes. The success criterion is met.
+- ✅ **It genuinely blends:** average learned weights across folds are Elo 72%,
+  Poisson-xG 12%, Dixon-Coles-xG 16% — the xG models get real weight in 7 of 8
+  seasons, confirming the Phase 1 setup (two strong, complementary views).
+- ⚠️ **But the margin is small and not robustly significant.** The edge over
+  Elo (0.9925 vs 0.9956) is significant on Wilcoxon (p=0.0002) but **not** on
+  the paired t-test (p=0.06). Treat the ensemble as the new *provisional*
+  champion, not a decisive leap.
+- ⚠️ **Diminishing returns signal:** in the most recent fold the blend
+  collapsed to ~100% Elo. Reblending the *existing* models is near its
+  ceiling — the next real gains need genuinely new **information**, not new
+  combinations. That is the case for Phase 3.
+
+### Phase 2b — Feature store + ML model *(pending)*
+
+- `prediction-engine/features/` — point-in-time-correct feature builders
+  (ratings, xG-form, rest days, congestion, promotion cold-start, head-to-head),
+  with leakage tests.
+- `data_warehouse/sources/transfermarkt.py` — squad market values.
+- An **ML model** (LightGBM) predicting goal rates from the feature store, added
+  as a candidate and folded into the ensemble.
+
+**Champion after Phase 2a:** **ensemble** (0.9925) — provisional, pending a
+more significant margin or new signals.
 
 ---
 
