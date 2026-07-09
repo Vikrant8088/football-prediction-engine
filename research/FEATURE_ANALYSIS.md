@@ -114,14 +114,16 @@ ingest it.
 ### Evidence log — Expected Goals (Phase 1, run `xg_report_20260709T103551Z`)
 
 On 8 walk-forward EPL seasons (3040 matches), fitting team strength on **xG
-beats fitting on actual goals** within identical Poisson machinery (log loss
-1.0198 vs 1.0254, significant on the paired t-test p=0.006), and the xG model
-is better *calibrated* (lower ECE) than every goal-based model — confirming the
-★★★★★ prior that xG is a superior input signal. However, the pure xG-Poisson
-does **not** beat the Elo champion (0.9956): a better input inside a weaker
-model structure is not enough on its own. xG is therefore promoted as a signal
-for the Phase 2 ensemble, not crowned a standalone champion. Next test: an
-xG-aware Dixon-Coles (xG strengths + time decay + low-score correction).
+beats fitting on actual goals** in *both* model families tested — Poisson
+(1.0198 vs 1.0254) and Dixon-Coles (1.0107 vs 1.0241) — confirming the ★★★★★
+prior that xG is a superior input signal. Adding structure compounds the gain:
+`dixon_coles_xg` (xG + time-decay + low-score correction) is the **best
+scoreline model of all** and the best-calibrated strength model (ECE_home
+0.0264), closing roughly half of Elo's lead over Dixon-Coles. However, even the
+best scoreline model does **not** beat the Elo champion (0.9956) on this window.
+Conclusion: xG is a validated input, carried into the Phase 2 ensemble
+alongside Elo (a strong, structurally different model) rather than crowned a
+standalone champion.
 
 ## How this table is used
 

@@ -47,31 +47,36 @@ largest accuracy jump on the board.
   the full actual-goal scoreline grid.
 - ✅ `research/evaluation/benchmark_xg.py` — walk-forward benchmark, all models
   scored on the identical Understat match set for a controlled contrast.
+- ✅ `research/experiments/dixon_coles_xg.py` — the follow-up: xG strengths +
+  Dixon-Coles's two innovations (time decay + low-score correction), fitted in
+  two stages (strengths from recency-weighted xG, rho from actual goals).
 
-**Result** *(run `xg_report_20260709T103551Z`, 8 eval seasons, 3040 matches)*
+**Result** *(run `xg_report_20260709T110624Z`, 8 eval seasons, 3040 matches)*
 
-| model | log loss | vs |
-|---|---|---|
-| **elo** (goals) | **0.9956** | overall champion (unchanged from Phase 0) |
-| poisson_xg (**xG**) | 1.0198 | best of the goals-family; beats… |
-| dixon_coles (goals) | 1.0241 | |
-| poisson (goals) | 1.0254 | its own goal-based twin |
+| model | log loss | ECE(home) | note |
+|---|---|---|---|
+| **elo** (goals) | **0.9956** | 0.0373 | overall champion (unchanged from Phase 0) |
+| dixon_coles_xg (**xG**) | 1.0107 | **0.0264** | best scoreline model; best-calibrated of the strength models |
+| poisson_xg (**xG**) | 1.0198 | 0.0322 | |
+| dixon_coles (goals) | 1.0241 | 0.0423 | |
+| poisson (goals) | 1.0254 | 0.0439 | |
 
-- ✅ **Hypothesis supported at the signal level:** within the same Poisson
-  machinery, fitting strength on **xG beats fitting on goals** (1.0198 vs
-  1.0254; significant on the paired t-test, p=0.006). poisson_xg also
-  calibrates better (lower ECE) than any goal model, and even edges out
-  Dixon-Coles.
-- ❌ **Success criterion not fully met:** the pure xG-Poisson does *not* beat
-  the Elo champion (0.9956). Elo's rating dynamics remain a stronger structure
-  than one-shot strength estimation, whatever the input signal.
-- **Honest conclusion:** xG is a better *input*, but a better input inside a
-  weaker *model structure* isn't enough. The win comes from combining xG with
-  Elo-style dynamics and ensembling → Phase 2. An xG-aware Dixon-Coles
-  (xG strengths + time decay + low-score correction) is the immediate follow-up.
+Two effects, both clean and consistent:
+- ✅ **xG beats goals** in *both* families (poisson_xg < poisson; dixon_coles_xg
+  < dixon_coles) — the input-signal result replicates.
+- ✅ **Structure matters too:** dixon_coles_xg (xG + time-decay + tau) is the
+  best scoreline model of all, and **closes ~half the gap to Elo** (Elo's lead
+  over Dixon-Coles shrank from −0.0285 to −0.0151 in per-match log loss once xG
+  and time-decay were added). It is also the **best-calibrated** strength model.
+- ❌ **Still short of Elo (0.9956).** Even the strongest scoreline structure +
+  the best input doesn't overtake Elo's rating dynamics on this window.
+- **Honest conclusion:** we now have two strong, *different* model families —
+  Elo (rating dynamics) and Dixon-Coles-xG (scoreline distribution). Neither
+  strictly dominates the other across all metrics. That is exactly the setup an
+  **ensemble** exploits → Phase 2.
 
-**Champion after Phase 1:** still Elo (0.9956 on this window). The xG *signal*
-is promoted into the candidate toolbox for Phase 2.
+**Champion after Phase 1:** still Elo (0.9956). Best scoreline model:
+dixon_coles_xg (1.0107). Both carried into Phase 2 as ensemble components.
 
 ---
 

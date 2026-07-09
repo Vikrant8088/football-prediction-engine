@@ -33,6 +33,7 @@ from research.evaluation.calibration import plot_calibration_curve
 from research.evaluation.significance import pairwise_significance
 from research.experiments.baseline import BaselineFrequencyModel
 from research.experiments.dixon_coles import DixonColesModel
+from research.experiments.dixon_coles_xg import DixonColesXGModel
 from research.experiments.elo import EloModel
 from research.experiments.poisson import PoissonModel
 from research.experiments.poisson_xg import PoissonXGModel
@@ -51,13 +52,30 @@ MODEL_BUILDERS = {
     "poisson": PoissonModel,
     "dixon_coles": DixonColesModel,
     "poisson_xg": PoissonXGModel,
+    "dixon_coles_xg": DixonColesXGModel,
 }
 
 
+def _pair_significance(significance, model_a, model_b):
+    row = significance[
+        ((significance["model_a"] == model_a) & (significance["model_b"] == model_b))
+        | ((significance["model_a"] == model_b) & (significance["model_b"] == model_a))
+    ]
+    if row.empty:
+        return ""
+    p_t = float(row.iloc[0]["paired_t_pvalue"])
+    p_w = float(row.iloc[0]["wilcoxon_pvalue"])
+    significant = p_t < 0.05 and p_w < 0.05
+    return (
+        f" The gap is {'significant' if significant else 'NOT significant'} "
+        f"(paired t p={p_t:.4f}, Wilcoxon p={p_w:.4f})."
+    )
+
+
 def recommend(summary, significance) -> str:
-    """Phase 1's headline question is narrower than Phase 0's: did the xG model
-    (poisson_xg) beat its direct goal-based twin (poisson), and did it beat the
-    overall field? Both are reported honestly, significance included."""
+    """Report, honestly: (1) each controlled goals-vs-xG contrast (same model
+    family, only the input signal changes), and (2) whether any xG model beat
+    the overall field - in particular the Elo champion."""
     ranked = summary.sort_values("log_loss")
     best_model = ranked.index[0]
 
@@ -66,48 +84,42 @@ def recommend(summary, significance) -> str:
         f"({ranked.loc[best_model, 'log_loss']:.4f})."
     ]
 
-    # The clean, controlled contrast: same model family, goals vs xG.
-    if "poisson" in summary.index and "poisson_xg" in summary.index:
-        ll_goals = summary.loc["poisson", "log_loss"]
-        ll_xg = summary.loc["poisson_xg", "log_loss"]
-        better = "xG" if ll_xg < ll_goals else "goals"
-        row = significance[
-            (
-                (significance["model_a"] == "poisson")
-                & (significance["model_b"] == "poisson_xg")
+    # Controlled contrasts: goal model vs its xG twin, same machinery.
+    contrasts = [
+        ("poisson", "poisson_xg", "Poisson"),
+        ("dixon_coles", "dixon_coles_xg", "Dixon-Coles"),
+    ]
+    for goal_model, xg_model, family in contrasts:
+        if goal_model in summary.index and xg_model in summary.index:
+            ll_goals = summary.loc[goal_model, "log_loss"]
+            ll_xg = summary.loc[xg_model, "log_loss"]
+            better = "xG" if ll_xg < ll_goals else "goals"
+            lines.append(
+                f"{family} goals-vs-xG (same machinery): {goal_model} (goals) "
+                f"{ll_goals:.4f} vs {xg_model} (xG) {ll_xg:.4f} - **{better}** "
+                f"predicts real results better here."
+                + _pair_significance(significance, goal_model, xg_model)
             )
-            | (
-                (significance["model_a"] == "poisson_xg")
-                & (significance["model_b"] == "poisson")
-            )
-        ]
-        sig_txt = ""
-        if not row.empty:
-            p_t = float(row.iloc[0]["paired_t_pvalue"])
-            p_w = float(row.iloc[0]["wilcoxon_pvalue"])
-            significant = p_t < 0.05 and p_w < 0.05
-            sig_txt = (
-                f" The gap is {'significant' if significant else 'NOT significant'} "
-                f"(paired t p={p_t:.4f}, Wilcoxon p={p_w:.4f})."
-            )
-        lines.append(
-            f"Controlled goals-vs-xG contrast (same Poisson machinery): "
-            f"poisson (goals) log loss {ll_goals:.4f} vs poisson_xg log loss "
-            f"{ll_xg:.4f} - fitting strength on **{better}** predicts real "
-            f"results better on this window.{sig_txt}"
-        )
 
-    if best_model == "poisson_xg":
-        lines.append(
-            "The xG model is the outright best model on this window - Phase 1 "
-            "hypothesis supported; promote poisson_xg to the candidate pool."
-        )
-    else:
-        lines.append(
-            f"The xG model is not the outright best here ({best_model} leads). "
-            f"Record the result honestly and treat xG as one useful signal to "
-            f"combine in Phase 2 rather than a standalone winner."
-        )
+    # The headline question: did the better structure + xG dethrone Elo?
+    xg_models = [m for m in ("dixon_coles_xg", "poisson_xg") if m in summary.index]
+    if "elo" in summary.index and xg_models:
+        best_xg = min(xg_models, key=lambda m: summary.loc[m, "log_loss"])
+        ll_elo = summary.loc["elo", "log_loss"]
+        ll_xg = summary.loc[best_xg, "log_loss"]
+        if ll_xg < ll_elo:
+            lines.append(
+                f"**{best_xg}** ({ll_xg:.4f}) beats the Elo champion "
+                f"({ll_elo:.4f}) - a stronger structure plus the xG input "
+                f"clears the bar." + _pair_significance(significance, best_xg, "elo")
+            )
+        else:
+            lines.append(
+                f"The best xG model ({best_xg}, {ll_xg:.4f}) still does not beat "
+                f"Elo ({ll_elo:.4f}). Elo's rating dynamics remain the structure "
+                f"to beat; the xG signal is carried forward into the Phase 2 "
+                f"ensemble rather than crowned a standalone champion."
+            )
     return "\n".join(lines)
 
 
