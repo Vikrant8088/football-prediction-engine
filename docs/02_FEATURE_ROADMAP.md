@@ -130,21 +130,52 @@ more significant margin or new signals.
 
 ---
 
-## Phase 3 — Real-time context (injuries, lineups, stakes)
+## Phase 3 — Real-time context (injuries, lineups, stakes) 🔄 *(in progress)*
 
 **Goal:** the signals only live/paid data provides — the "smart" edge.
 
-**Deliverables**
-- `data_warehouse/sources/api_football.py` — fixtures, **injuries/suspensions**,
-  and **confirmed pre-match lineups** (available ~1h before kickoff).
-- Availability features: key-player-out, squad-value-missing, lineup strength.
-- Context features: rest asymmetry, European/cup congestion, match stakes
-  (title/relegation/mid-table), manager change.
-- A "provisional → upgraded" prediction flow: predict early, refine when
-  lineups drop.
+### Phase 3a — Feature store + tiredness signal ✅ *(done — tiredness rejected)*
 
-**Success criterion:** each context feature is added *only if* it beats the
-Phase 2 ensemble; features that don't are documented as rejected and left out.
+Built the point-in-time-correct **feature store** (the machinery every Phase 3
+signal plugs into) and used it to test the *free* half of Phase 3: tiredness.
+
+- ✅ `research/features/builders.py` — leakage-tested feature builders (form,
+  **rest days**, **fixture congestion**). The no-leakage test asserts a match's
+  features never change when later matches are added.
+- ✅ `research/experiments/feature_logistic.py` — an explainable multinomial
+  logistic model (MLE, not a black box) that consumes arbitrary features — the
+  vehicle for testing any new signal.
+- ✅ `research/evaluation/benchmark_features.py` — controlled experiment.
+
+**Result** *(run `features_report_20260709T114814Z`, 8 seasons, 3040 matches)*
+
+| model | log loss | note |
+|---|---|---|
+| ensemble (champion) | 0.9925 | (context) |
+| elo | 0.9956 | (context) |
+| logistic_form | 1.0207 | form features only |
+| logistic_form_rest | 1.0311 | form + **tiredness** — *worse* |
+
+- ❌ **Tiredness (rest + congestion) REJECTED.** Adding it to form features did
+  **not** improve prediction — it was slightly *worse* (1.0311 vs 1.0207), and
+  the difference is not significant (Wilcoxon p=0.99). Per project discipline,
+  it is documented as rejected and left out. (This matches football-analytics
+  findings: calendar rest is a weak signal — top squads rotate around it.)
+- 💡 **What this tells us:** *who is on the calendar* doesn't matter much; *who
+  is on the pitch* does. Generic tiredness isn't the edge — **injuries and
+  confirmed line-ups are.** That is the paid half of Phase 3, and this negative
+  result sharpens the case for it.
+
+### Phase 3b — Injuries + line-ups *(pending — needs an API-Football key)*
+
+- `data_warehouse/sources/api_football.py` — fixtures, **injuries/suspensions**,
+  **confirmed pre-match line-ups** (available ~1h before kickoff). **Requires a
+  paid API-Football key the user must supply.**
+- Availability features (key-player-out, line-up strength) → new builders in the
+  existing feature store → tested via the same controlled method.
+
+**Success criterion:** each signal is added *only if* it beats the ensemble
+champion; ones that don't are documented as rejected (as tiredness now is).
 
 ---
 

@@ -76,9 +76,9 @@ backtest, never a licence to ship the feature unproven.
 | 5 | **xG-based form (rolling, time-decayed)** | ★★★★☆ | Requires Collection | Medium | derived from xG | 1 |
 | 6 | **Key player injuries / suspensions** | ★★★★☆ | Paid | Medium–High | API-Football | 3 |
 | 7 | **Confirmed pre-match lineups** | ★★★★☆ | Paid | High (timing: ~1h pre-kickoff) | API-Football | 3 |
-| 8 | **Recent results form** | ★★★☆☆ | Free | Low | derived from results | 2 |
+| 8 | **Recent results form** | ★★★☆☆ | Free | Low | derived from results | 3a ✅ built |
 | 9 | **Squad market value** | ★★★☆☆ | Free · Requires Collection | Medium | Transfermarkt (scrape) | 2 |
-| 10 | **Rest days / fixture congestion** | ★★★☆☆ | Free | Low | derived from fixture calendar | 2 |
+| 10 | **Rest days / fixture congestion** | ★☆☆☆☆ *(REJECTED — see evidence log)* | Free | Low | derived from fixture calendar | 3a ❌ |
 | 11 | **Newly-promoted team handling (cold start)** | ★★★☆☆ | Requires Modelling | Medium | derived | 2 |
 | 12 | **European / cup competition load** | ★★☆☆☆ | Paid | Medium | API-Football | 3 |
 | 13 | **Match stakes / motivation (table context)** | ★★☆☆☆ | Free | Medium | derived from standings | 3 |
@@ -124,6 +124,18 @@ best scoreline model does **not** beat the Elo champion (0.9956) on this window.
 Conclusion: xG is a validated input, carried into the Phase 2 ensemble
 alongside Elo (a strong, structurally different model) rather than crowned a
 standalone champion.
+
+### Evidence log — Tiredness / rest & congestion (Phase 3a, run `features_report_20260709T114814Z`)
+
+Controlled test on 8 walk-forward EPL seasons: an identical logistic model fit
+on form features only (log loss 1.0207) vs form + rest-days + fixture-congestion
+(1.0311). Adding the tiredness features made prediction **slightly worse**, and
+the difference is **not significant** (Wilcoxon p=0.99). **Rejected** — its
+★-rating is downgraded from ★★★☆☆ to ★☆☆☆☆ to reflect what the data showed, and
+it is left out of the models. Interpretation: at EPL level, *calendar rest* is a
+weak, well-managed signal; the availability of *specific players* (injuries /
+line-ups) is the real edge — which is why Phase 3b (paid API data) is the
+priority, not more calendar-derived features.
 
 ## How this table is used
 
