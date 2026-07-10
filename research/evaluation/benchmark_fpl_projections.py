@@ -67,6 +67,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from data_warehouse.config.loader import load_config
 from data_warehouse.utils.logging_config import configure_logging
 from prediction_engine.fpl.projection import fixture_context, project_player, team_scoring_rates
 from prediction_engine.scoreline_ensemble import ScorelineEnsemble
@@ -244,6 +245,33 @@ def run_backtest(seasons=SEASONS_WITH_XG) -> pd.DataFrame:
 
     frame = pd.DataFrame(predictions)
     frame["global_mean"] = frame["actual"].mean()   # constant floor
+    return frame
+
+
+def _cache_path():
+    return load_config().raw_data_dir.parent / "processed" / "fpl_backtest_predictions.csv"
+
+
+def cached_predictions(seasons=SEASONS_WITH_XG, refresh: bool = False) -> pd.DataFrame:
+    """The walk-forward predictions, computed once.
+
+    Producing them refits the team model once per gameweek (~7 minutes). Every
+    downstream experiment - the optimizer sweep, the ablations - consumes exactly
+    the same projections, so caching them is not just speed: it guarantees those
+    experiments differ ONLY in what they claim to vary.
+    """
+    path = _cache_path()
+    if not refresh and path.exists():
+        frame = pd.read_csv(path)
+        if set(frame["season"].unique()) == set(seasons):
+            logger.info("using cached predictions (%d rows) from %s", len(frame), path)
+            return frame
+        logger.info("cached predictions cover different seasons; recomputing")
+
+    frame = run_backtest(seasons)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(path, index=False)
+    logger.info("cached %d predictions to %s", len(frame), path)
     return frame
 
 
@@ -558,7 +586,7 @@ def main():
         level="INFO", max_bytes=5 * 1024 * 1024, backup_count=3,
     )
 
-    frame = run_backtest()
+    frame = cached_predictions(refresh=True)
     logger.info("scored %d player-gameweeks", len(frame))
 
     results = evaluate(frame)

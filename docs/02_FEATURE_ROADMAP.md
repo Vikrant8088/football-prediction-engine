@@ -720,15 +720,62 @@ from the three seasons that lack it.
   just with a lag. And it rests on **one season that cannot be replicated**,
   because 2025/26 is the only season the rule has ever existed.
 
-**Not a product.** Phase 5b's "first real edge" was one season measured with a
-yardstick that let us field six goalkeepers. This is the sixth hypothesis this
-project has tested and the sixth it has failed to prove.
+**Not a product** *(on this metric — but see Phase 5d, which plays the real game and
+finds a genuine, if unproven, residual edge)*. Phase 5b's "first real edge" was one
+season measured with a yardstick that let us field six goalkeepers.
 
 *Retained and still true: restricted to the **pickable pool** (3.0+ pts/GW, a
 prediction-time filter), our ranking is the best of every model — 0.181 vs 0.137
 (`player_ppg`). Fixture information is worthless for a bench player who scores 0
 either way, and matters at the top of the board. It is simply not worth enough
 points to prove out.*
+
+### Phase 5d — Play the real game: an optimal £100m squad ⚠️ *(done — strongest result yet, not proven)*
+
+Phase 5c measured a *ranking*. But FPL is not a ranking — you buy a **15-man squad
+for £100m** (2 GKP, 5 DEF, 5 MID, 3 FWD; max 3 per club across all fifteen), start
+the best legal eleven, captain one of them, and only the eleven score. A calibrated
+projection *should* beat a well-ordered one here, because a budget rewards points
+**per pound**, not just rank.
+
+- ✅ `prediction_engine/fpl/optimizer.py` — `select_squad`: the provably best legal
+  squad, by branch and bound, **verified against exhaustive enumeration** of every
+  legal XI and every legal bench (52 tests). This removes *"our team-picker was
+  worse than theirs"* as an explanation for any result, good or bad.
+- 🐛 **Three bugs the proof caught, each of which would have produced a confidently
+  wrong answer:** (1) a float budget comparison rejected any squad costing *exactly*
+  its budget — and the optimum always spends everything, so it discarded the answer
+  every gameweek; (2) a bound-tolerance error hung the search on tied projections;
+  (3) the bench search lacked a cheapest-completion bound (96s → 1.2s per solve).
+- 🧭 **There is no "XI budget".** The bench costs real money and its shape is *forced*
+  by the formation, so the money left for the eleven is £83.1–84.3m depending on
+  what you play. An earlier version swept flat XI budgets to £90m — **unbuyable
+  squads** — and £90m gave the sweep's best result. The six-goalkeepers error in a
+  new costume; deleted.
+
+**Result** *(run `fpl_squad_benchmark_20260710T160739Z`)* — pre-specified endpoint
+(£100m, captain), fixed before any number existed:
+
+| metric | value |
+|---|---|
+| gain vs `player_ppg` | **+3.22 pts/GW** (+122/season), 74/131 GWs won |
+| significance | t p=0.0184, Wilcoxon p=0.0302 — **passes** both |
+| multiplicity (Holm over 6 cells) | **6/6 survive** |
+| poorer squad (£95m/£90m) | edge *grows* (+3.80 / +5.76) |
+
+- ⚠️ **The load-bearing check.** Drop the one defensive-contribution season (2025/26)
+  and the edge falls to **+2.13 pts/GW, p=0.19 — not significant.** So ~+2.1 is a
+  genuine fixture edge present in every season, and the rest is the same *perishable*
+  rule-modelling advantage Phase 5c already isolated.
+- 📊 **Replication:** positive in 3/4 seasons, individually significant in 1/4.
+- 🧩 **Mechanism, visible:** we play far more varied formations than `player_ppg`
+  (five defenders 7% of gameweeks vs its 0%), i.e. our clean-sheet signal actually
+  moves the team — it is not just noise.
+
+**Verdict: the strongest result in the project, and the first that is not pure
+artifact — but still not proven.** The residual non-DC edge is *positive across all
+seasons*, unlike Phase 5b's zero; it is simply too small to clear the bar on 98
+gameweeks. Honest status: **promising, not sellable.** More seasons would settle it.
 
 ### Phase 4e — Serving + drift *(pending)*
 
