@@ -253,6 +253,40 @@ signings. Both are cheap-ish; neither is justified until something else stalls.
 
 ---
 
+## Cross-cutting — Hyperparameter tuning ✅ *(done — defaults were already near-optimal)*
+
+The outstanding milestone flagged in the very first Phase 0 report: every model
+had used **literature-default** hyperparameters (Elo K=20 / home advantage=100;
+Dixon-Coles xi=0.0065/day), never fitted to this data. Now settled.
+
+- ✅ `research/experiments/tuning.py` — `TunedModel`, a **nested walk-forward**
+  search. On each fold, candidate settings are scored on an inner validation
+  split of the *training* window only, so a setting is never chosen by looking
+  at the season it predicts. Drops into the harness (and into the ensemble as a
+  base) like any other model, and reports the settings it picked.
+
+**Result** *(run `tuning_report_20260710T051002Z`, 8 seasons, 3040 matches)*
+
+| model | default | tuned | verdict |
+|---|---|---|---|
+| elo | **0.9956** | 0.9963 | tuning does not help |
+| dixon_coles_xg | **1.0107** | 1.0151 | tuning does not help |
+| **ensemble** | **0.9925** 👑 | 0.9943 | tuning does not help |
+
+- ❌ **Tuning made every model marginally worse**, and no difference was
+  significant (paired t p=0.12–0.57). Settings the search landed on (Elo K=25,
+  home advantage=120; xi=0.002) beat the defaults on the inner validation split
+  but did **not** transfer to the next season — textbook mild overfitting of the
+  hyperparameter search itself.
+- ✅ **This is a useful null result, not a wasted pass.** It closes the Phase 0
+  milestone, confirms the published defaults are already near-optimal for this
+  data, and **rules tuning out as a lever** so we stop wondering about it.
+
+**Champion after tuning:** unchanged — **ensemble** (0.9925) with default
+hyperparameters.
+
+---
+
 ## Phase 4 — Serving + continuous improvement
 
 **Goal:** expose predictions and keep the engine improving on its own.
