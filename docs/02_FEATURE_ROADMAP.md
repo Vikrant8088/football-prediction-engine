@@ -627,54 +627,108 @@ exactly the things intuition is worst at (clean-sheet odds, fixture difficulty).
 
 Injured/doubtful players are auto-flagged from FPL's own availability feed.
 
-### Phase 5b — Backtest the projections ✅ *(done — first real edge in the project, but unproven)*
+### Phase 5b — Backtest the projections ⛔ *(RETRACTED by Phase 5c — the result was wrong)*
 
-Walk-forward over 33 gameweeks, **26,058 player-gameweeks**. To project gameweek
-*k*, a model sees only gameweeks 1..*k*−1 and matches played before that
-gameweek's first kickoff. The decisive metric is **top-11 points**: pick each
-model's best XI, sum what they *actually* scored — the decision a manager makes.
+Walk-forward over one season, 33 gameweeks, 26,058 player-gameweeks. It reported
+**+4.45 pts/GW over `player_ppg`** and was written up as *"the first genuine,
+usable edge in this project."*
 
-**Result** *(run `fpl_projection_backtest_20260710T091620Z`)*
+**That claim is withdrawn.** Phase 5c replayed four seasons and found the margin
+is **+1.83 pts/GW, p=0.13 — not significant.** Three defects, every one of which
+flattered us:
 
-| baseline | its XI | our XI | gain/GW | GWs won | t p | Wilcoxon p |
-|---|---|---|---|---|---|---|
-| price ("pick the expensive ones") | 38.24 | **51.00** | **+12.76** | 26/33 | 0.0001 | 0.0004 ✅ |
-| player_form5 (last 5 GWs) | 42.45 | **51.00** | **+8.55** | 25/33 | 0.0014 | 0.0022 ✅ |
-| **player_ppg** (season points/GW) | 46.55 | **51.00** | **+4.45** | 22/33 | 0.0520 | 0.0386 ⚠️ |
-| global_mean | 21.82 | **51.00** | +29.18 | 33/33 | — | ✅ |
+1. ⛔ **The XI was illegal.** "Rank by projected points, take the top 11" fielded
+   **5.9 goalkeepers** on average in 2022/23. FPL permits **one**. Clean-sheet and
+   save points make keepers look efficient *in isolation*, so the yardstick
+   rewarded whichever model rated them highest — ours. The defect was in the
+   **metric**, not the projection.
+2. ⛔ **Double gameweeks double-counted.** A player with two fixtures got two rows
+   and could be picked **twice in the same XI**.
+3. ⛔ **The `price` baseline used end-of-season prices**, contaminated by the very
+   season it was predicting. (This one made the baseline *weaker*, not stronger.)
 
-- ✅ **Beats "pick by price" and "chase form" decisively** — significant on both
-  tests. Those are what most managers actually do.
-- ⚠️ **Beats the strongest baseline (season points-per-gameweek) by +4.45 pts/GW
-  (+147 across the season, 22/33 gameweeks won) — but only ONE of the two tests
-  passes** (Wilcoxon p=0.039; paired t p=0.052). By this project's own rule, that
-  is **suggestive, not proven.** One season has little statistical power.
-- 📊 **The apparent contradiction, resolved.** On MAE and overall Spearman the
-  baselines win, because those metrics are dominated by ~700 fringe players who
-  reliably score ~0 — which a player's own average nails. Restricted to the
-  **pickable pool** (3.0+ points/GW, a prediction-time filter), our ranking is
-  best of all models: **0.178 vs 0.131 (ppg) and 0.168 (form5)**. The engine's
-  fixture information — clean-sheet probability, opponent strength — is worthless
-  for a bench player and decisive at the top of the board, exactly where picks
-  are made.
+**Why a single season could never have caught it:** 2025/26's new
+defensive-contribution rule lifts outfielders enough that goalkeepers fall out of
+the naive XI unaided — **0.4 per XI in 2025/26 versus 5.9 in 2022/23**. The bug
+was hiding behind a rule change. Only the replay exposed it.
 
-**Caveats, all understating or overstating in known directions:**
-- One season, 33 gameweeks. Low power *by construction*.
-- The top-11 pick ignores FPL's budget / 3-per-club / formation constraints. All
-  models face the same omission, so the comparison is fair; the absolute totals
-  are not achievable.
-- Historical **injury flags are unavailable**, so the backtest projects points for
-  players who were injured. The live tool uses them → this **understates** us.
-- The `price` baseline uses *end-of-season* prices, which reflect who did well →
-  it is **flattered**, and we beat it anyway.
+The original report is kept, unaltered but banner-retracted, at
+`research/results/fpl_projection_backtest_20260710T091620Z.md`. Deleting it would
+have erased the evidence of the mistake.
 
-**Verdict: the first genuine, usable edge found anywhere in this project — over
-what FPL managers actually do. Not yet proven against the strongest baseline.**
-To prove it: replay more seasons (the community FPL archive covers 2016/17
-onward) and re-test. Until then, promising, not sellable.
+*Also delivered here, and still valid: a fix for the misleading `p_60_minutes`
+label (it is an appearance factor, not a probability) and a console-encoding
+crash on accented player names.*
 
-*Also fixed here: a misleading `p_60_minutes` label (it is an appearance factor,
-not a probability) and a console-encoding crash on accented player names.*
+### Phase 5c — Replay four seasons ✅ *(done — the edge does not survive)*
+
+Walk-forward across **4 seasons, 131 gameweeks, 96,303 player-gameweeks**
+(2022/23–2025/26). Earlier seasons are excluded on principle: **FPL published no
+xG before 2022/23**, and replaying them on realised goals would silently test a
+*different* model. Padding the sample by swapping the inputs is the exact thing
+this project exists not to do.
+
+- `research/data/fpl_archive.py` — the community FPL archive
+  ([vaastav](https://github.com/vaastav/Fantasy-Premier-League), CC BY 4.0),
+  checksummed into the versioned raw lake. Fixtures reconcile against Understat
+  **380/380 in every season**, zero date mismatches.
+- The decisive metric is now a **legal XI**: 1 GKP, 3–5 DEF, 2–5 MID, 1–3 FWD,
+  max 3 per club — the team a manager could actually field. Both the legal and
+  the old naive number are reported, so the defect stays visible.
+
+**Result** *(run `fpl_projection_backtest_multiseason_20260710T101328Z`)*
+
+| baseline | its XI | our XI | gain/GW | GWs won | t p | Wilcoxon p | proven? |
+|---|---|---|---|---|---|---|---|
+| price ("pick the expensive ones") | 43.44 | **52.34** | **+8.91** | 94/131 | 0.0000 | 0.0000 | ✅ |
+| player_form5 (last 5 GWs) | 46.15 | **52.34** | **+6.19** | 86/131 | 0.0000 | 0.0000 | ✅ |
+| **player_ppg** (season points/GW) | 50.51 | **52.34** | **+1.83** | 72/131 | 0.1303 | 0.0913 | ❌ |
+| global_mean | 15.66 | **52.34** | +36.68 | 131/131 | 0.0000 | 0.0000 | ✅ |
+
+**Replication — the test one pooled p-value cannot give you:**
+
+| season | gain/GW vs `player_ppg` | proven? |
+|---|---|---|
+| 2022-23 | **−2.22** | ❌ (a loss) |
+| 2023-24 | +1.61 | ❌ |
+| 2024-25 | +1.39 | ❌ |
+| 2025-26 | **+6.42** | ✅ |
+
+**And where does the one good season come from?** 2025/26 is also the only season
+with the **defensive-contribution rule**, which we model (`P(actions ≥ threshold)`
+under a Poisson) and the baselines do not. Coincidence is not an explanation, so
+`research/evaluation/benchmark_fpl_dc_ablation.py` zeroes the term and re-runs:
+
+| 2025/26 run | gain/GW | t p | Wilcoxon p | proven? |
+|---|---|---|---|---|
+| **with** defensive contribution | **+6.42** | 0.0082 | 0.0166 | ✅ |
+| **without** (ablated) | +2.58 | 0.3039 | 0.3036 | ❌ |
+
+**60% of the edge is that one rule.** Strip it and 2025/26 is indistinguishable
+from the three seasons that lack it.
+
+**Verdict — the honest one:**
+- ✅ We **beat what most managers actually do** — "pick the expensive ones"
+  (+8.91/GW) and "chase form" (+6.19/GW) — decisively, in every season.
+- ❌ We do **not** beat a player's own season points-per-gameweek. +1.83/GW over
+  131 gameweeks, significant on **neither** test, positive in only 3 of 4 seasons.
+  **The fixture model — clean sheets, opponent strength — has never reached
+  significance in any single season.**
+- ⚠️ The one significant season is significant because we modelled a **new rule**
+  faster than the baselines absorbed it. That edge is real but **perishable**:
+  `player_ppg` already learns defensive-contribution points from realised history,
+  just with a lag. And it rests on **one season that cannot be replicated**,
+  because 2025/26 is the only season the rule has ever existed.
+
+**Not a product.** Phase 5b's "first real edge" was one season measured with a
+yardstick that let us field six goalkeepers. This is the sixth hypothesis this
+project has tested and the sixth it has failed to prove.
+
+*Retained and still true: restricted to the **pickable pool** (3.0+ pts/GW, a
+prediction-time filter), our ranking is the best of every model — 0.181 vs 0.137
+(`player_ppg`). Fixture information is worthless for a bench player who scores 0
+either way, and matters at the top of the board. It is simply not worth enough
+points to prove out.*
 
 ### Phase 4e — Serving + drift *(pending)*
 

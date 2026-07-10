@@ -1,3 +1,28 @@
+> # ⛔ RETRACTED — DO NOT CITE
+>
+> **This report's headline result (+4.45 points/GW over `player_ppg`) is wrong.**
+> It is kept, unaltered below, as the record of a mistake rather than deleted.
+>
+> Superseded by `fpl_projection_backtest_multiseason_*.md`, which replays four
+> seasons instead of one. Three defects, all of which flattered us:
+>
+> 1. **The XI was illegal.** Ranking players by projected points and taking the
+>    top 11 fielded **5.9 goalkeepers** on average; FPL permits one. Clean-sheet
+>    and save points make keepers look efficient in isolation, so the metric
+>    rewarded the model that rated them highest — ours.
+> 2. **Double gameweeks double-counted.** A player with two fixtures appeared
+>    twice and could be picked twice in one XI.
+> 3. **The `price` baseline used end-of-season prices**, contaminated by the very
+>    season it was predicting.
+>
+> On the corrected metric across 131 gameweeks the gain is **+1.83 pts/GW,
+> p=0.13 — not significant.** The single-season result was noise plus artifact.
+>
+> Why one season could not have caught this: 2025/26's new defensive-contribution
+> rule lifts outfielders enough that goalkeepers drop out of the naive XI by
+> themselves (0.4 per XI, versus 5.9 in 2022/23). The bug was hiding behind a
+> rule change.
+
 # FPL Projection Backtest - 20260710T091620Z
 
 Walk-forward over 33 gameweeks, 26,058 player-gameweeks. To project gameweek k a model sees only gameweeks 1..k-1 and matches played before that gameweek's first kickoff.

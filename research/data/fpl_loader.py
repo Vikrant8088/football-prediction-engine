@@ -30,6 +30,7 @@ TEAM_NAME_MAP = {
     "Man Utd": "Manchester United",
     "Newcastle": "Newcastle United",
     "Nott'm Forest": "Nottingham Forest",
+    "Sheffield Utd": "Sheffield United",
     "Spurs": "Tottenham",
     "Wolves": "Wolverhampton Wanderers",
 }
