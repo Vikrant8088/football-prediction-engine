@@ -114,11 +114,16 @@ Pinnacle closing odds score log loss 0.9464 (55.9% accuracy) vs our champion
 ensemble's 0.9821 (53.1%). The market wins by 0.0357 (p<0.0001) — as expected.
 The engine has captured **70% of the baseline→market edge**, and is *better
 calibrated* than the market on home wins and draws; the market's advantage is
-sharpness. Crucially, the closing line is priced minutes before kickoff and so
-already knows confirmed line-ups and late team news, which our engine does not —
-so part of the residual gap is an information advantage, not modelling skill.
-This bounds what any further feature can add and points the remaining signal at
-**team news**, not at weather/referees.
+sharpness.
+
+**Follow-up (Phase 4c) refuted the "team news explains the gap" hypothesis.**
+Pinnacle's *opening* price — set before any team news — already beats our engine
+by 0.0318 of the 0.0357 gap. The entire open→close improvement (team news AND
+sharp money combined) is worth just **0.0039**. So the market's edge is a
+modelling/information advantage present from the start, not a timing one. This
+also explains, consistently, why our injury tests kept finding no detectable
+effect: the whole team-news channel is small. It bounds every remaining feature
+— weather, referees, line-ups alike — as unable to close much of this gap.
 
 ---
 

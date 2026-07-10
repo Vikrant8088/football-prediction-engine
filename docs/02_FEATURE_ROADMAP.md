@@ -362,13 +362,68 @@ file, of which we read six.
 - ✅ **On calibration we are competitive with the market** — better on home
   (0.0228 vs 0.0249) and markedly better on draws (0.0074 vs 0.0144). The
   market's advantage is *sharpness*, not honesty.
-- 🔑 **The decisive insight for what to build next.** The closing line is priced
-  *minutes before kickoff*, so it already knows **confirmed line-ups and late
-  team news**. Our engine does not. A meaningful share of the residual 30% is
-  therefore an **information** advantage, not a modelling one — which says the
-  remaining signal lives in **team news (line-ups/injuries)**, and *not* in the
-  low-rated features (weather, referees) we deprioritised. Those cannot pay for
-  themselves against a 0.0357 gap.
+- ⚠️ **A hypothesis we formed here was later REFUTED — see Phase 4c.** We
+  reasoned that because the closing line is priced minutes before kickoff (and
+  thus knows confirmed line-ups and late team news, which we do not), much of
+  the residual gap must be an *information* advantage, and that team news was
+  therefore the lever with headroom. **Phase 4c measured it and that is wrong:**
+  the entire open→close improvement is worth only 0.0039, while the market's
+  *opening* price — which knows no team news either — already beats us by
+  0.0318. The gap is a modelling/information advantage present from the start,
+  not a timing one. Recorded here rather than deleted, because the reasoning was
+  plausible and the measurement is what settled it.
+
+### Phase 4c — Do we hold any EDGE over the market? ✅ *(done — measured: no)*
+
+"Beat the closing line" is too blunt a goal to test. It was decomposed into four
+sharper questions, all answered with Pinnacle **opening** and **closing** prices
+already in the raw lake. *(Integrity: the T3 blend is a measurement instrument,
+never a shipped model. Odds remain a yardstick, not an input.)*
+
+**Result** *(run `market_edge_report_20260710T063543Z`, 2,660 EPL matches)*
+
+| forecast | log loss |
+|---|---|
+| market_close (Pinnacle, at kickoff) | **0.9464** |
+| blend(engine + market_close) | 0.9466 |
+| **market_open** (Pinnacle, before team news) | **0.9503** |
+| ensemble (our engine) | 0.9821 |
+
+- **T1 — what is late information worth?** open → close improves the market by
+  only **0.0039**. Team news *and* sharp money *combined* are worth that much.
+- **T2 — can we beat the opening line?** **No.** The opening price, which knows
+  no team news, already beats us by **0.0318** (p<0.0001).
+- **T3 — do we carry signal the market misses?** **No.** Blending our engine
+  into the closing line earns it an average weight of just **4%** and does not
+  improve it (0.9466 vs 0.9464). Our forecast is a strict *information subset*
+  of the market.
+- **T4 — Closing Line Value.** When we disagree with the open, the line moves
+  toward us **48.5%** of the time (r = −0.007, p = 0.54) — a coin flip. **We do
+  not anticipate the market at all.**
+
+**Verdict: the engine has no measurable edge over Pinnacle, at the open or the
+close.** This is the honest, hard-won answer most projects never obtain — they
+assume an edge instead of measuring one.
+
+Three consequences, all evidence-based:
+1. 🔁 **It refutes the Phase 4a hypothesis** that team news explains the gap
+   (only 0.0039 of 0.0357 arrives late), and *explains* why every injury test
+   returned "no detectable effect" — the whole channel is small. Two independent
+   lines of evidence now agree.
+2. 🚫 **No public-data feature is likely to close this gap.** Weather, referees,
+   line-ups are all bounded by the same measurement.
+3. 🎯 **The only untested route to beating a line** is a *less efficient* market:
+   lower divisions (Championship, League One, Scottish, second tiers), which
+   football-data.co.uk covers with odds for free, and which our Elo/Dixon-Coles
+   models can predict without xG.
+
+### Phase 4d — Beat the line where the market is soft *(pending — the one live route)*
+
+- Run the odds benchmark on lower/less-liquid leagues (E1/E2/E3, SC0-3, D2, I2,
+  SP2, F2). Bookmakers price these less sharply; if the engine can beat a closing
+  line anywhere, it is here.
+- Goal-only models (Elo, Dixon-Coles) work without xG, so these leagues are
+  immediately reachable.
 
 ### Phase 4b — Serving + drift *(pending)*
 

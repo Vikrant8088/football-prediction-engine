@@ -39,8 +39,12 @@ logger = logging.getLogger(__name__)
 
 SOURCE_NAME = "football_data_co_uk"
 
-# Pinnacle CLOSING odds: home / draw / away.
+# Pinnacle CLOSING odds: home / draw / away. The sharpest public forecast.
 ODDS_COLUMNS = ["PSCH", "PSCD", "PSCA"]
+# Pinnacle OPENING odds - the price before the market has absorbed team news and
+# sharp money. The open->close move is the market learning; anticipating that
+# move is the professional definition of having an edge.
+OPENING_COLUMNS = ["PSH", "PSD", "PSA"]
 MIN_COVERAGE = 0.95  # a season must have odds on ~all matches to be usable
 
 # football-data.co.uk name -> Understat canonical name (only the 7 that differ).
@@ -146,5 +150,70 @@ def load_closing_odds(league_code: str = "E0") -> pd.DataFrame:
     logger.info(
         "Loaded closing odds for %d matches across %d seasons (mean overround %.2f%%)",
         len(odds_df), odds_df["season"].nunique(), 100 * odds_df["overround"].mean(),
+    )
+    return odds_df
+
+
+def load_pinnacle_odds(league_code: str = "E0") -> pd.DataFrame:
+    """Both the OPENING and CLOSING Pinnacle prices for every match that has both.
+
+    Columns: season, home_team, away_team,
+             open_p_home/open_p_draw/open_p_away, open_overround,
+             close_p_home/close_p_draw/close_p_away, close_overround.
+
+    The open->close movement is the market absorbing information (team news,
+    sharp money) between the price going up and kickoff.
+    """
+    config = load_config()
+    raw = config.raw_data_dir
+    needed = OPENING_COLUMNS + ODDS_COLUMNS
+
+    frames = []
+    for season_code in config.football_data_co_uk.seasons:
+        csv_path = _season_csv(raw, league_code, season_code)
+        if csv_path is None:
+            continue
+        raw_df = pd.read_csv(csv_path, encoding="utf-8-sig").dropna(subset=["HomeTeam"])
+
+        if any(c not in raw_df.columns for c in needed):
+            logger.warning("Season %s: opening and/or closing odds absent - skipping", season_code)
+            continue
+        if raw_df[needed].notna().all(axis=1).mean() < MIN_COVERAGE:
+            logger.warning("Season %s: opening/closing odds too sparse - skipping", season_code)
+            continue
+
+        df = raw_df.dropna(subset=needed).copy()
+        df = df[(df[needed] > 1.0).all(axis=1)]
+
+        open_odds = df[OPENING_COLUMNS].to_numpy(dtype=float)
+        close_odds = df[ODDS_COLUMNS].to_numpy(dtype=float)
+        open_probs = implied_probabilities(open_odds)
+        close_probs = implied_probabilities(close_odds)
+
+        frames.append(
+            pd.DataFrame({
+                "season": _season_label(season_code),
+                "home_team": df["HomeTeam"].map(_canonical).to_numpy(),
+                "away_team": df["AwayTeam"].map(_canonical).to_numpy(),
+                "open_p_home": open_probs[:, 0],
+                "open_p_draw": open_probs[:, 1],
+                "open_p_away": open_probs[:, 2],
+                "close_p_home": close_probs[:, 0],
+                "close_p_draw": close_probs[:, 1],
+                "close_p_away": close_probs[:, 2],
+                "open_overround": overround(open_odds),
+                "close_overround": overround(close_odds),
+            })
+        )
+
+    if not frames:
+        raise ValueError(f"No usable opening+closing odds for league '{league_code}'")
+
+    odds_df = pd.concat(frames, ignore_index=True)
+    logger.info(
+        "Loaded Pinnacle open+close for %d matches, %d seasons "
+        "(overround %.2f%% -> %.2f%% as the market sharpens)",
+        len(odds_df), odds_df["season"].nunique(),
+        100 * odds_df["open_overround"].mean(), 100 * odds_df["close_overround"].mean(),
     )
     return odds_df
