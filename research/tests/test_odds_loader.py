@@ -137,5 +137,71 @@ class TestLoadClosingOdds(unittest.TestCase):
             self._load(["1819"])  # nothing written
 
 
+class TestLoadTotalsOdds(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.raw = Path(self._tmp.name)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _write(self, season, rows):
+        d = self.raw / "football_data_co_uk" / "E0" / season / "v1"
+        d.mkdir(parents=True)
+        pd.DataFrame(rows).to_csv(d / f"{season}.csv", index=False)
+        (self.raw / "football_data_co_uk" / "E0" / season / "latest.json").write_text(
+            '{"latest_version": "v1"}', encoding="utf-8"
+        )
+
+    def _load(self, seasons):
+        cfg = SimpleNamespace(
+            raw_data_dir=self.raw,
+            football_data_co_uk=SimpleNamespace(seasons=seasons),
+        )
+        with patch.object(odds_loader, "load_config", return_value=cfg):
+            return odds_loader.load_totals_odds("E0")
+
+    def test_two_way_overround_is_removed(self):
+        # A fair 2-way book: 1/2.0 + 1/2.0 = 1.0 exactly.
+        self._write("1920", [{
+            "Date": "11/08/2019", "HomeTeam": "Arsenal", "AwayTeam": "Chelsea",
+            "PC>2.5": 2.0, "PC<2.5": 2.0, "MaxC>2.5": 2.1, "MaxC<2.5": 2.05,
+        }])
+        out = self._load(["1920"])
+        self.assertEqual(len(out), 1)
+        self.assertAlmostEqual(out.iloc[0]["p_over"], 0.5)
+        self.assertAlmostEqual(out.iloc[0]["p_under"], 0.5)
+        self.assertAlmostEqual(out.iloc[0]["p_over"] + out.iloc[0]["p_under"], 1.0)
+        self.assertAlmostEqual(out.iloc[0]["overround"], 0.0, places=9)
+
+    def test_short_over_price_means_over_is_likely(self):
+        self._write("1920", [{
+            "Date": "11/08/2019", "HomeTeam": "Arsenal", "AwayTeam": "Chelsea",
+            "PC>2.5": 1.4, "PC<2.5": 3.0, "MaxC>2.5": 1.45, "MaxC<2.5": 3.1,
+        }])
+        out = self._load(["1920"])
+        self.assertGreater(out.iloc[0]["p_over"], out.iloc[0]["p_under"])
+
+    def test_best_prices_are_carried_through(self):
+        self._write("1920", [{
+            "Date": "11/08/2019", "HomeTeam": "Arsenal", "AwayTeam": "Chelsea",
+            "PC>2.5": 2.0, "PC<2.5": 2.0, "MaxC>2.5": 2.15, "MaxC<2.5": 2.05,
+        }])
+        out = self._load(["1920"]).iloc[0]
+        self.assertAlmostEqual(out["pin_odds_over"], 2.0)
+        self.assertAlmostEqual(out["best_odds_over"], 2.15)  # best price beats Pinnacle
+
+    def test_season_without_totals_odds_is_skipped(self):
+        self._write("1819", [{
+            "Date": "11/08/2018", "HomeTeam": "Arsenal", "AwayTeam": "Chelsea",
+        }])
+        self._write("1920", [{
+            "Date": "11/08/2019", "HomeTeam": "Arsenal", "AwayTeam": "Chelsea",
+            "PC>2.5": 2.0, "PC<2.5": 2.0, "MaxC>2.5": 2.1, "MaxC<2.5": 2.05,
+        }])
+        out = self._load(["1819", "1920"])
+        self.assertEqual(set(out["season"]), {"2019-20"})
+
+
 if __name__ == "__main__":
     unittest.main()

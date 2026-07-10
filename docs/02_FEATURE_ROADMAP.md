@@ -538,6 +538,51 @@ measures how often that score is right, walk-forward on 3,040 unseen matches.
 - 📌 **Product rule, now evidence-backed:** never publish a scoreline without its
   probability attached. "2-0 (11.1%)" is honest; "2-0" is a lie.
 
+### Phase 4f — The goals market (Over/Under 2.5) ✅ *(done — closed too)*
+
+The last untested market, and the one the xG models were actually built for.
+Every prior edge test was on 1X2, where Elo (a ratings model) carried ~72% of
+the weight. Pinnacle also charges a wider margin on totals (2.96% vs ~2.4%),
+i.e. it is less sure. So the 1X2 result did **not** automatically transfer.
+
+**Result** *(run `totals_report_20260710T075001Z`, 2,269 EPL matches, 2019-20 → 2024-25)*
+
+| model | log loss | accuracy |
+|---|---|---|
+| **market_closing** | **0.6724** | **58.3%** |
+| poisson_xg | 0.6883 | 52.7% |
+| **baseline** (train base rate) | **0.6897** | 54.9% |
+| ensemble (rescaled grid) | 0.6910 | 53.8% |
+| dixon_coles_xg | 0.6940 | 54.3% |
+
+- ❌ **The market wins again** (0.6724 vs our best 0.6883, p<0.0001).
+- ⚠️ **Worse: the engine has almost no skill on totals at all.** Our best model
+  beats the naive base rate by 0.0014, and *the ensemble and Dixon-Coles-xG are
+  beaten by it*. Team-level xG barely narrows the enormous variance of total
+  goals.
+- 🔧 **A real technical finding:** the ScorelineEnsemble's rescaling (forcing the
+  grid's 1X2 marginals onto the champion's) **hurts the totals distribution**
+  (0.6910 vs poisson_xg's 0.6883). Consistent with the over-peaked grid found in
+  Phase 4b(ii). Derived goal markets should be taken from the raw Poisson-xG
+  grid until the shape is fixed.
+
+**Betting simulation** — flat 1-unit bets wherever the model saw >2% expected value:
+
+| price level | ROI | p-value | profitable? |
+|---|---|---|---|
+| Pinnacle closing | −1.3% to −3.3% | — | ❌ no |
+| Best available across books | +1.3% to +3.1% | 0.23–0.60 | ❌ **not significant** |
+
+The positive ROI at best-available prices is a **mirage**: it bets 92–93% of all
+matches (so it is not selecting anything), the standard error on ROI over ~2,100
+even-money bets is ≈ ±2.2% (so +3% is ~1.4σ — noise), those prices are not
+reliably reachable, and winning accounts get limited.
+
+**Verdict: no profit at any price level.** Combined with Phases 4a/4c/4d, the
+betting question is now closed across *every* market and league we can reach:
+1X2 at the close, 1X2 at the open, 1X2 in soft leagues, and goals. **The engine's
+value is not betting alpha.**
+
 ### Phase 4e — Serving + drift *(pending)*
 
 - `prediction_engine/serving/` — FastAPI service returning the same payload.

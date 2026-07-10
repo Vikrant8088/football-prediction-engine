@@ -164,6 +164,81 @@ def load_closing_odds(league_code: str = "E0", map_names: bool = True) -> pd.Dat
     return odds_df
 
 
+def load_totals_odds(league_code: str = "E0", map_names: bool = True) -> pd.DataFrame:
+    """Closing Over/Under 2.5-goals odds: Pinnacle, and the best price available.
+
+    The goals market is a genuinely different test from 1X2. Our xG models
+    predict *goals* directly - that is their core competence - whereas the 1X2
+    benchmark leant on Elo, a ratings model. Pinnacle also charges a wider
+    margin here (~3.2% vs ~2.4% on 1X2), i.e. it is less sure about totals.
+
+    Two price sets are returned, because they answer different questions:
+      - `pin_*`   : Pinnacle's closing price. Beating this means beating the
+                    sharpest forecaster.
+      - `best_*`  : the highest closing price any book offered (MaxC). This is
+                    what a bettor shopping across books would actually take, and
+                    its combined margin is near zero - so it is the realistic
+                    test of whether money could be made.
+
+    Columns: season, date, home_team, away_team, p_over, p_under (Pinnacle
+    implied, overround removed), overround, pin_odds_over/under,
+    best_odds_over/under.
+    """
+    config = load_config()
+    raw = config.raw_data_dir
+    name_fn = _canonical if map_names else (lambda n: n.strip())
+
+    pin_cols = ["PC>2.5", "PC<2.5"]
+    best_cols = ["MaxC>2.5", "MaxC<2.5"]
+    needed = pin_cols + best_cols
+
+    frames = []
+    for season_code in config.football_data_co_uk.seasons:
+        csv_path = _season_csv(raw, league_code, season_code)
+        if csv_path is None:
+            continue
+        raw_df = read_csv_resilient(csv_path).dropna(subset=["HomeTeam"])
+
+        if any(c not in raw_df.columns for c in needed):
+            logger.warning("Season %s: closing over/under odds absent - skipping", season_code)
+            continue
+        if raw_df[needed].notna().all(axis=1).mean() < MIN_COVERAGE:
+            logger.warning("Season %s: closing over/under odds too sparse - skipping", season_code)
+            continue
+
+        df = raw_df.dropna(subset=needed).copy()
+        df = df[(df[needed] > 1.0).all(axis=1)]
+
+        pin = df[pin_cols].to_numpy(dtype=float)
+        probs = implied_probabilities(pin)  # 2-way normalisation works identically
+
+        frames.append(
+            pd.DataFrame({
+                "season": _season_label(season_code),
+                "date": pd.to_datetime(df["Date"], dayfirst=True).to_numpy(),
+                "home_team": df["HomeTeam"].map(name_fn).to_numpy(),
+                "away_team": df["AwayTeam"].map(name_fn).to_numpy(),
+                "p_over": probs[:, 0],
+                "p_under": probs[:, 1],
+                "overround": overround(pin),
+                "pin_odds_over": pin[:, 0],
+                "pin_odds_under": pin[:, 1],
+                "best_odds_over": df["MaxC>2.5"].to_numpy(dtype=float),
+                "best_odds_under": df["MaxC<2.5"].to_numpy(dtype=float),
+            })
+        )
+
+    if not frames:
+        raise ValueError(f"No usable closing over/under odds for league '{league_code}'")
+
+    odds_df = pd.concat(frames, ignore_index=True)
+    logger.info(
+        "Loaded closing O/U 2.5 odds for %d matches, %d seasons (Pinnacle overround %.2f%%)",
+        len(odds_df), odds_df["season"].nunique(), 100 * odds_df["overround"].mean(),
+    )
+    return odds_df
+
+
 def load_pinnacle_odds(league_code: str = "E0") -> pd.DataFrame:
     """Both the OPENING and CLOSING Pinnacle prices for every match that has both.
 
