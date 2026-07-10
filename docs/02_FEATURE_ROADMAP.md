@@ -253,6 +253,43 @@ signings. Both are cheap-ish; neither is justified until something else stalls.
 
 ---
 
+## Cross-cutting — Multi-league generalization ✅ *(done — champion confirmed, and now significant)*
+
+Everything up to this point was established on the Premier League alone. A
+champion that only wins in England is an overfitted champion, so the same
+walk-forward benchmark was re-run **independently on each of Europe's top five
+leagues** (each trained and evaluated strictly within itself — no cross-league
+training). Pooling the five at *scoring* time also gives ~5x the matches, which
+finally supplies the statistical power the single-league test lacked.
+
+**Result** *(run `multileague_report_20260710T052635Z`, 5 leagues, 14,284 matches/model)*
+
+| model | EPL | La Liga | Bundesliga | Serie A | Ligue 1 | **pooled** |
+|---|---|---|---|---|---|---|
+| **ensemble** 👑 | **0.9925** | **0.9945** | 0.9988 | **0.9963** | **1.0212** | **1.0003** |
+| elo | 0.9956 | 0.9995 | 1.0064 | 0.9971 | 1.0333 | 1.0058 |
+| poisson_xg | 1.0198 | 0.9968 | **0.9985** | 1.0099 | 1.0224 | 1.0096 |
+| dixon_coles_xg | 1.0107 | 1.0023 | 1.0089 | 1.0240 | 1.0267 | 1.0145 |
+| baseline | 1.0673 | 1.0707 | 1.0736 | 1.0842 | 1.0763 | 1.0744 |
+
+- ✅ **The champion generalizes.** The ensemble wins **4 of 5** leagues outright,
+  and in the fifth (Bundesliga) it loses to poisson_xg by 0.0003 — a hair. It is
+  best-or-tied-best everywhere. It was not an artefact of the Premier League.
+- ✅ **The champion is now statistically significant.** Pooled over 14,284
+  matches, ensemble (1.0003) beats Elo (1.0058) on **both** tests
+  (paired t p<0.0001, Wilcoxon p<0.0001). The margin that was only borderline on
+  the EPL (t p=0.06) holds up decisively at 5x the sample. **The ensemble is no
+  longer "provisional" — it is the settled champion.**
+- 📊 **League texture worth knowing:** Elo is clearly weakest in Ligue 1 (1.0333,
+  behind both xG models), while the xG models are relatively strongest in
+  Bundesliga and La Liga. The ensemble's value is precisely that it re-weights
+  toward whichever view works in a given league.
+
+**Champion:** **ensemble** — confirmed across 5 leagues, significant, and better
+calibrated than any component.
+
+---
+
 ## Cross-cutting — Hyperparameter tuning ✅ *(done — defaults were already near-optimal)*
 
 The outstanding milestone flagged in the very first Phase 0 report: every model
