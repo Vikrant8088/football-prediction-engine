@@ -151,11 +151,13 @@ data_warehouse/            # Layer 1 — ingestion (exists)
     api_football.py        #   + injuries, lineups, fixtures  [Phase 3]
     transfermarkt.py       #   + squad market values          [Phase 2]
 
-prediction-engine/         # Layers 2–5 — the production engine (empty today)
-  features/                #   feature store + builders       [Phase 2]
-  models/                  #   promoted, production models
-  ensemble/                #   blending + calibration         [Phase 2]
-  serving/                 #   FastAPI prediction service     [Phase 4]
+prediction_engine/         # Layers 2–5 — the production engine
+  scoreline_ensemble.py    #   the champion + a consistent scoreline grid
+  markets.py               #   1X2, exact score, O/U, BTTS, double chance
+  confidence.py            #   selective prediction (measured tiers)
+  engine.py                #   PredictionEngine -> a full, explained forecast
+  cli.py                   #   `python -m prediction_engine.cli --home .. --away ..`
+  serving/                 #   FastAPI prediction service     [pending]
 
 research/                  # the lab (exists)
   experiments/             #   candidate models (baseline/elo/poisson/dixon_coles)
@@ -165,9 +167,14 @@ research/                  # the lab (exists)
 ```
 
 `research/` is the **lab**: where candidate models and features are proven.
-`prediction-engine/` is the **factory**: only proven components graduate into
+`prediction_engine/` is the **factory**: only proven components graduate into
 it. This separation is deliberate — experiments stay messy and fast; production
-stays clean and gated.
+stays clean and gated. (The directory uses an underscore, not a hyphen, because
+a hyphenated name is not importable as a Python package.)
+
+The factory **imports** the champion's models from `research/experiments` rather
+than copying them, so production can never silently diverge from the code that
+was actually benchmarked.
 
 ---
 

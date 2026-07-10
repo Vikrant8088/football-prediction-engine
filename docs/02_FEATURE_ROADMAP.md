@@ -470,19 +470,52 @@ read_csv_resilient`), and `(season, home, away)` is **not** a unique fixture key
 in leagues that split mid-season, where a team hosts the same opponent twice
 (→ the date is now part of the join key, with a duplicate guard).
 
-### Phase 4b — Serving + drift *(pending)*
+### Phase 4b — The product layer ✅ *(done — the engine now predicts real fixtures)*
 
-- `prediction-engine/serving/` — FastAPI service returning the scoreline grid,
-  derived markets (1X2, over/under, BTTS, correct score), and the explanation.
-  *(Note: the champion ensemble currently emits 1X2 only; wiring the scoreline
-  grid through the blend is outstanding.)*
+Research answers "which model is best". This is the other side: the champion,
+trained on all history, turning one fixture into a complete, explained forecast.
+
+- ✅ `prediction_engine/scoreline_ensemble.py` — **the scoreline grid, finally
+  wired through the champion.** Elo carries ~72% of the blend but has no notion
+  of a scoreline, so the grid's *shape* comes from the two goal models
+  (Poisson-xG, Dixon-Coles-xG) and is then **rescaled region-by-region so its
+  home/draw/away marginals equal the champion's 1X2 exactly**. Enforced by test.
+  The founding principle is now whole: *"exact score prediction is a consequence
+  of probability modelling."*
+- ✅ `prediction_engine/markets.py` — every market from that one grid (exact
+  score, over/under 1.5/2.5/3.5, both-teams-to-score, double chance, expected
+  goals, clean sheet). All mutually consistent by construction.
+- ✅ `prediction_engine/confidence.py` — **selective prediction**. Publishes a
+  call only above a threshold, annotated with the accuracy that confidence level
+  *historically delivered* (measured, not promised): ≥70% → 72.6% right; 60–70%
+  → 65.1%; 50–60% → 53.1%. `recompute_tiers()` stops the constants going stale.
+- ✅ `prediction_engine/engine.py` + `cli.py` — a real forecast, with the
+  explanation attached.
+
+**It works** — `python -m prediction_engine.cli --home Arsenal --away Chelsea`:
+
+```
+  Home win  67.9% | Draw 19.4% | Away win 12.7%
+  Most likely score : 2-0 (11.1%)      Over 2.5: 61.4%   BTTS: 54.1%
+  Call: home win @ 67.9% (high confidence)  -> PUBLISH
+  Historically, calls at this confidence were right 65.1% of the time.
+  Why: elo 62%, dixon_coles_xg 38%, poisson_xg 0%
+```
+
+*(Also fixed here: `prediction-engine/` → `prediction_engine/` — a hyphenated
+directory is not importable — and a float overflow in Elo's sigmoid on extreme
+rating gaps.)*
+
+### Phase 4e — Serving + drift *(pending)*
+
+- `prediction_engine/serving/` — FastAPI service returning the same payload.
 - Automated retraining + a **drift monitor** that re-runs the backtest on new
   results and alerts when the champion degrades.
-- Repeat the odds benchmark across all five leagues, and refine overround
-  removal (Shin's method) to sharpen the market's own estimate.
+- Upcoming-fixture ingestion (API-Football `/fixtures`) so the engine predicts a
+  scheduled match, not just any team pairing.
+- Refine overround removal (Shin's method) in the odds benchmark.
 
-**Success criterion:** live predictions stay calibrated over a full season, and
-the engine measurably closes the gap to the closing-odds benchmark.
+**Success criterion:** live predictions stay calibrated over a full season.
 
 ---
 

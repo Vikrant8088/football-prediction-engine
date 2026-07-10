@@ -38,7 +38,10 @@ AWAY, DRAW, HOME = 0, 1, 2
 
 
 def _sigmoid(x: np.ndarray) -> np.ndarray:
-    return 1.0 / (1.0 + np.exp(-x))
+    # Clipping keeps exp() inside float64 range for extreme rating gaps. The
+    # sigmoid saturates long before |x|=700, so this changes no representable
+    # value - it only avoids a spurious overflow warning.
+    return 1.0 / (1.0 + np.exp(-np.clip(x, -700.0, 700.0)))
 
 
 def _fit_ordered_logit(elo_diff: np.ndarray, outcome_idx: np.ndarray):

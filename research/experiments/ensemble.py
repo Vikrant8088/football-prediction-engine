@@ -84,6 +84,15 @@ class EnsembleModel(PredictionModel):
         self._models = None
         self.weights_ = None  # {name: weight}, set on fit
 
+    @property
+    def base_models(self) -> dict:
+        """The fitted base models, by name. Exposed so a caller can reach a
+        base's richer output (e.g. a scoreline grid) that the blended 3-way
+        probability vector does not carry."""
+        if self._models is None:
+            raise RuntimeError("fit() must be called before accessing base_models")
+        return dict(self._models)
+
     def _fit_weights(self, train_df: pd.DataFrame) -> np.ndarray:
         names = list(self.base_builders)
         seasons = sorted(train_df["season"].unique())
