@@ -125,6 +125,27 @@ Conclusion: xG is a validated input, carried into the Phase 2 ensemble
 alongside Elo (a strong, structurally different model) rather than crowned a
 standalone champion.
 
+### Evidence log — Injuries, importance-weighted (Phase 3c, run `injuries_report_20260710T045427Z`)
+
+Fixed the blunt-count problem: each absence is now weighted by the player's
+share of a full season's minutes **in the previous season** (leakage-safe; free,
+from Understat payloads already on disk — no Transfermarkt scrape). Validation:
+71.8% of absences matched a prior-season player, and the top-weighted absences
+are the ever-present regulars (Raya, Lloris, Alisson, Trippier).
+
+Controlled 3-way test on 760 matches: form 1.0268 | form+weighted 1.0361 |
+form+count 1.0392. **Weighting beat the raw count**, confirming the Phase 3b
+diagnosis that *who* is missing carries more than *how many* — but the gap is not
+significant, and neither encoding beat form alone. Crucially, form-vs-weighted is
+**also not significant** (t p=0.068, Wilcoxon p=0.249), so the honest reading is
+**"no detectable injury effect in 760 matches"**, not "injuries don't matter."
+
+The test is underpowered (2 seasons, and 3 extra features cost variance on a
+small training set), and the minutes proxy scores brand-new signings at 0 even
+when they are stars (van de Ven, Udogie). Injuries stay out of the champion; the
+★★★★☆ prior survives as *unresolved*. To settle it: more seasons (paid tier) plus
+a **market-value** importance proxy. See [[squad-market-value]].
+
 ### Evidence log — Injuries, raw count (Phase 3b, run `injuries_report_20260709T124657Z`)
 
 Real injury data (API-Football free tier, 2022/23-2024/25) joined onto matches

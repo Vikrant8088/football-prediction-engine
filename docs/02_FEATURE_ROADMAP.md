@@ -206,11 +206,50 @@ possible availability feature: how many players each side is missing.
 **Champion after Phase 3b:** unchanged — **ensemble** (0.9925 on the full
 window). No new signal has beaten it yet.
 
-### Phase 3c — Smarter availability *(pending)*
+### Phase 3c — Importance-weighted absences ✅ *(done — diagnosis confirmed, signal still not additive)*
 
-- Player-importance-weighted absences (needs squad market values, e.g.
-  Transfermarkt) + confirmed line-ups (needs paid API tier).
-- Re-test with the same controlled method on a larger (paid) injury window.
+Phase 3b's diagnosis was that a raw count is blunt. Phase 3c fixed the encoding
+and re-ran the identical test, so the *only* thing that changed was how the
+absence is weighted.
+
+- ✅ `research/data/player_importance.py` — importance = the player's share of a
+  full season's minutes **in the PREVIOUS season** (leakage-safe by
+  construction). Sourced free from the Understat payloads already in the lake —
+  **no Transfermarkt scrape and no paid data needed**. Name matching reduces
+  "D. de Gea" and "David de Gea" to one key; 71.8% of absences matched, and the
+  top-weighted absences are exactly the ever-present regulars (Raya, Lloris,
+  Alisson, Trippier), while youth/new signings score 0.
+
+**Result** *(run `injuries_report_20260710T045427Z`, 2 seasons, 760 matches)*
+
+| model | log loss | note |
+|---|---|---|
+| elo | 0.9789 | (context) |
+| ensemble | 0.9824 | (context) |
+| **logistic_form** | **1.0268** | the bar to beat |
+| logistic_form_injury_weight | 1.0361 | + **importance-weighted** absences |
+| logistic_form_injury_count | 1.0392 | + raw count (Phase 3b) |
+
+- ✅ **The diagnosis was right, directionally.** Weighting by importance beats
+  the raw count (1.0361 vs 1.0392) — encoding the *who*, not just the *how many*,
+  does carry more information. But the gap is **not significant** (p=0.17–0.56).
+- ❌ **Still not additive.** Neither encoding beats form alone (1.0268). And
+  critically, those gaps are **not statistically significant either**
+  (form-vs-weighted: t p=0.068, Wilcoxon p=0.249) — so the honest statement is
+  not "injuries hurt" but **"we cannot detect an injury effect in 760 matches."**
+- ⚠️ **This test is underpowered, and we know it.** 760 evaluation matches, and
+  adding 3 features to a model trained on ~380–760 rows costs variance. A real
+  effect of plausible size would be invisible here.
+- ⚠️ **Known flaw in the importance proxy:** previous-season minutes give a
+  brand-new signing 0 importance even if he is a star (van de Ven, Udogie both
+  scored 0). Squad **market value** would capture those; minutes cannot.
+
+**Verdict:** injuries stay **out of the champion** on current evidence — but the
+result is *inconclusive*, not a refutation. Resolving it needs (a) more seasons
+(paid API tier, ~6), and (b) a market-value importance proxy that handles new
+signings. Both are cheap-ish; neither is justified until something else stalls.
+
+**Champion after Phase 3:** unchanged — **ensemble** (0.9925).
 
 ---
 
