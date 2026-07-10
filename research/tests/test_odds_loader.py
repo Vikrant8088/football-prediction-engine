@@ -72,14 +72,16 @@ class TestLoadClosingOdds(unittest.TestCase):
             football_data_co_uk=SimpleNamespace(seasons=seasons),
         )
 
-    def _load(self, seasons):
+    def _load(self, seasons, map_names=True):
         with patch.object(odds_loader, "load_config", return_value=self._config(seasons)):
-            return load_closing_odds("E0")
+            return load_closing_odds("E0", map_names=map_names)
 
     def test_maps_team_names_and_builds_probabilities(self):
         self._write_season("1819", [
-            {"HomeTeam": "Man City", "AwayTeam": "Wolves", "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
-            {"HomeTeam": "QPR", "AwayTeam": "Nott'm Forest", "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
+            {"Date": "11/08/2018", "HomeTeam": "Man City", "AwayTeam": "Wolves",
+             "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
+            {"Date": "12/08/2018", "HomeTeam": "QPR", "AwayTeam": "Nott'm Forest",
+             "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
         ])
         out = self._load(["1819"])
         self.assertEqual(len(out), 2)
@@ -89,22 +91,43 @@ class TestLoadClosingOdds(unittest.TestCase):
         self.assertEqual(out.iloc[1]["away_team"], "Nottingham Forest")
         self.assertEqual(out.iloc[0]["season"], "2018-19")
         self.assertAlmostEqual(out.iloc[0]["p_home"], 0.5)
+        # Dates are parsed dayfirst, as football-data.co.uk publishes them.
+        self.assertEqual(pd.Timestamp(out.iloc[0]["date"]), pd.Timestamp("2018-08-11"))
+
+    def test_date_disambiguates_repeat_home_fixtures(self):
+        """Regression: in leagues that split mid-season (Scottish Premiership) a
+        team can host the SAME opponent twice, so (season, home, away) is not a
+        unique key - the date must be part of it."""
+        self._write_season("1819", [
+            {"Date": "11/08/2018", "HomeTeam": "Celtic", "AwayTeam": "Rangers",
+             "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
+            {"Date": "02/03/2019", "HomeTeam": "Celtic", "AwayTeam": "Rangers",
+             "PSCH": 1.5, "PSCD": 4.0, "PSCA": 7.0},
+        ])
+        out = self._load(["1819"], map_names=False)
+        self.assertEqual(len(out), 2)
+        keys = set(zip(out["date"], out["home_team"], out["away_team"]))
+        self.assertEqual(len(keys), 2)  # distinct once the date is included
 
     def test_season_without_odds_columns_is_skipped(self):
         self._write_season("1819", [
-            {"HomeTeam": "Arsenal", "AwayTeam": "Chelsea", "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
+            {"Date": "11/08/2018", "HomeTeam": "Arsenal", "AwayTeam": "Chelsea",
+             "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
         ])
         self._write_season("2526", [
-            {"HomeTeam": "Arsenal", "AwayTeam": "Chelsea", "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
+            {"Date": "11/08/2025", "HomeTeam": "Arsenal", "AwayTeam": "Chelsea",
+             "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
         ], with_odds=False)
         out = self._load(["1819", "2526"])
         self.assertEqual(set(out["season"]), {"2018-19"})
 
     def test_rows_with_missing_odds_are_dropped(self):
         self._write_season("1819", [
-            {"HomeTeam": "Arsenal", "AwayTeam": "Chelsea", "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
+            {"Date": "11/08/2018", "HomeTeam": "Arsenal", "AwayTeam": "Chelsea",
+             "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
         ] * 20 + [
-            {"HomeTeam": "Everton", "AwayTeam": "Fulham", "PSCH": np.nan, "PSCD": 4.0, "PSCA": 4.0},
+            {"Date": "12/08/2018", "HomeTeam": "Everton", "AwayTeam": "Fulham",
+             "PSCH": np.nan, "PSCD": 4.0, "PSCA": 4.0},
         ])
         out = self._load(["1819"])
         self.assertEqual(len(out), 20)  # the NaN-odds row is gone

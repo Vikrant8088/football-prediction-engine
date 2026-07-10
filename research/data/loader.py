@@ -21,6 +21,7 @@ import pandas as pd
 
 from data_warehouse.config.loader import load_config
 from data_warehouse.ingest.metadata_store import read_latest_version
+from research.data.csv_utils import read_csv_resilient
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +51,9 @@ def _latest_csv_path(raw_data_dir: Path, league_code: str, season_code: str) -> 
 
 
 def _load_season(csv_path: Path, league_code: str, season_code: str) -> pd.DataFrame:
-    # utf-8-sig transparently strips the BOM that recent seasons' files carry.
-    raw = pd.read_csv(csv_path, encoding="utf-8-sig")
+    # Encodings vary across seasons and leagues (some files carry a UTF-8 BOM,
+    # a few contain cp1252 bytes) - read_csv_resilient tries UTF-8 first.
+    raw = read_csv_resilient(csv_path)
 
     missing = [c for c in CORE_COLUMNS if c not in raw.columns]
     if missing:

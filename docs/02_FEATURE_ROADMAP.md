@@ -417,13 +417,58 @@ Three consequences, all evidence-based:
    football-data.co.uk covers with odds for free, and which our Elo/Dixon-Coles
    models can predict without xG.
 
-### Phase 4d — Beat the line where the market is soft *(pending — the one live route)*
+### Phase 4d — Beat the line where the market is soft ✅ *(done — hypothesis REFUTED)*
 
-- Run the odds benchmark on lower/less-liquid leagues (E1/E2/E3, SC0-3, D2, I2,
-  SP2, F2). Bookmakers price these less sharply; if the engine can beat a closing
-  line anywhere, it is here.
-- Goal-only models (Elo, Dixon-Coles) work without xG, so these leagues are
-  immediately reachable.
+The last live route to beating a closing line: Pinnacle prices the Premier
+League with enormous care but charges a fatter margin in the lower divisions
+(overround 2.38% in the EPL vs 3.15% in League Two), which reads like a
+bookmaker hedging against its own uncertainty. Nine leagues, ~29,800 matches,
+matches *and* odds from the same football-data.co.uk file (no cross-source join).
+Engine = **Elo** (72% of the champion's weight; within 0.004 of the full ensemble
+on the EPL, and it fits in 0.1s).
+
+**Result** *(run `soft_markets_report_20260710T065901Z`)*
+
+| league | overround | engine (elo) | closing line | gap | **edge captured** |
+|---|---|---|---|---|---|
+| Bundesliga 2 | 2.89% | 1.0723 | 1.0522 | +0.0202 | 26% |
+| Championship | 2.59% | 1.0643 | 1.0338 | +0.0304 | 29% |
+| **Scottish Prem** | 2.88% | 0.9694 | 0.9314 | +0.0380 | **72%** |
+| **Premier League** | 2.38% | 0.9847 | 0.9457 | +0.0390 | **68%** |
+| Serie B | 2.88% | 1.0831 | 1.0439 | +0.0392 | 7% |
+| League One | 3.10% | 1.0722 | 1.0198 | +0.0524 | 7% |
+| **League Two** | 3.14% | 1.0834 | 1.0484 | +0.0350 | **−13%** ⚠️ |
+
+- ❌ **The closing line wins in every league, all p<0.0001. There is no soft
+  market.** And the conclusion is robust to the Elo probe: the full ensemble beats
+  Elo by only ~0.003 on the EPL — an order of magnitude less than the *smallest*
+  gap (0.0202).
+- ❌ **The hypothesis is backwards.** Correlation between the bookmaker's margin
+  and our gap to its price is **r = +0.18** — where the book is *less* sure, we
+  fall *further* behind, not closer.
+- 🔑 **Why: a wider margin means genuine unpredictability, not laziness.** The
+  whole predictable span (baseline→market) collapses in the lower divisions —
+  0.136 in the Scottish Prem, but only 0.031 in League Two. Lower-league football
+  is ~4x less predictable **for everyone**, and our model captures far less of the
+  little that is there.
+- ⚠️ **In League Two, Elo is WORSE than the naive baseline** (1.0834 vs 1.0795):
+  the engine has *negative* skill there and must not be used.
+- ✅ **Our engine is at its best in the most predictable leagues** — Scottish
+  Premiership (72% of the achievable edge, thanks to the Celtic/Rangers gap) and
+  the Premier League (68%) — not in the obscure ones.
+
+**Verdict: "beat the closing line" is closed. There is no exploitable betting
+edge anywhere we can reach — not at the open, not at the close, not in the lower
+leagues.** Definitively measured across 9 leagues and ~30,000 matches, rather
+than assumed. The engine's value is therefore *not* betting alpha: it is honest,
+calibrated, explainable forecasting, and it is strongest exactly where the
+audience is (the top divisions).
+
+*Two real bugs were found and fixed by this phase:* football-data.co.uk publishes
+some files in cp1252 (Scottish/Serie B were silently unreadable → `csv_utils.
+read_csv_resilient`), and `(season, home, away)` is **not** a unique fixture key
+in leagues that split mid-season, where a team hosts the same opponent twice
+(→ the date is now part of the join key, with a duplicate guard).
 
 ### Phase 4b — Serving + drift *(pending)*
 

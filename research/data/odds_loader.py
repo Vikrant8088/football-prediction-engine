@@ -34,6 +34,7 @@ import pandas as pd
 
 from data_warehouse.config.loader import load_config
 from data_warehouse.ingest.metadata_store import read_latest_version
+from research.data.csv_utils import read_csv_resilient
 
 logger = logging.getLogger(__name__)
 
@@ -90,22 +91,26 @@ def _season_csv(raw_data_dir, league_code: str, season_code: str):
     return dataset_dir / version / f"{season_code}.csv"
 
 
-def load_closing_odds(league_code: str = "E0") -> pd.DataFrame:
+def load_closing_odds(league_code: str = "E0", map_names: bool = True) -> pd.DataFrame:
     """Return one row per match that has usable closing odds:
     season, home_team, away_team, p_home, p_draw, p_away, overround.
 
-    Team names are already mapped to the Understat canonical form, so this joins
-    directly onto the research match dataset.
+    `map_names=True` (default) converts club names to the Understat canonical
+    form, so the odds join onto the xG-based research dataset. Set it False when
+    the matches themselves come from football-data.co.uk (e.g. leagues Understat
+    does not cover) - then both sides already share the same names and mapping
+    would be wrong.
     """
     config = load_config()
     raw = config.raw_data_dir
+    name_fn = _canonical if map_names else (lambda n: n.strip())
 
     frames = []
     for season_code in config.football_data_co_uk.seasons:
         csv_path = _season_csv(raw, league_code, season_code)
         if csv_path is None:
             continue
-        raw_df = pd.read_csv(csv_path, encoding="utf-8-sig").dropna(subset=["HomeTeam"])
+        raw_df = read_csv_resilient(csv_path).dropna(subset=["HomeTeam"])
 
         missing = [c for c in ODDS_COLUMNS if c not in raw_df.columns]
         if missing:
@@ -131,8 +136,13 @@ def load_closing_odds(league_code: str = "E0") -> pd.DataFrame:
         frames.append(
             pd.DataFrame({
                 "season": _season_label(season_code),
-                "home_team": df["HomeTeam"].map(_canonical).to_numpy(),
-                "away_team": df["AwayTeam"].map(_canonical).to_numpy(),
+                # The date is needed as part of the join key: in some leagues
+                # (e.g. the Scottish Premiership, which splits mid-season) a team
+                # hosts the same opponent TWICE, so (season, home, away) is not
+                # unique. Parsed dayfirst, as football-data.co.uk publishes.
+                "date": pd.to_datetime(df["Date"], dayfirst=True).to_numpy(),
+                "home_team": df["HomeTeam"].map(name_fn).to_numpy(),
+                "away_team": df["AwayTeam"].map(name_fn).to_numpy(),
                 "p_home": probs[:, 0],
                 "p_draw": probs[:, 1],
                 "p_away": probs[:, 2],
@@ -173,7 +183,7 @@ def load_pinnacle_odds(league_code: str = "E0") -> pd.DataFrame:
         csv_path = _season_csv(raw, league_code, season_code)
         if csv_path is None:
             continue
-        raw_df = pd.read_csv(csv_path, encoding="utf-8-sig").dropna(subset=["HomeTeam"])
+        raw_df = read_csv_resilient(csv_path).dropna(subset=["HomeTeam"])
 
         if any(c not in raw_df.columns for c in needed):
             logger.warning("Season %s: opening and/or closing odds absent - skipping", season_code)
