@@ -627,14 +627,51 @@ exactly the things intuition is worst at (clean-sheet odds, fixture difficulty).
 
 Injured/doubtful players are auto-flagged from FPL's own availability feed.
 
-### Phase 5b — Validate the projections *(pending — the next honest step)*
+### Phase 5b — Backtest the projections ✅ *(done — first real edge in the project, but unproven)*
 
-Scoring rules are proven; **the projections themselves are not yet backtested.**
-Before this is sold to anyone, it needs a walk-forward test: project gameweek
-*k+1* using only data through gameweek *k*, and compare against actual points and
-against naive baselines (last-season points-per-game; price; "captain the most
-expensive forward"). Per-gameweek history is available from the FPL API's
-`element-summary` endpoint.
+Walk-forward over 33 gameweeks, **26,058 player-gameweeks**. To project gameweek
+*k*, a model sees only gameweeks 1..*k*−1 and matches played before that
+gameweek's first kickoff. The decisive metric is **top-11 points**: pick each
+model's best XI, sum what they *actually* scored — the decision a manager makes.
+
+**Result** *(run `fpl_projection_backtest_20260710T091620Z`)*
+
+| baseline | its XI | our XI | gain/GW | GWs won | t p | Wilcoxon p |
+|---|---|---|---|---|---|---|
+| price ("pick the expensive ones") | 38.24 | **51.00** | **+12.76** | 26/33 | 0.0001 | 0.0004 ✅ |
+| player_form5 (last 5 GWs) | 42.45 | **51.00** | **+8.55** | 25/33 | 0.0014 | 0.0022 ✅ |
+| **player_ppg** (season points/GW) | 46.55 | **51.00** | **+4.45** | 22/33 | 0.0520 | 0.0386 ⚠️ |
+| global_mean | 21.82 | **51.00** | +29.18 | 33/33 | — | ✅ |
+
+- ✅ **Beats "pick by price" and "chase form" decisively** — significant on both
+  tests. Those are what most managers actually do.
+- ⚠️ **Beats the strongest baseline (season points-per-gameweek) by +4.45 pts/GW
+  (+147 across the season, 22/33 gameweeks won) — but only ONE of the two tests
+  passes** (Wilcoxon p=0.039; paired t p=0.052). By this project's own rule, that
+  is **suggestive, not proven.** One season has little statistical power.
+- 📊 **The apparent contradiction, resolved.** On MAE and overall Spearman the
+  baselines win, because those metrics are dominated by ~700 fringe players who
+  reliably score ~0 — which a player's own average nails. Restricted to the
+  **pickable pool** (3.0+ points/GW, a prediction-time filter), our ranking is
+  best of all models: **0.178 vs 0.131 (ppg) and 0.168 (form5)**. The engine's
+  fixture information — clean-sheet probability, opponent strength — is worthless
+  for a bench player and decisive at the top of the board, exactly where picks
+  are made.
+
+**Caveats, all understating or overstating in known directions:**
+- One season, 33 gameweeks. Low power *by construction*.
+- The top-11 pick ignores FPL's budget / 3-per-club / formation constraints. All
+  models face the same omission, so the comparison is fair; the absolute totals
+  are not achievable.
+- Historical **injury flags are unavailable**, so the backtest projects points for
+  players who were injured. The live tool uses them → this **understates** us.
+- The `price` baseline uses *end-of-season* prices, which reflect who did well →
+  it is **flattered**, and we beat it anyway.
+
+**Verdict: the first genuine, usable edge found anywhere in this project — over
+what FPL managers actually do. Not yet proven against the strongest baseline.**
+To prove it: replay more seasons (the community FPL archive covers 2016/17
+onward) and re-test. Until then, promising, not sellable.
 
 *Also fixed here: a misleading `p_60_minutes` label (it is an appearance factor,
 not a probability) and a console-encoding crash on accented player names.*

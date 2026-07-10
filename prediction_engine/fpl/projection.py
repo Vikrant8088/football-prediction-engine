@@ -119,10 +119,20 @@ def expected_minutes(player: pd.Series, gameweeks: int = GAMEWEEKS_PER_SEASON) -
     return float(np.clip(base * availability, 0.0, FULL_MATCH_MINUTES))
 
 
-def project_player(player: pd.Series, context: Dict[str, float], team_rate: Dict[str, float]) -> Dict[str, float]:
-    """Expected FPL points for one player in one fixture, broken into its parts."""
+def project_player(
+    player: pd.Series,
+    context: Dict[str, float],
+    team_rate: Dict[str, float],
+    gameweeks: int = GAMEWEEKS_PER_SEASON,
+) -> Dict[str, float]:
+    """Expected FPL points for one player in one fixture, broken into its parts.
+
+    `gameweeks` is the denominator for expected minutes - the number of
+    gameweeks the player's `minutes` total was accumulated over. It defaults to a
+    full season; a walk-forward backtest passes the gameweeks completed so far.
+    """
     position = int(player["position"])
-    minutes = expected_minutes(player)
+    minutes = expected_minutes(player, gameweeks=gameweeks)
     if minutes <= 0:
         return {"expected_points": 0.0, "expected_minutes": 0.0, "p_60_minutes": 0.0,
                 "appearance": 0.0, "goals": 0.0, "assists": 0.0, "clean_sheet": 0.0,
