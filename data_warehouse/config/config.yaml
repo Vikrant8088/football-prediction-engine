@@ -98,6 +98,19 @@ sources:
       - "2024"
       - "2025"
 
+  fpl:
+    # The official Fantasy Premier League API. Free, public, no key required.
+    # Carries per-player Opta expected goals/assists, positions, prices,
+    # availability status - everything a fantasy projection needs.
+    base_url: "https://fantasy.premierleague.com/api"
+    # The endpoint rejects the default bot user-agent, so a browser one is
+    # declared here rather than hardcoded in the source module.
+    request_headers:
+      User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+    datasets:
+      bootstrap-static: "players, teams, positions, gameweeks"
+      fixtures: "all fixtures with gameweek and kickoff"
+
   api_football:
     # Injuries / line-ups source (api-sports.io direct endpoint). The API key is
     # a SECRET: it is read from the APIFOOTBALL_KEY environment variable at

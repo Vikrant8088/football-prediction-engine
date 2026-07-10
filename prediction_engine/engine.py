@@ -120,6 +120,18 @@ class PredictionEngine:
     def teams(self) -> List[str]:
         return sorted(set(self._matches["home_team"]) | set(self._matches["away_team"]))
 
+    @property
+    def matches(self) -> pd.DataFrame:
+        """The history the champion was trained on."""
+        return self._matches
+
+    def scoreline_grid(self, home_team: str, away_team: str) -> np.ndarray:
+        """P(home_goals=h, away_goals=a) for a fixture. Its home/draw/away
+        regions sum to the champion's 1X2 probabilities exactly."""
+        self._check_team(home_team)
+        self._check_team(away_team)
+        return self._model.scoreline_grid(home_team, away_team)
+
     def _check_team(self, team: str) -> None:
         if team not in set(self.teams):
             raise ValueError(

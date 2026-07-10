@@ -11,9 +11,10 @@ from data_warehouse.ingest.exceptions import UnknownSourceError
 from data_warehouse.ingest.http_client import RateLimitedHttpClient
 from data_warehouse.sources.api_football import ApiFootballInjuriesSource
 from data_warehouse.sources.football_data_co_uk import FootballDataCoUkSource
+from data_warehouse.sources.fpl import FplSource
 from data_warehouse.sources.understat import UnderstatSource
 
-SOURCE_NAMES = ("football_data_co_uk", "understat", "api_football")
+SOURCE_NAMES = ("football_data_co_uk", "understat", "api_football", "fpl")
 
 
 def build_source(
@@ -36,6 +37,12 @@ def build_source(
             raw_data_dir=config.raw_data_dir,
             http_client=http_client,
             source_config=config.api_football,
+        )
+    if name == "fpl":
+        return FplSource(
+            raw_data_dir=config.raw_data_dir,
+            http_client=http_client,
+            source_config=config.fpl,
         )
     raise UnknownSourceError(
         f"Unknown source '{name}'. Registered sources: {', '.join(SOURCE_NAMES)}"

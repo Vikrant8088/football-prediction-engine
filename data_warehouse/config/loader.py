@@ -62,6 +62,13 @@ class ApiFootballConfig:
 
 
 @dataclass(frozen=True)
+class FplConfig:
+    base_url: str
+    request_headers: Dict[str, str]
+    datasets: Dict[str, str]
+
+
+@dataclass(frozen=True)
 class AppConfig:
     storage: StorageConfig
     logging: LoggingConfig
@@ -69,6 +76,7 @@ class AppConfig:
     football_data_co_uk: FootballDataCoUkConfig
     understat: UnderstatConfig
     api_football: ApiFootballConfig
+    fpl: FplConfig
     repo_root: Path
 
     @property
@@ -106,6 +114,7 @@ def load_config(
     fdc_raw = _require(sources_raw, "football_data_co_uk", "sources")
     understat_raw = _require(sources_raw, "understat", "sources")
     api_football_raw = _require(sources_raw, "api_football", "sources")
+    fpl_raw = _require(sources_raw, "fpl", "sources")
 
     storage = StorageConfig(
         raw_data_dir=Path(_require(storage_raw, "raw_data_dir", "storage")),
@@ -145,6 +154,12 @@ def load_config(
         seasons=list(_require(api_football_raw, "seasons", "sources.api_football")),
     )
 
+    fpl = FplConfig(
+        base_url=str(_require(fpl_raw, "base_url", "sources.fpl")),
+        request_headers=dict(_require(fpl_raw, "request_headers", "sources.fpl")),
+        datasets=dict(_require(fpl_raw, "datasets", "sources.fpl")),
+    )
+
     resolved_root = repo_root if repo_root is not None else config_path.parents[2]
 
     return AppConfig(
@@ -154,5 +169,6 @@ def load_config(
         football_data_co_uk=football_data_co_uk,
         understat=understat,
         api_football=api_football,
+        fpl=fpl,
         repo_root=resolved_root,
     )

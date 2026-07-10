@@ -583,6 +583,62 @@ betting question is now closed across *every* market and league we can reach:
 1X2 at the close, 1X2 at the open, 1X2 in soft leagues, and goals. **The engine's
 value is not betting alpha.**
 
+## Phase 5 — Fantasy Premier League 🎯 *(the honest product)*
+
+Phases 4a/4c/4d/4f closed the betting question: **no exploitable edge exists**,
+at any line, in any league, in any market. So the engine's value is not betting
+alpha. FPL is the market where it *is* valuable — **there is no bookmaker and
+therefore no margin**; you compete against ~11 million managers' intuition, at
+exactly the things intuition is worst at (clean-sheet odds, fixture difficulty).
+
+### Phase 5a — Projections ✅ *(done)*
+
+- ✅ `data_warehouse/sources/fpl.py` — the official FPL API (free, no key).
+  Carries Opta per-player xG/xA/xGC, positions, prices, and injury status.
+- ✅ `prediction_engine/fpl/scoring.py` — FPL's scoring rules encoded exactly,
+  **including the new 2025/26 defensive-contribution rule**.
+- ✅ **The credibility anchor:** `research/evaluation/validate_fpl_scoring.py`
+  recomputed **2,085 real scored matches** across 60 players and reconstructed
+  **2,085 of them exactly — a 100.0000% match**. The rules are not assumed to be
+  right; they are *proven* right against reality. Everything downstream inherits
+  that.
+- ✅ `prediction_engine/fpl/projection.py` — expected points for a fixture. The
+  champion's scoreline grid supplies E[team goals], **P(clean sheet)**, the
+  goals-conceded distribution, and a goalkeeper's save volume; the FPL API
+  supplies per-90 player rates. Defensive-contribution points use
+  **P(actions ≥ threshold)** under a Poisson, because the rule is a per-match
+  threshold, not a tally.
+- ✅ Honest separation: appearance, goals, assists, clean sheets, conceding and
+  saves are **modelled from the fixture**; bonus, cards and defensive actions use
+  the player's own realised rate. Flagged separately, never hidden in one number.
+
+**It works** — `python -m prediction_engine.fpl.cli --home Arsenal --away Burnley`:
+
+```
+  Win/Draw/Loss : 87% / 9% / 4%
+  Clean sheet   : Arsenal 60%  |  Burnley 5%
+
+  Gabriel   Arsenal  DEF  7.3  6.38 xPts     Saka   Arsenal  MID 10.0  5.44 xPts
+  Rice      Arsenal  MID  7.2  5.29          Saliba Arsenal  DEF  6.3  5.05
+
+  Breakdown for Saka:  appearance +1.95  goals +1.58  assists +0.90
+                       clean_sheet +0.59  bonus +0.47  cards -0.05  = 5.44
+```
+
+Injured/doubtful players are auto-flagged from FPL's own availability feed.
+
+### Phase 5b — Validate the projections *(pending — the next honest step)*
+
+Scoring rules are proven; **the projections themselves are not yet backtested.**
+Before this is sold to anyone, it needs a walk-forward test: project gameweek
+*k+1* using only data through gameweek *k*, and compare against actual points and
+against naive baselines (last-season points-per-game; price; "captain the most
+expensive forward"). Per-gameweek history is available from the FPL API's
+`element-summary` endpoint.
+
+*Also fixed here: a misleading `p_60_minutes` label (it is an appearance factor,
+not a probability) and a console-encoding crash on accented player names.*
+
 ### Phase 4e — Serving + drift *(pending)*
 
 - `prediction_engine/serving/` — FastAPI service returning the same payload.
