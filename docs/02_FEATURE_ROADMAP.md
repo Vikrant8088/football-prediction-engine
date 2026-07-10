@@ -506,6 +506,38 @@ trained on all history, turning one fixture into a complete, explained forecast.
 directory is not importable — and a float overflow in Elo's sigmoid on extreme
 rating gaps.)*
 
+### Phase 4b(ii) — How good are the score predictions, really? ✅ *(measured)*
+
+The engine can now name a score. `research/evaluation/benchmark_scorelines.py`
+measures how often that score is right, walk-forward on 3,040 unseen matches.
+
+**Result** *(run `scorelines_report_20260710T072754Z`)*
+
+| | rate |
+|---|---|
+| Engine's most likely score is exactly right | **11.3%** |
+| True score is in the engine's **top 3** | **29.6%** |
+| Naive: always predict 1-1 | 10.9% |
+| **Ceiling** (avg probability of its own top score) | **12.9%** |
+
+- ✅ **Exact-score prediction is a variance problem, not a skill problem.** The
+  most likely scoreline in a football match is itself only ~13% likely, so no
+  forecaster — model, bookmaker or human — can be right much more often. The
+  engine operates at ~88% of that ceiling.
+- ⚠️ **As a point predictor it barely beats a constant.** 11.3% vs 10.9% for
+  *always saying 1-1*, because the grid's mode collapses onto 1-1 (named in
+  47.6% of matches) or 1-0. The single guess is nearly worthless; the
+  **distribution** is where the value is (top-3 hit 29.6%; mean 6.8% probability
+  assigned to the score that actually happened).
+- ⚠️ **A calibration wrinkle worth knowing:** the engine hits 11.3% while its own
+  probabilities imply 12.9%, so the grid is mildly **over-peaked** on the modal
+  score. The 1X2 marginals are calibrated by construction; the *within-region*
+  scoreline shape is slightly too confident. Candidate fix: shrink the grid
+  toward a flatter distribution, or fit the Dixon-Coles low-score correction on
+  the blended grid rather than per-model.
+- 📌 **Product rule, now evidence-backed:** never publish a scoreline without its
+  probability attached. "2-0 (11.1%)" is honest; "2-0" is a lie.
+
 ### Phase 4e — Serving + drift *(pending)*
 
 - `prediction_engine/serving/` — FastAPI service returning the same payload.
