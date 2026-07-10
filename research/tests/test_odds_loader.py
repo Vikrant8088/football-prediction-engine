@@ -1,0 +1,118 @@
+"""Unit tests for closing-odds loading and overround removal."""
+
+import tempfile
+import unittest
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+
+import numpy as np
+import pandas as pd
+
+import research.data.odds_loader as odds_loader
+from research.data.odds_loader import (
+    _season_label,
+    implied_probabilities,
+    load_closing_odds,
+    overround,
+)
+
+
+class TestImpliedProbabilities(unittest.TestCase):
+    def test_probabilities_sum_to_one(self):
+        odds = np.array([[2.0, 3.5, 4.0], [1.5, 4.0, 7.0]])
+        probs = implied_probabilities(odds)
+        self.assertTrue(np.allclose(probs.sum(axis=1), 1.0))
+        self.assertTrue((probs > 0).all())
+
+    def test_fair_odds_recover_exact_probabilities(self):
+        # A book with zero margin: 1/2 + 1/4 + 1/4 = 1.0 exactly.
+        odds = np.array([[2.0, 4.0, 4.0]])
+        probs = implied_probabilities(odds)
+        self.assertTrue(np.allclose(probs[0], [0.5, 0.25, 0.25]))
+        self.assertAlmostEqual(overround(odds)[0], 0.0, places=9)
+
+    def test_overround_is_measured(self):
+        # 1/2 + 1/3 + 1/6 = 1.0; shorten every price by 5% -> positive margin.
+        odds = np.array([[2.0, 3.0, 6.0]]) / 1.05
+        self.assertGreater(overround(odds)[0], 0.04)
+
+    def test_shorter_odds_mean_higher_probability(self):
+        probs = implied_probabilities(np.array([[1.5, 4.0, 7.0]]))[0]
+        self.assertGreater(probs[0], probs[1])
+        self.assertGreater(probs[1], probs[2])
+
+    def test_season_label(self):
+        self.assertEqual(_season_label("1819"), "2018-19")
+        self.assertEqual(_season_label("2425"), "2024-25")
+
+
+class TestLoadClosingOdds(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.raw = Path(self._tmp.name)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _write_season(self, season, rows, with_odds=True):
+        d = self.raw / "football_data_co_uk" / "E0" / season / "v1"
+        d.mkdir(parents=True)
+        df = pd.DataFrame(rows)
+        if not with_odds:
+            df = df.drop(columns=["PSCH", "PSCD", "PSCA"])
+        df.to_csv(d / f"{season}.csv", index=False)
+        (self.raw / "football_data_co_uk" / "E0" / season / "latest.json").write_text(
+            '{"latest_version": "v1"}', encoding="utf-8"
+        )
+
+    def _config(self, seasons):
+        return SimpleNamespace(
+            raw_data_dir=self.raw,
+            football_data_co_uk=SimpleNamespace(seasons=seasons),
+        )
+
+    def _load(self, seasons):
+        with patch.object(odds_loader, "load_config", return_value=self._config(seasons)):
+            return load_closing_odds("E0")
+
+    def test_maps_team_names_and_builds_probabilities(self):
+        self._write_season("1819", [
+            {"HomeTeam": "Man City", "AwayTeam": "Wolves", "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
+            {"HomeTeam": "QPR", "AwayTeam": "Nott'm Forest", "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
+        ])
+        out = self._load(["1819"])
+        self.assertEqual(len(out), 2)
+        self.assertEqual(out.iloc[0]["home_team"], "Manchester City")
+        self.assertEqual(out.iloc[0]["away_team"], "Wolverhampton Wanderers")
+        self.assertEqual(out.iloc[1]["home_team"], "Queens Park Rangers")
+        self.assertEqual(out.iloc[1]["away_team"], "Nottingham Forest")
+        self.assertEqual(out.iloc[0]["season"], "2018-19")
+        self.assertAlmostEqual(out.iloc[0]["p_home"], 0.5)
+
+    def test_season_without_odds_columns_is_skipped(self):
+        self._write_season("1819", [
+            {"HomeTeam": "Arsenal", "AwayTeam": "Chelsea", "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
+        ])
+        self._write_season("2526", [
+            {"HomeTeam": "Arsenal", "AwayTeam": "Chelsea", "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
+        ], with_odds=False)
+        out = self._load(["1819", "2526"])
+        self.assertEqual(set(out["season"]), {"2018-19"})
+
+    def test_rows_with_missing_odds_are_dropped(self):
+        self._write_season("1819", [
+            {"HomeTeam": "Arsenal", "AwayTeam": "Chelsea", "PSCH": 2.0, "PSCD": 4.0, "PSCA": 4.0},
+        ] * 20 + [
+            {"HomeTeam": "Everton", "AwayTeam": "Fulham", "PSCH": np.nan, "PSCD": 4.0, "PSCA": 4.0},
+        ])
+        out = self._load(["1819"])
+        self.assertEqual(len(out), 20)  # the NaN-odds row is gone
+
+    def test_no_usable_seasons_raises(self):
+        with self.assertRaises(ValueError):
+            self._load(["1819"])  # nothing written
+
+
+if __name__ == "__main__":
+    unittest.main()

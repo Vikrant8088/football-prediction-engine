@@ -328,16 +328,61 @@ hyperparameters.
 
 **Goal:** expose predictions and keep the engine improving on its own.
 
-**Deliverables**
+### Phase 4a — Benchmark vs the closing bookmaker line ✅ *(done — 70% of the achievable edge captured)*
+
+The true finish line, and the one number that says how good the engine really
+is. Pinnacle **closing** odds (the sharpest public forecast that exists) were
+already sitting unused in the raw lake — 106 columns per football-data.co.uk
+file, of which we read six.
+
+- ✅ `research/data/odds_loader.py` — closing odds → implied probabilities with
+  the bookmaker's **overround removed** (measured at 2.38%, exactly Pinnacle's
+  typical margin). Joined to the Understat dataset on (season, home, away); 7
+  of 35 club names differ and are mapped explicitly. **Odds are a yardstick,
+  never a model input** — the vision's non-goal is upheld.
+- ✅ `research/evaluation/benchmark_odds.py` — scores the market as if it were
+  just another model, on identical matches and metrics.
+
+**Result** *(run `odds_report_20260710T055226Z`, 7 seasons, 2,660 matches)*
+
+| model | log loss | accuracy | ECE(home) | ECE(draw) |
+|---|---|---|---|---|
+| **market_closing** (Pinnacle) | **0.9464** | **55.9%** | 0.0249 | 0.0144 |
+| **ensemble** (our champion) | **0.9821** | 53.1% | **0.0228** | **0.0074** |
+| elo | 0.9857 | 53.2% | 0.0303 | 0.0089 |
+| baseline | 1.0650 | 44.1% | 0.0094 | 0.0146 |
+
+- ❌ **The market beats the engine** by 0.0357 log loss (significant, p<0.0001).
+  This is the expected, honest outcome — the closing line is the strongest
+  public forecast of a football match there is.
+- ✅ **Progress metric: the engine has captured 70% of the achievable edge.**
+  Baseline → market spans the entire range of publicly-extractable skill; we
+  cover 70% of it, and sit **2.8 accuracy points** behind the sharpest
+  bookmaker on earth, using only free data.
+- ✅ **On calibration we are competitive with the market** — better on home
+  (0.0228 vs 0.0249) and markedly better on draws (0.0074 vs 0.0144). The
+  market's advantage is *sharpness*, not honesty.
+- 🔑 **The decisive insight for what to build next.** The closing line is priced
+  *minutes before kickoff*, so it already knows **confirmed line-ups and late
+  team news**. Our engine does not. A meaningful share of the residual 30% is
+  therefore an **information** advantage, not a modelling one — which says the
+  remaining signal lives in **team news (line-ups/injuries)**, and *not* in the
+  low-rated features (weather, referees) we deprioritised. Those cannot pay for
+  themselves against a 0.0357 gap.
+
+### Phase 4b — Serving + drift *(pending)*
+
 - `prediction-engine/serving/` — FastAPI service returning the scoreline grid,
   derived markets (1X2, over/under, BTTS, correct score), and the explanation.
+  *(Note: the champion ensemble currently emits 1X2 only; wiring the scoreline
+  grid through the blend is outstanding.)*
 - Automated retraining + a **drift monitor** that re-runs the backtest on new
   results and alerts when the champion degrades.
-- A standing **benchmark vs closing bookmaker odds** — the market is the true
-  yardstick (used to measure, never as a model input).
+- Repeat the odds benchmark across all five leagues, and refine overround
+  removal (Shin's method) to sharpen the market's own estimate.
 
 **Success criterion:** live predictions stay calibrated over a full season, and
-the engine measurably closes the gap to (or beats) the closing-odds benchmark.
+the engine measurably closes the gap to the closing-odds benchmark.
 
 ---
 

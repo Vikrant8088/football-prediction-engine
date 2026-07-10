@@ -94,7 +94,7 @@ backtest, never a licence to ship the feature unproven.
 
 | Feature | Predictive Power | Role |
 |---|---|---|
-| **Closing bookmaker odds** | ★★★★★ | **Benchmark only — never a model input** |
+| **Closing bookmaker odds** | ★★★★★ | **Benchmark only — never a model input** ✅ *measured, see below* |
 
 The betting market is the single strongest predictor of match outcomes because
 it aggregates the information of everyone betting. But the project's vision
@@ -108,6 +108,17 @@ lists "copy bookmaker predictions" as an explicit **non-goal**. The resolution:
 Opening-vs-closing line movement is itself a data point (it reveals where
 sharp money went), but the same non-goal applies: measure against it, don't
 ingest it.
+
+**Measured** *(Phase 4a, run `odds_report_20260710T055226Z`, 2,660 EPL matches)*:
+Pinnacle closing odds score log loss 0.9464 (55.9% accuracy) vs our champion
+ensemble's 0.9821 (53.1%). The market wins by 0.0357 (p<0.0001) — as expected.
+The engine has captured **70% of the baseline→market edge**, and is *better
+calibrated* than the market on home wins and draws; the market's advantage is
+sharpness. Crucially, the closing line is priced minutes before kickoff and so
+already knows confirmed line-ups and late team news, which our engine does not —
+so part of the residual gap is an information advantage, not modelling skill.
+This bounds what any further feature can add and points the remaining signal at
+**team news**, not at weather/referees.
 
 ---
 
