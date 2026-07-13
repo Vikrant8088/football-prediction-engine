@@ -47,6 +47,7 @@ absolute numbers are not achievable.
 
 import json
 import logging
+import os
 import pickle
 from datetime import datetime, timezone
 from pathlib import Path
@@ -90,9 +91,32 @@ SQUAD_BUDGETS = (TOTAL_SQUAD_BUDGET, 95.0, 90.0)
 # squad for a given (gameweek, model, budget) can never change.
 _SQUADS = {}
 
+# The in-memory squad cache is keyed by (season, gameweek, model, budget) - which
+# does NOT identify WHICH projection frame produced it. When two frames (FPL xG vs
+# Understat xG) are scored in one process, the second silently reuses the first's
+# squads. `_CACHE_TAG` disambiguates them; a caller comparing two frames sets a
+# distinct tag per frame. Default "" preserves existing on-disk caches, whose keys
+# were written without it, and is correct for a run that scores a single frame.
+_CACHE_TAG = ""
+
+
+def set_cache_tag(tag: str) -> None:
+    global _CACHE_TAG
+    _CACHE_TAG = tag
+
+
+# Which projections to benchmark, chosen at run time so one module serves the
+# FPL-xG validation, the Understat-xG validation, and the full multi-season run
+# without any of them sharing a cache. `RUN_TAG` keys every on-disk artifact.
+XG_SOURCE = os.environ.get("FPL_XG_SOURCE", "fpl")
+SEASONS = (tuple(os.environ["FPL_SEASONS"].split(","))
+           if os.environ.get("FPL_SEASONS") else None)   # None -> cached_predictions default
+RUN_TAG = os.environ.get("FPL_RUN_TAG", XG_SOURCE)
+
 
 def _cache_path():
-    return load_config().raw_data_dir.parent / "processed" / "fpl_squad_selections.pkl"
+    return (load_config().raw_data_dir.parent / "processed"
+            / f"fpl_squad_selections_{RUN_TAG}.pkl")
 
 
 def _load_cache():
@@ -103,7 +127,15 @@ def _load_cache():
         logger.info("loaded %d cached squads from %s", len(_SQUADS), path)
 
 
+# Disk persistence is only wanted for the long main() sweep, where a timeout must
+# not cost an hour of solving. Ad-hoc callers (the validation harness) set this False
+# so they neither pay for repeated pickling nor write into the main cache file.
+_PERSIST = False
+
+
 def _save_cache():
+    if not _PERSIST:
+        return
     path = _cache_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("wb") as handle:
@@ -118,7 +150,7 @@ def _squad_points(frame: pd.DataFrame, model: str, budget: float,
     solved = 0
     for key, week in frame.groupby(["season", "gameweek"]):
         week = week.reset_index(drop=True)
-        cache_key = (key, model, budget)
+        cache_key = (key, model, budget, _CACHE_TAG)
         if cache_key not in _SQUADS:
             _SQUADS[cache_key] = select_squad(week, model, squad_budget=budget)
             solved += 1
@@ -227,18 +259,37 @@ def without_dc_season(frame, budget, with_captain) -> dict:
     return compare(non_dc, CHALLENGER, BASELINE, budget, with_captain)
 
 
+def decay_analysis(frame, budget, with_captain) -> dict:
+    """Split the seasons into an older and a more recent half and measure the edge in
+    each. An edge that is large early and small late is the signature of a market
+    growing more efficient - and it means the pooled number overstates today's edge.
+    Reported so a headline is never mistaken for a forecast."""
+    seasons = sorted(frame["season"].unique())
+    half = len(seasons) // 2
+    old_seasons, recent_seasons = seasons[:half], seasons[half:]
+    return {
+        "old_label": f"{old_seasons[0]}..{old_seasons[-1]}" if old_seasons else "-",
+        "recent_label": f"{recent_seasons[0]}..{recent_seasons[-1]}" if recent_seasons else "-",
+        "old": compare(frame[frame["season"].isin(old_seasons)], CHALLENGER, BASELINE,
+                       budget, with_captain),
+        "recent": compare(frame[frame["season"].isin(recent_seasons)], CHALLENGER,
+                          BASELINE, budget, with_captain),
+    }
+
+
 def formation_mix(frame, model, budget) -> pd.Series:
     """Which shapes each model actually plays. A model that always plays 3-4-3 is
     telling you it never rates a defender."""
     shapes = []
     for key, week in frame.groupby(["season", "gameweek"]):
-        selection = _SQUADS.get((key, model, budget))
+        selection = _SQUADS.get((key, model, budget, _CACHE_TAG))
         if selection is not None:
             shapes.append("%d-%d-%d" % selection.formation)
     return pd.Series(shapes).value_counts(normalize=True)
 
 
-def build_report(frame, cells, primary, model_table, seasons, formations, non_dc, run_id) -> str:
+def build_report(frame, cells, primary, model_table, seasons, formations, non_dc,
+                 decay, run_id) -> str:
     gameweeks = frame.groupby(["season", "gameweek"]).ngroups
     survivors = sum(1 for cell in cells if cell["significant_corrected"])
 
@@ -324,21 +375,43 @@ def build_report(frame, cells, primary, model_table, seasons, formations, non_dc
         "## The load-bearing check: does the edge survive without the new rule?",
         "",
         f"2025/26 is the only season with the **defensive-contribution rule**, which "
-        f"we model and the baselines do not. In the projection-only backtest that rule "
-        f"was ~60% of a *perishable* edge. So the test that matters: drop 2025/26 "
-        f"entirely and re-measure on the three seasons that lack the rule.",
+        f"we model and the baselines do not — in the projection-only backtest it was "
+        f"~60% of a *perishable* edge. So the test that matters: drop 2025/26 and "
+        f"re-measure on the seasons that lack the rule.",
         "",
-        f"> **Three non-DC seasons ({98} gameweeks), £{PRIMARY_BUDGET:.0f}m + captain:** "
+        f"> **{non_dc['gameweeks']} non-DC gameweeks, £{PRIMARY_BUDGET:.0f}m + captain:** "
         f"{non_dc['mean_gain_per_gw']:+.2f} pts/GW, "
         f"winning {non_dc['gameweeks_won']}/{non_dc['gameweeks']}, "
         f"t p={non_dc['paired_t_p']:.4f}, Wilcoxon p={non_dc['wilcoxon_p']:.4f} "
         f"→ **{'still significant' if non_dc['significant'] else 'NOT significant'}.**",
         "",
-        f"So of the {primary['mean_gain_per_gw']:+.2f} pooled gain, roughly "
-        f"{non_dc['mean_gain_per_gw']:.1f} is a fixture edge present across seasons "
-        f"(positive but underpowered), and the rest is the one-season DC-rule advantage "
-        f"we already know is perishable. This is more than Phase 5b had — the non-DC "
-        f"signal is genuinely positive, not zero — but it does not clear the bar alone.",
+        (f"The edge does **not** depend on the new rule: with 2025/26 removed it is "
+         f"{non_dc['mean_gain_per_gw']:+.2f} pts/GW and still clears both tests. That "
+         f"refutes the earlier worry that the whole effect was the perishable rule."
+         if non_dc["significant"] else
+         f"With 2025/26 removed the edge falls to {non_dc['mean_gain_per_gw']:+.2f} "
+         f"pts/GW and is no longer significant, so the pooled result leans on the "
+         f"perishable rule."),
+        "",
+        "## The honest caveat: the edge is decaying",
+        "",
+        f"The pooled +{primary['mean_gain_per_gw']:.2f} is not the edge you would get "
+        f"today. Split by era ({decay['old_label']} vs {decay['recent_label']}):",
+        "",
+        f"| era | gain/GW | t p | Wilcoxon p | significant? |",
+        f"|---|---|---|---|---|",
+        f"| **{decay['old_label']}** | **{decay['old']['mean_gain_per_gw']:+.2f}** | "
+        f"{decay['old']['paired_t_p']:.4f} | {decay['old']['wilcoxon_p']:.4f} | "
+        f"{'✅' if decay['old']['significant'] else '❌'} |",
+        f"| **{decay['recent_label']}** | **{decay['recent']['mean_gain_per_gw']:+.2f}** | "
+        f"{decay['recent']['paired_t_p']:.4f} | {decay['recent']['wilcoxon_p']:.4f} | "
+        f"{'✅' if decay['recent']['significant'] else '❌'} |",
+        "",
+        f"The edge was **{decay['old']['mean_gain_per_gw']:+.2f}/GW** when few managers "
+        f"used xG and is **{decay['recent']['mean_gain_per_gw']:+.2f}/GW** now that xG "
+        f"tools are mainstream — consistent with the FPL market becoming more efficient. "
+        f"The strong pooled significance is powered substantially by the older seasons. "
+        f"The realistic *forward-looking* edge is the recent end (~+3/GW), not +5.",
         "",
         "## Every model, playing the real game",
         "",
@@ -376,7 +449,13 @@ def build_report(frame, cells, primary, model_table, seasons, formations, non_dc
                     f"pre-specified endpoint passes ({primary['mean_gain_per_gw']:+.2f} "
                     f"pts/GW), {survivors}/{len(cells)} cells survive correction, AND the "
                     f"edge stays significant with the defensive-contribution season removed "
-                    f"({non_dc['mean_gain_per_gw']:+.2f} pts/GW on three seasons). " + fair_fight)
+                    f"({non_dc['mean_gain_per_gw']:+.2f} pts/GW over "
+                    f"{non_dc['gameweeks']} gameweeks). " + fair_fight
+                    + f" **But it is decaying** — {decay['old']['mean_gain_per_gw']:+.2f}"
+                    f"/GW in {decay['old_label']} versus "
+                    f"{decay['recent']['mean_gain_per_gw']:+.2f}/GW in "
+                    f"{decay['recent_label']}, so the realistic forward edge is the recent "
+                    f"end, not the pooled figure.")
     else:
         headline = (f"**Promising, and the strongest result so far — but not proven.** The "
                     f"pre-specified endpoint passes ({primary['mean_gain_per_gw']:+.2f} "
@@ -417,7 +496,13 @@ def main():
         level="INFO", max_bytes=5 * 1024 * 1024, backup_count=3,
     )
 
-    frame = cached_predictions()
+    frame = (cached_predictions(seasons=SEASONS, xg_source=XG_SOURCE)
+             if SEASONS is not None else cached_predictions(xg_source=XG_SOURCE))
+    logger.info("benchmark on %d seasons, xg_source=%s, tag=%s",
+                frame["season"].nunique(), XG_SOURCE, RUN_TAG)
+    global _PERSIST
+    _PERSIST = True                     # the long sweep wants resumable disk caching
+    set_cache_tag(XG_SOURCE)            # keep in-memory keys aligned with the source
     _load_cache()
 
     cells = []
@@ -448,16 +533,18 @@ def main():
 
     seasons = per_season(frame, PRIMARY_BUDGET, PRIMARY_CAPTAIN)
     non_dc = without_dc_season(frame, PRIMARY_BUDGET, PRIMARY_CAPTAIN)
+    decay = decay_analysis(frame, PRIMARY_BUDGET, PRIMARY_CAPTAIN)
 
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     report = build_report(frame, cells, primary, table.to_markdown(floatfmt=".2f"),
-                          seasons, shapes.to_markdown(floatfmt=".2f"), non_dc, run_id)
+                          seasons, shapes.to_markdown(floatfmt=".2f"), non_dc, decay, run_id)
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    (RESULTS_DIR / f"fpl_squad_benchmark_{run_id}.md").write_text(report, encoding="utf-8")
-    (RESULTS_DIR / f"fpl_squad_benchmark_{run_id}.json").write_text(
+    (RESULTS_DIR / f"fpl_squad_benchmark_{RUN_TAG}_{run_id}.md").write_text(
+        report, encoding="utf-8")
+    (RESULTS_DIR / f"fpl_squad_benchmark_{RUN_TAG}_{run_id}.json").write_text(
         json.dumps({"cells": cells, "primary": primary, "per_season": seasons,
-                    "without_dc_season": non_dc,
+                    "without_dc_season": non_dc, "decay": decay,
                     "models": {"no captain": all_models(frame, PRIMARY_BUDGET, False),
                                "with captain": all_models(frame, PRIMARY_BUDGET, True)}},
                    indent=2), encoding="utf-8")

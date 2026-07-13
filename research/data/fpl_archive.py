@@ -50,6 +50,7 @@ from data_warehouse.ingest.metadata_store import (
     write_new_version,
 )
 from data_warehouse.utils.checksum import sha256_bytes
+from research.data.csv_utils import read_csv_bytes_resilient
 from research.data.fpl_loader import canonical_team
 
 logger = logging.getLogger(__name__)
@@ -59,10 +60,27 @@ BASE_URL = "https://raw.githubusercontent.com/vaastav/Fantasy-Premier-League/mas
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; football-prediction-engine/1.0)"}
 REQUEST_TIMEOUT_SECONDS = 60
 
-# Seasons in which FPL publishes expected_goals / expected_assists. See module docstring.
+# Seasons in which FPL publishes expected_goals / expected_assists. Earlier seasons
+# get their xG from Understat (`understat_xg_join`), so the MODEL is identical across
+# all of them - the whole point of sourcing xG externally rather than dropping it.
 SEASONS_WITH_XG: Tuple[str, ...] = ("2022-23", "2023-24", "2024-25", "2025-26")
 
-DATASETS = {"merged_gw": "gws/merged_gw.csv", "teams": "teams.csv"}
+# Every season the archive can be parsed for. 2016/17-2017/18 use an older format
+# with no element/GW/kickoff columns and are excluded; 2018/19-2019/20 lack the
+# per-row position/team columns, which are recovered from players_raw.csv.
+ALL_SEASONS: Tuple[str, ...] = (
+    "2018-19", "2019-20", "2020-21", "2021-22", "2022-23", "2023-24", "2024-25", "2025-26",
+)
+
+DATASETS = {
+    "merged_gw": "gws/merged_gw.csv",
+    "teams": "teams.csv",
+    "players_raw": "players_raw.csv",   # element -> position/team, for seasons lacking them
+}
+# 2018/19 has no per-season teams.csv; this repo-root file maps (season, team id) ->
+# name for every early season. One fetch, cached, shared across seasons.
+MASTER_TEAM_LIST_URL = f"{BASE_URL}/master_team_list.csv"
+MASTER_TEAM_DATASET = "master_team_list"
 
 # FPL position labels -> element_type codes used throughout prediction_engine.fpl.
 POSITION_CODES: Dict[str, int] = {"GK": 1, "GKP": 1, "DEF": 2, "MID": 3, "FWD": 4}
@@ -129,14 +147,76 @@ def _ensure_dataset(season: str, dataset: str, force: bool = False) -> bytes:
     return content
 
 
+def _ensure_master_team_list(force: bool = False) -> bytes:
+    dataset_dir = _dataset_dir("_shared", MASTER_TEAM_DATASET)
+    filename = f"{MASTER_TEAM_DATASET}.csv"
+    if not force and has_any_version(dataset_dir):
+        version = read_latest_version(dataset_dir)
+        return (dataset_dir / version / filename).read_bytes()
+    logger.info("fetching %s", MASTER_TEAM_LIST_URL)
+    response = requests.get(MASTER_TEAM_LIST_URL, headers=HEADERS,
+                            timeout=REQUEST_TIMEOUT_SECONDS)
+    response.raise_for_status()
+    content = response.content
+    version = new_version_id()
+    metadata = build_metadata(
+        source=SOURCE_NAME, identifier=MASTER_TEAM_DATASET, source_url=MASTER_TEAM_LIST_URL,
+        version=version, local_path=dataset_dir / version / filename,
+        content=content, checksum_sha256=sha256_bytes(content),
+    )
+    write_new_version(dataset_dir, filename, content, metadata)
+    return content
+
+
 def load_team_names(season: str, force: bool = False) -> Dict[int, str]:
     """FPL team id -> canonical (Understat) team name, for one season.
 
     Team ids are re-assigned alphabetically every season, so a table fetched for
-    2023/24 will silently mislabel 2022/23. Always load the season's own.
+    2023/24 will silently mislabel 2022/23. Always load the season's own. Seasons
+    without a per-season teams.csv (2018/19) fall back to the repo-root
+    master_team_list.csv, keyed by season.
     """
-    frame = pd.read_csv(io.BytesIO(_ensure_dataset(season, "teams", force)))
-    return {int(row["id"]): canonical_team(row["name"]) for _, row in frame.iterrows()}
+    try:
+        frame = read_csv_bytes_resilient(_ensure_dataset(season, "teams", force),
+                                         label=f"{season}/teams")
+        return {int(row["id"]): canonical_team(row["name"])
+                for _, row in frame.iterrows()}
+    except requests.exceptions.HTTPError:
+        master = read_csv_bytes_resilient(_ensure_master_team_list(force),
+                                          label="master_team_list")
+        rows = master[master["season"] == season]
+        if rows.empty:
+            raise ValueError(f"No team list for season '{season}'")
+        return {int(r["team"]): canonical_team(r["team_name"]) for _, r in rows.iterrows()}
+
+
+def load_player_meta(season: str, force: bool = False) -> Dict[int, dict]:
+    """element id -> {position, team, name}, from players_raw.csv.
+
+    Needed because 2018/19 and 2019/20 `merged_gw` rows carry neither position nor
+    team; both are looked up here by the `element` id, which IS present.
+    """
+    frame = read_csv_bytes_resilient(_ensure_dataset(season, "players_raw", force),
+                                     label=f"{season}/players_raw")
+    teams = load_team_names(season, force)
+    meta = {}
+    for _, row in frame.iterrows():
+        meta[int(row["id"])] = {
+            "position": int(row["element_type"]),
+            "team": teams.get(int(row["team"])),
+            "name": ("%s %s" % (row["first_name"], row["second_name"])).strip(),
+        }
+    return meta
+
+
+def _clean_name(raw_name: str) -> str:
+    """'Aaron_Cresswell_376' -> 'Aaron Cresswell'. Pre-2020 names carry underscores
+    and a trailing element id; later seasons are already clean."""
+    text = str(raw_name)
+    if "_" in text:
+        parts = [p for p in text.split("_") if not p.isdigit()]
+        text = " ".join(parts)
+    return text.strip()
 
 
 def load_gameweeks(season: str, force: bool = False) -> pd.DataFrame:
@@ -145,31 +225,44 @@ def load_gameweeks(season: str, force: bool = False) -> pd.DataFrame:
     Columns: season, gameweek, player_id, player, position (int), team, opponent,
     was_home, kickoff_time, price, plus the per-fixture stat fields.
     """
-    if season not in SEASONS_WITH_XG:
+    if season not in ALL_SEASONS:
         raise ValueError(
-            f"Season '{season}' has no expected_goals in FPL's data; "
-            f"replaying it would test a different model. Available: {SEASONS_WITH_XG}"
+            f"Season '{season}' cannot be parsed. Available: {ALL_SEASONS}"
         )
 
-    raw = pd.read_csv(io.BytesIO(_ensure_dataset(season, "merged_gw", force)))
+    raw = read_csv_bytes_resilient(_ensure_dataset(season, "merged_gw", force),
+                                   label=f"{season}/merged_gw")
     teams = load_team_names(season, force)
 
-    managers = raw["position"].isin(NON_PLAYER_POSITIONS).sum()
-    if managers:
-        logger.info("%s: dropping %d manager rows (not players)", season, managers)
-    raw = raw[~raw["position"].isin(NON_PLAYER_POSITIONS)]
+    # Manager elements exist only from 2024/25 and only when the column is present.
+    if "position" in raw.columns:
+        managers = raw["position"].isin(NON_PLAYER_POSITIONS).sum()
+        if managers:
+            logger.info("%s: dropping %d manager rows (not players)", season, managers)
+        raw = raw[~raw["position"].isin(NON_PLAYER_POSITIONS)]
 
-    unknown = set(raw["position"]) - set(POSITION_CODES)
-    if unknown:
-        raise ValueError(f"{season}: unrecognised positions {sorted(unknown)}")
+    # Position and team are per-row from 2020/21; earlier they come from players_raw.
+    if "position" in raw.columns and raw["position"].notna().all():
+        unknown = set(raw["position"]) - set(POSITION_CODES)
+        if unknown:
+            raise ValueError(f"{season}: unrecognised positions {sorted(unknown)}")
+        position = raw["position"].map(POSITION_CODES).astype(int)
+        team = raw["team"].astype(str).map(canonical_team)
+    else:
+        meta = load_player_meta(season, force)
+        position = raw["element"].map(lambda e: (meta.get(int(e)) or {}).get("position"))
+        team = raw["element"].map(lambda e: (meta.get(int(e)) or {}).get("team"))
+        if position.isna().any():
+            raise ValueError(f"{season}: {int(position.isna().sum())} rows have no "
+                             f"players_raw position")
 
     frame = pd.DataFrame({
         "season": season,
         "gameweek": raw["GW"].astype(int),
         "player_id": raw["element"].astype(int),
-        "player": raw["name"].astype(str),
-        "position": raw["position"].map(POSITION_CODES).astype(int),
-        "team": raw["team"].astype(str).map(canonical_team),
+        "player": raw["name"].map(_clean_name),
+        "position": position.astype(int),
+        "team": team,
         # Never `astype(bool)`: on the string "False" that silently yields True,
         # which would mark every fixture a home fixture.
         "was_home": raw["was_home"].map(_as_bool),
@@ -177,8 +270,13 @@ def load_gameweeks(season: str, force: bool = False) -> pd.DataFrame:
     })
     for field in NUMERIC_FIELDS:
         frame[field] = pd.to_numeric(raw[field], errors="coerce").fillna(0).astype(int)
+    # xG is present only from 2022/23; earlier seasons carry 0 here and have it
+    # injected from Understat downstream. Do not confuse "0" with "no data".
     for field in FLOAT_FIELDS:
-        frame[field] = pd.to_numeric(raw[field], errors="coerce").fillna(0.0).astype(float)
+        frame[field] = (
+            pd.to_numeric(raw[field], errors="coerce").fillna(0.0).astype(float)
+            if field in raw.columns else 0.0
+        )
     for field in OPTIONAL_NUMERIC_FIELDS:
         frame[field] = (
             pd.to_numeric(raw[field], errors="coerce").fillna(0).astype(int)
@@ -193,8 +291,9 @@ def load_gameweeks(season: str, force: bool = False) -> pd.DataFrame:
         raise ValueError(f"{season}: {missing} rows have an unmappable opponent id")
 
     logger.info(
-        "%s: %d player-fixtures, %d gameweeks, %d players",
+        "%s: %d player-fixtures, %d gameweeks, %d players, xG from FPL: %s",
         season, len(frame), frame["gameweek"].nunique(), frame["player_id"].nunique(),
+        season in SEASONS_WITH_XG,
     )
     return frame.drop(columns=["opponent_team", "value"])
 

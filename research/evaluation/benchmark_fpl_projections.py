@@ -71,7 +71,9 @@ from data_warehouse.config.loader import load_config
 from data_warehouse.utils.logging_config import configure_logging
 from prediction_engine.fpl.projection import fixture_context, project_player, team_scoring_rates
 from prediction_engine.scoreline_ensemble import ScorelineEnsemble
-from research.data.fpl_archive import SEASONS_WITH_XG, load_gameweeks
+from research.data.fpl_archive import ALL_SEASONS, SEASONS_WITH_XG, load_gameweeks
+from research.data.understat_player_matches import ensure_player_matches
+from research.data.understat_xg_join import inject_understat_xg
 from research.data.xg_loader import load_understat_matches
 from research.evaluation.benchmark import RESULTS_DIR
 
@@ -177,9 +179,22 @@ class _GridCache:
         return self._contexts[key]
 
 
-def run_season(season: str, matches: pd.DataFrame) -> list:
-    """Walk forward through one season, gameweek by gameweek."""
+def run_season(season: str, matches: pd.DataFrame,
+               xg_source: str = "fpl", understat_matches=None) -> list:
+    """Walk forward through one season, gameweek by gameweek.
+
+    `xg_source`:
+      "fpl"       - use FPL's own per-match xG (2022/23 onward only).
+      "understat" - overwrite it with Understat's, so the SAME model runs on
+                    seasons where FPL never published xG. See `understat_xg_join`.
+    """
     frame = load_gameweeks(season)
+    if xg_source == "understat":
+        frame, coverage = inject_understat_xg(frame, season, matches=understat_matches)
+        logger.info("%s: Understat xG covers %.1f%% of played minutes",
+                    season, 100 * coverage["minute_coverage"])
+    elif xg_source != "fpl":
+        raise ValueError("xg_source must be 'fpl' or 'understat', got %r" % xg_source)
 
     fixtures_by_gw = defaultdict(lambda: defaultdict(list))   # gw -> player -> [fixture]
     for row in frame.to_dict("records"):
@@ -237,30 +252,37 @@ def run_season(season: str, matches: pd.DataFrame) -> list:
     return predictions
 
 
-def run_backtest(seasons=SEASONS_WITH_XG) -> pd.DataFrame:
+def run_backtest(seasons=SEASONS_WITH_XG, xg_source: str = "fpl") -> pd.DataFrame:
     matches = load_understat_matches("EPL")
+    understat_matches = ensure_player_matches() if xg_source == "understat" else None
     predictions = []
     for season in seasons:
-        predictions.extend(run_season(season, matches))
+        predictions.extend(run_season(season, matches, xg_source=xg_source,
+                                      understat_matches=understat_matches))
 
     frame = pd.DataFrame(predictions)
     frame["global_mean"] = frame["actual"].mean()   # constant floor
     return frame
 
 
-def _cache_path():
-    return load_config().raw_data_dir.parent / "processed" / "fpl_backtest_predictions.csv"
+def _cache_path(tag: str = "fpl"):
+    name = "fpl_backtest_predictions" if tag == "fpl" else f"fpl_backtest_predictions_{tag}"
+    return load_config().raw_data_dir.parent / "processed" / f"{name}.csv"
 
 
-def cached_predictions(seasons=SEASONS_WITH_XG, refresh: bool = False) -> pd.DataFrame:
+def cached_predictions(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
+                       refresh: bool = False) -> pd.DataFrame:
     """The walk-forward predictions, computed once.
 
     Producing them refits the team model once per gameweek (~7 minutes). Every
     downstream experiment - the optimizer sweep, the ablations - consumes exactly
     the same projections, so caching them is not just speed: it guarantees those
     experiments differ ONLY in what they claim to vary.
+
+    `xg_source` is part of the cache key: an FPL-xG run and an Understat-xG run over
+    the same seasons are different experiments and must never share a file.
     """
-    path = _cache_path()
+    path = _cache_path(xg_source)
     if not refresh and path.exists():
         frame = pd.read_csv(path)
         if set(frame["season"].unique()) == set(seasons):
@@ -268,7 +290,7 @@ def cached_predictions(seasons=SEASONS_WITH_XG, refresh: bool = False) -> pd.Dat
             return frame
         logger.info("cached predictions cover different seasons; recomputing")
 
-    frame = run_backtest(seasons)
+    frame = run_backtest(seasons, xg_source=xg_source)
     path.parent.mkdir(parents=True, exist_ok=True)
     frame.to_csv(path, index=False)
     logger.info("cached %d predictions to %s", len(frame), path)

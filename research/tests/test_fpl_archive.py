@@ -108,5 +108,76 @@ class TestLoadGameweeks(unittest.TestCase):
                 load_gameweeks("2022-23")
 
 
+# Pre-2021 merged_gw has neither position nor team, and no per-season teams.csv;
+# both are recovered from players_raw.csv + the repo-root master team list.
+OLD_MERGED_CSV = (
+    b"name,element,kickoff_time,minutes,opponent_team,saves,bonus,yellow_cards,"
+    b"red_cards,clean_sheets,goals_conceded,goals_scored,assists,own_goals,"
+    b"penalties_missed,penalties_saved,total_points,value,was_home,GW\n"
+    # Note the latin-1 byte (0xe9) in a name: the reader must not choke on it.
+    b"Aaron_Cresswell_376,10,2018-08-11T14:00:00Z,90,2,0,0,0,0,1,0,0,0,0,0,0,6,55,True,1\n"
+    b"Andr\xe9_Gomes_5,20,2018-08-11T14:00:00Z,90,1,0,1,0,0,0,1,0,1,0,0,0,8,65,False,1\n"
+)
+PLAYERS_RAW_CSV = (
+    b"id,first_name,second_name,element_type,team,now_cost\n"
+    b"10,Aaron,Cresswell,2,1,55\n"
+    b"20,Andr\xe9,Gomes,3,2,65\n"
+)
+MASTER_TEAM_LIST_CSV = (
+    b"season,team,team_name\n2018-19,1,West Ham\n2018-19,2,Everton\n2019-20,1,Arsenal\n"
+)
+
+
+def _old_season_datasets(season, dataset, force=False):
+    import requests
+    if dataset == "teams":
+        raise requests.exceptions.HTTPError("404")   # no per-season teams.csv
+    if dataset == "players_raw":
+        return PLAYERS_RAW_CSV
+    return OLD_MERGED_CSV
+
+
+class TestOldSeasonWithoutPositionOrTeam(unittest.TestCase):
+    def setUp(self):
+        ds = patch.object(fpl_archive, "_ensure_dataset", side_effect=_old_season_datasets)
+        ml = patch.object(fpl_archive, "_ensure_master_team_list",
+                          return_value=MASTER_TEAM_LIST_CSV)
+        self.addCleanup(ds.stop)
+        self.addCleanup(ml.stop)
+        ds.start()
+        ml.start()
+        self.frame = load_gameweeks("2018-19")
+
+    def test_position_recovered_from_players_raw(self):
+        by_name = self.frame.set_index("player")["position"]
+        self.assertEqual(by_name["Aaron Cresswell"], 2)          # DEF
+        self.assertEqual(by_name["André Gomes"], 3)         # MID (cp1252 -> e-acute)
+
+    def test_team_recovered_from_master_team_list(self):
+        by_name = self.frame.set_index("player")["team"]
+        self.assertEqual(by_name["Aaron Cresswell"], "West Ham")
+        self.assertEqual(by_name["André Gomes"], "Everton")
+
+    def test_underscored_name_is_cleaned(self):
+        self.assertIn("Aaron Cresswell", set(self.frame["player"]))
+        self.assertNotIn("Aaron_Cresswell_376", set(self.frame["player"]))
+
+    def test_latin1_bytes_do_not_crash_the_reader(self):
+        self.assertEqual(len(self.frame), 2)
+
+    def test_xg_absent_defaults_to_zero(self):
+        # 2018/19 has no xG; it must read as 0, to be filled from Understat later.
+        self.assertEqual(self.frame["expected_goals"].sum(), 0.0)
+        self.assertEqual(self.frame["expected_assists"].sum(), 0.0)
+
+
+class TestCleanName(unittest.TestCase):
+    def test_strips_trailing_id_and_underscores(self):
+        self.assertEqual(fpl_archive._clean_name("Aaron_Cresswell_376"), "Aaron Cresswell")
+
+    def test_leaves_clean_names_alone(self):
+        self.assertEqual(fpl_archive._clean_name("Bukayo Saka"), "Bukayo Saka")
+
+
 if __name__ == "__main__":
     unittest.main()

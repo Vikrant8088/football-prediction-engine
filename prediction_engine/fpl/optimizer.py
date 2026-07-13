@@ -113,20 +113,33 @@ class _PositionPool(object):
     reachable from index i are exactly i..i+k-1.
     """
 
-    __slots__ = ("values", "prices", "clubs", "labels", "min_cost", "size", "affordable")
+    __slots__ = ("values", "value_prefix", "prices", "clubs", "labels",
+                 "min_cost", "size", "affordable")
 
     def __init__(self, frame: pd.DataFrame, value_column: str):
         ordered = frame.sort_values(value_column, ascending=False)
         self.values = ordered[value_column].to_numpy(dtype=float)
+        self.size = len(ordered)
+        # Prefix sums of the (descending) values, so "the k best from index i" is an
+        # O(1) subtraction instead of a numpy slice-sum. That slice-sum, called ~7M
+        # times inside branch-and-bound, was 60% of a pathological 50-second solve.
+        self.value_prefix = [0.0] * (self.size + 1)
+        running = 0.0
+        for i, value in enumerate(self.values):
+            running += float(value)
+            self.value_prefix[i + 1] = running
         self.prices = [_to_tenths(price) for price in ordered["price"]]
         self.clubs = ordered["club"].to_numpy()
         self.labels = list(ordered.index)
-        self.size = len(ordered)
         self.min_cost = _suffix_min_cost(self.prices)
         self.affordable = None      # set by `build_affordable_table` when budgeted
 
     def best_values(self, count: int) -> float:
-        return float(self.values[:count].sum()) if self.size >= count else 0.0
+        return self.value_prefix[count] if self.size >= count else 0.0
+
+    def value_range(self, start: int, count: int) -> float:
+        """Sum of the `count` best values from `start` onward. O(1)."""
+        return self.value_prefix[start + count] - self.value_prefix[start]
 
     def cheapest_fill(self, count: int) -> int:
         return self.min_cost[count][0]
@@ -394,7 +407,7 @@ def _solve_formation(pools, needs, budget_tenths, max_per_club, incumbent):
         for index in range(start, limit + 1):
             ceiling = (
                 value
-                + float(pool.values[index:index + remaining].sum())
+                + pool.value_range(index, remaining)
                 + best_after[position_index + 1]
             )
             if ceiling <= best["value"] + BOUND_TOLERANCE:
@@ -796,7 +809,7 @@ def _solve_squad_formation(pools, price_sorted, formation,
 
         limit = pool.size - remaining
         for index in range(start, limit + 1):
-            ceiling = (value + float(pool.values[index:index + remaining].sum())
+            ceiling = (value + pool.value_range(index, remaining)
                        + best_after[position_index + 1])
             if ceiling <= best["value"] + BOUND_TOLERANCE:
                 return

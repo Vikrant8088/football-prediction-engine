@@ -22,15 +22,13 @@ import pandas as pd
 ENCODINGS = ("utf-8-sig", "cp1252", "latin-1")
 
 
-def read_csv_resilient(path: Union[str, Path], **kwargs) -> pd.DataFrame:
-    """Read a CSV, trying progressively more permissive encodings.
+def read_csv_bytes_resilient(data: bytes, label: str = "<bytes>", **kwargs) -> pd.DataFrame:
+    """Parse CSV bytes, trying progressively more permissive encodings.
 
-    The bytes are read once and decoded in memory rather than re-opening the
-    file per encoding: a failed `pd.read_csv` can leave the file handle open,
-    which on Windows blocks the file from being deleted afterwards.
+    The same fidelity order as `read_csv_resilient`. Used when the bytes are
+    already in hand (e.g. straight from the raw lake), so no file is reopened.
+    Some vaastav FPL archive seasons (2018/19) carry cp1252 bytes like 0xE9.
     """
-    data = Path(path).read_bytes()
-
     last_error = None
     for encoding in ENCODINGS:
         try:
@@ -40,6 +38,14 @@ def read_csv_resilient(path: Union[str, Path], **kwargs) -> pd.DataFrame:
             continue
         return pd.read_csv(io.StringIO(text), **kwargs)
 
-    raise ValueError(
-        f"Could not decode {path} with any of {ENCODINGS}"
-    ) from last_error
+    raise ValueError(f"Could not decode {label} with any of {ENCODINGS}") from last_error
+
+
+def read_csv_resilient(path: Union[str, Path], **kwargs) -> pd.DataFrame:
+    """Read a CSV, trying progressively more permissive encodings.
+
+    The bytes are read once and decoded in memory rather than re-opening the
+    file per encoding: a failed `pd.read_csv` can leave the file handle open,
+    which on Windows blocks the file from being deleted afterwards.
+    """
+    return read_csv_bytes_resilient(Path(path).read_bytes(), label=str(path), **kwargs)

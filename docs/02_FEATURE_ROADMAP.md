@@ -777,6 +777,56 @@ artifact — but still not proven.** The residual non-DC edge is *positive acros
 seasons*, unlike Phase 5b's zero; it is simply too small to clear the bar on 98
 gameweeks. Honest status: **promising, not sellable.** More seasons would settle it.
 
+### Phase 5e — Eight seasons: the fixture edge is proven ✅ *(done — and decaying)*
+
+Phase 5d said "more seasons would settle it." They did. FPL only published xG from
+2022/23, so the four extra seasons could not come from FPL without silently changing
+the model. They came from **Understat**, which measured xG back to 2014/15.
+
+- ✅ `research/data/understat_player_matches.py` — per-match xG for **2,056 players
+  / 191,643 matches**, cached in the versioned lake.
+- ✅ `research/data/understat_fpl_player_map.py` — the risky part, gated hardest. A
+  within-club fuzzy matcher (surname-weighted; handles "Alisson Ramses Becker" ↔
+  "Alisson", "Ward-Prowse" tokenisation, Ødegaard transliteration) plus a
+  transfer fallback. **≥97.3% of the pickable pool matched, every season.**
+- ✅ `research/data/understat_xg_join.py` — substitutes Understat xG per (player,
+  date); `fpl_archive.py` generalised to 2018/19–2025/26.
+- ✅ **Validation gate (the discipline that made this trustworthy):** on 2022–25,
+  where BOTH FPL and Understat xG exist, they correlate **0.895** per match and
+  reproduce the same headline (+3.22/GW; p 0.018 vs 0.024). Understat xG is faithful,
+  so extending it to the pre-2022 seasons is sound. *(A too-perfect first pass caught
+  a real bug — the in-memory squad cache was comparing FPL squads to FPL squads.)*
+
+**Result** *(run `fpl_squad_benchmark_understat8_*`)* — 8 seasons, 263 gameweeks,
+174,517 player-gameweeks; pre-specified £100m squad + captain:
+
+| metric | value |
+|---|---|
+| gain vs `player_ppg` | **+4.99 pts/GW** (+190/season), 165/263 GWs won |
+| significance | t p<0.0001, Wilcoxon p<0.0001 — **passes** |
+| multiplicity (Holm, 6 cells) | **6/6 survive** |
+| **drop the DC season (230 GW)** | **+4.99/GW, p<0.0001 — still significant** |
+| replication | **positive in 8/8 seasons**, individually significant in 3/8 |
+
+- ✅ **The fixture edge is proven.** It survives removing the defensive-contribution
+  season decisively (+4.99/GW, p<0.0001) — the worry that the whole effect was the
+  perishable 2025/26 rule is **refuted**. This is the first result beyond "xG > goals"
+  to clear the bar.
+- ⚠️ **But it is decaying.** Split by era: **+6.81/GW in 2018–21** vs **+3.16/GW in
+  2022–25** — consistent with the FPL market growing more efficient as xG tools went
+  mainstream (~2019–20). The pooled +4.99 is inflated by how beatable the game used
+  to be; the realistic **forward-looking edge is ~+3/GW**, still significant on the
+  recent four seasons but modest.
+
+**Verdict: a real, statistically proven edge over what FPL managers actually do —
+not a rule artifact — but an edge that is shrinking as the market matures.** ~+3
+pts/GW today (~110/season). Enough to matter for rank; not a jackpot, and worth
+re-checking each season to see whether it survives.
+
+*Engineering: fixed an optimizer performance pathology (a numpy slice-sum called ~7M
+times inside branch-and-bound → O(1) prefix sums, ~2× faster, all 51 brute-force
+proofs still pass). 282 tests pass.*
+
 ### Phase 4e — Serving + drift *(pending)*
 
 - `prediction_engine/serving/` — FastAPI service returning the same payload.
