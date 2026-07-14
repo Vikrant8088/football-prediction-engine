@@ -127,6 +127,39 @@ effect: the whole team-news channel is small. It bounds every remaining feature
 
 ---
 
+### Evidence log — Recent-form expected minutes (Phase 6b, runs `minutes_accuracy_*` + `fpl_minutes_*`) ✅ PROVEN
+
+The shipped minutes model was a flat season average (`total minutes / gameweeks`).
+Rebuilt as a recency-weighted model estimating P(plays 60+), P(plays), expected
+minutes separately (`prediction_engine/fpl/minutes.py`). **Gate A** (predict next-match
+minutes, walk-forward): recent-form crushes the flat average — squad-pool MAE 22.0 vs
+28.8 (−23%), P(60+) Brier 0.169 vs 0.277 (−39%), p<0.0001. **Gate B** (the FPL £100m-
+squad primary, head-to-head vs the shipped model): recent-form (half-life 2) beats it
+by **+2.95 pts/GW**, significant on both tests after Holm, positive in **7/8 seasons**,
+survives dropping the best season (+2.14) and the DC season (+3.04). Edge over
+player_ppg grows +5.02 → +7.94/GW. **The first proven model-quality gain** beyond
+xG-over-goals and the fixture edge. Mechanism: the flat average over-rates benched/
+rotated/sub players (points they cannot earn); avoiding them in a 15-man squad adds
+real points — a *discrimination* gain, unlike the Phase 6a decay null. Understated
+live: the backtest cannot see FPL's injury flag, the biggest minutes signal.
+
+### Evidence log — Training window & time-decay (Phase 6a, runs `window_decay_*` + `fpl_window_decay_*`)
+
+A deep-research pass rated window/decay tuning the cheapest team-model lever. Tested
+in two stages. **Stage 1** (goal-model screen, 25 window×`xi` cells): the shipped
+Dixon-Coles `xi=0.0065` is too aggressive — a gentler `xi≈0.001` predicts clean sheets
+*and* 1X2 measurably better (cs log-loss 0.5520 vs 0.5559), and the decay-less Poisson
+prefers a ~5-season window. **Stage 2** (the FPL £100m-squad primary, paired
+head-to-head): that team-model gain **did not transfer — it reversed.** `xi=0.001`
+made the edge *worse* (+4.17 vs the shipped +5.02/GW). The edge instead rises
+monotonically with `xi` (+4.17 → +5.02 → +5.33 → +5.51 at `xi`=0.001/0.0065/0.012/0.02):
+the squad decision rewards **fixture discrimination**, which a *more reactive* decay
+serves, not the average calibration Stage 1 measured. The more-aggressive arms lean
+positive (+0.3–0.5/GW) but are **not significant** (t p≈0.30–0.36, Wilcoxon p≈0.40) and
+**>½ the gain rides on one season** (2019-20). **Null on the FPL endpoint; the shipped
+`xi=0.0065`/expanding default stands.** Lesson: *calibration ≠ discrimination* — a team
+model tuned to its own scoring rule can degrade the product; measure the endpoint.
+
 ### Evidence log — Expected Goals (Phase 1, run `xg_report_20260709T103551Z`)
 
 On 8 walk-forward EPL seasons (3040 matches), fitting team strength on **xG

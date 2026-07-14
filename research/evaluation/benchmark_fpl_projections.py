@@ -69,6 +69,7 @@ from scipy import stats
 
 from data_warehouse.config.loader import load_config
 from data_warehouse.utils.logging_config import configure_logging
+from prediction_engine.fpl.minutes import recent_form_minutes
 from prediction_engine.fpl.projection import fixture_context, project_player, team_scoring_rates
 from prediction_engine.scoreline_ensemble import ScorelineEnsemble
 from research.data.fpl_archive import ALL_SEASONS, SEASONS_WITH_XG, load_gameweeks
@@ -129,8 +130,12 @@ def _rates_from_history(rows: list, gameweeks_elapsed: int) -> dict:
     }
 
 
-def _project_gameweek(model, rates, fixtures, history_rates, position):
-    """Sum a player's projection over every fixture he plays this gameweek."""
+def _project_gameweek(model, rates, fixtures, history_rates, position, minutes_model=None):
+    """Sum a player's projection over every fixture he plays this gameweek.
+
+    `minutes_model` is the prebuilt {expected_minutes, p_60, p_play} for this
+    player (None -> project_player falls back to the crude flat average, the
+    shipped behaviour)."""
     total = 0.0
     for fixture in fixtures:
         team, opponent = fixture["team"], fixture["opponent"]
@@ -151,7 +156,8 @@ def _project_gameweek(model, rates, fixtures, history_rates, position):
             **{field: history_rates[field] for field in RATE_FIELDS},
         })
         total += project_player(
-            projection_input, context, rates[team], gameweeks=history_rates["gameweeks"]
+            projection_input, context, rates[team],
+            gameweeks=history_rates["gameweeks"], minutes_model=minutes_model,
         )["expected_points"]
     return total
 
@@ -180,13 +186,19 @@ class _GridCache:
 
 
 def run_season(season: str, matches: pd.DataFrame,
-               xg_source: str = "fpl", understat_matches=None) -> list:
+               xg_source: str = "fpl", understat_matches=None,
+               dc_xi=None, max_train_seasons=None,
+               minutes_mode="crude", minutes_half_life=2.0) -> list:
     """Walk forward through one season, gameweek by gameweek.
 
     `xg_source`:
       "fpl"       - use FPL's own per-match xG (2022/23 onward only).
       "understat" - overwrite it with Understat's, so the SAME model runs on
                     seasons where FPL never published xG. See `understat_xg_join`.
+
+    `dc_xi` / `max_train_seasons` parameterise the team model for the Phase 6a
+    window/decay experiment. Both None reproduce the shipped model exactly:
+    the library-default Dixon-Coles decay and an expanding training window.
     """
     frame = load_gameweeks(season)
     if xg_source == "understat":
@@ -205,6 +217,7 @@ def run_season(season: str, matches: pd.DataFrame,
 
     history = defaultdict(list)        # player -> fixture rows so far
     gw_totals = defaultdict(list)      # player -> per-gameweek points so far
+    minutes_history = defaultdict(list)  # player -> per-gameweek minutes so far
     predictions = []
 
     for elapsed, gameweek in enumerate(sorted(fixtures_by_gw)):
@@ -214,9 +227,12 @@ def run_season(season: str, matches: pd.DataFrame,
             kickoff = min(f["kickoff_time"] for fs in by_player.values() for f in fs)
             cutoff = pd.Timestamp(kickoff).tz_convert(None)
             train = matches[matches["date"] < cutoff]
+            if max_train_seasons is not None:
+                keep = sorted(train["season"].unique())[-max_train_seasons:]
+                train = train[train["season"].isin(keep)]
 
             if train["season"].nunique() >= MIN_TRAINING_SEASONS:
-                model = _GridCache(ScorelineEnsemble().fit(train))
+                model = _GridCache(ScorelineEnsemble(dc_xi=dc_xi).fit(train))
                 rates = team_scoring_rates(train)
                 logger.info("%s GW%-2d  training on %d matches", season, gameweek, len(train))
 
@@ -225,8 +241,13 @@ def run_season(season: str, matches: pd.DataFrame,
                     if not prior_totals:
                         continue
                     history_rates = _rates_from_history(history[player_id], elapsed)
+                    minutes_model = None
+                    if minutes_mode == "recent":
+                        minutes_model = recent_form_minutes(
+                            minutes_history[player_id], half_life_matches=minutes_half_life)
                     projected = _project_gameweek(
-                        model, rates, fixtures, history_rates, positions[player_id]
+                        model, rates, fixtures, history_rates, positions[player_id],
+                        minutes_model=minutes_model,
                     )
                     if projected is None:
                         continue
@@ -248,17 +269,23 @@ def run_season(season: str, matches: pd.DataFrame,
         for player_id, fixtures in by_player.items():
             history[player_id].extend(fixtures)
             gw_totals[player_id].append(sum(f["total_points"] for f in fixtures))
+            minutes_history[player_id].append(sum(f["minutes"] for f in fixtures))
 
     return predictions
 
 
-def run_backtest(seasons=SEASONS_WITH_XG, xg_source: str = "fpl") -> pd.DataFrame:
+def run_backtest(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
+                 dc_xi=None, max_train_seasons=None,
+                 minutes_mode="crude", minutes_half_life=2.0) -> pd.DataFrame:
     matches = load_understat_matches("EPL")
     understat_matches = ensure_player_matches() if xg_source == "understat" else None
     predictions = []
     for season in seasons:
         predictions.extend(run_season(season, matches, xg_source=xg_source,
-                                      understat_matches=understat_matches))
+                                      understat_matches=understat_matches,
+                                      dc_xi=dc_xi, max_train_seasons=max_train_seasons,
+                                      minutes_mode=minutes_mode,
+                                      minutes_half_life=minutes_half_life))
 
     frame = pd.DataFrame(predictions)
     frame["global_mean"] = frame["actual"].mean()   # constant floor
@@ -271,7 +298,8 @@ def _cache_path(tag: str = "fpl"):
 
 
 def cached_predictions(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
-                       refresh: bool = False) -> pd.DataFrame:
+                       refresh: bool = False, dc_xi=None, max_train_seasons=None,
+                       cache_tag=None, minutes_mode="crude", minutes_half_life=2.0) -> pd.DataFrame:
     """The walk-forward predictions, computed once.
 
     Producing them refits the team model once per gameweek (~7 minutes). Every
@@ -281,8 +309,14 @@ def cached_predictions(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
 
     `xg_source` is part of the cache key: an FPL-xG run and an Understat-xG run over
     the same seasons are different experiments and must never share a file.
+
+    `dc_xi` / `max_train_seasons` parameterise the team model (Phase 6a); a caller
+    testing a non-default team model MUST pass a distinct `cache_tag` so its frame
+    never collides with the shipped default's cache. `cache_tag` defaults to
+    `xg_source`, preserving every existing on-disk cache.
     """
-    path = _cache_path(xg_source)
+    tag = cache_tag if cache_tag is not None else xg_source
+    path = _cache_path(tag)
     if not refresh and path.exists():
         frame = pd.read_csv(path)
         if set(frame["season"].unique()) == set(seasons):
@@ -290,7 +324,9 @@ def cached_predictions(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
             return frame
         logger.info("cached predictions cover different seasons; recomputing")
 
-    frame = run_backtest(seasons, xg_source=xg_source)
+    frame = run_backtest(seasons, xg_source=xg_source, dc_xi=dc_xi,
+                         max_train_seasons=max_train_seasons,
+                         minutes_mode=minutes_mode, minutes_half_life=minutes_half_life)
     path.parent.mkdir(parents=True, exist_ok=True)
     frame.to_csv(path, index=False)
     logger.info("cached %d predictions to %s", len(frame), path)

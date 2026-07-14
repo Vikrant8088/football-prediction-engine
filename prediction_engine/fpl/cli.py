@@ -8,11 +8,32 @@
 import argparse
 import logging
 import sys
-from typing import List
+from typing import Dict, List
 
 from prediction_engine.engine import PredictionEngine
 from prediction_engine.fpl.projection import project_fixture
+from research.data.fpl_archive import ALL_SEASONS, load_gameweeks
 from research.data.fpl_loader import load_players
+
+logger = logging.getLogger(__name__)
+
+
+def _recent_minutes_history() -> Dict[int, list]:
+    """Per-player current-season minutes (chronological) for the recent-form
+    minutes model, keyed by FPL player id. Double-gameweeks are summed to the
+    gameweek total, matching how the model was proven. Returns {} on any failure
+    so the projection degrades gracefully to the crude flat average.
+    """
+    try:
+        frame = load_gameweeks(ALL_SEASONS[-1])
+    except Exception as exc:                      # data not ingested / off-season
+        logger.warning("no current-season minutes history (%s); using flat average", exc)
+        return {}
+    history = {}
+    per_gw = frame.groupby(["player_id", "gameweek"])["minutes"].sum().reset_index()
+    for player_id, rows in per_gw.groupby("player_id"):
+        history[int(player_id)] = rows.sort_values("gameweek")["minutes"].tolist()
+    return history
 
 
 def _safe(text: str) -> str:
@@ -40,9 +61,11 @@ def main(argv: List[str] = None) -> int:
 
     engine = PredictionEngine.train("EPL")
     players = load_players()
+    minutes_history = _recent_minutes_history()
 
     try:
-        table = project_fixture(engine, players, args.home, args.away)
+        table = project_fixture(engine, players, args.home, args.away,
+                                minutes_history=minutes_history)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

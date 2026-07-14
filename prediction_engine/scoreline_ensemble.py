@@ -63,8 +63,16 @@ def outcome_masks(size: int):
 class ScorelineEnsemble(PredictionModel):
     """The champion ensemble, plus a consistent scoreline grid."""
 
-    def __init__(self):
-        self._ensemble = EnsembleModel(BASE_BUILDERS)
+    def __init__(self, dc_xi: float = None):
+        """`dc_xi` overrides the Dixon-Coles-xG time-decay rate (per day). Left as
+        None it reproduces the shipped model exactly (the library default,
+        xi=0.0065). It is a parameter so the Phase 6a window/decay experiment can
+        test a gentler decay without forking this class; the default is unchanged
+        until that experiment proves a new value on the FPL primary endpoint."""
+        builders = dict(BASE_BUILDERS)
+        if dc_xi is not None:
+            builders["dixon_coles_xg"] = lambda: DixonColesXGModel(xi=dc_xi)
+        self._ensemble = EnsembleModel(builders)
 
     @property
     def weights_(self) -> dict:

@@ -84,6 +84,11 @@ class _SpyEnsemble:
 
     seen = []
 
+    def __init__(self, dc_xi=None):
+        # Mirrors ScorelineEnsemble's signature so run_season can pass dc_xi;
+        # the value is irrelevant to the point-in-time discipline under test.
+        self.dc_xi = dc_xi
+
     def fit(self, train):
         _SpyEnsemble.seen.append(train.copy())
         return self

@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from prediction_engine.fpl.projection import (
+    _live_minutes_model,
     expected_minutes,
     fixture_context,
     project_player,
@@ -147,6 +148,40 @@ class TestTeamScoringRates(unittest.TestCase):
         # Only 2024-25 counts: A scored 3 + 1 = 4 over 2 matches.
         self.assertAlmostEqual(rates["A"]["scored_per_match"], 2.0)
         self.assertAlmostEqual(rates["A"]["conceded_per_match"], 0.5)
+
+
+class TestLiveMinutesModel(unittest.TestCase):
+    """The live wiring: recent-form when per-match minutes are supplied, with the
+    availability flag folded in; crude fallback otherwise."""
+
+    def _player(self, player_id=1, chance=100.0, available=True):
+        return _player(id=player_id, chance_of_playing=chance, available=available)
+
+    def test_no_history_falls_back_to_crude(self):
+        self.assertIsNone(_live_minutes_model(self._player(), None))
+
+    def test_player_absent_from_history_falls_back(self):
+        self.assertIsNone(_live_minutes_model(self._player(player_id=7), {3: [90, 90]}))
+
+    def test_recent_form_used_when_history_present(self):
+        # A permanent substitute (always ~20 min): recent-form must zero his
+        # clean-sheet eligibility, which the crude average would wrongly allow.
+        m = _live_minutes_model(self._player(), {1: [20, 20, 20, 20, 20]})
+        self.assertIsNotNone(m)
+        self.assertAlmostEqual(m["p_60"], 0.0)
+        self.assertGreater(m["p_play"], 0.0)
+
+    def test_injury_flag_zeroes_a_nailed_starter(self):
+        # The live-only signal: a 0%-chance player is projected out even with a
+        # perfect recent starting record.
+        m = _live_minutes_model(self._player(chance=0.0, available=False),
+                                {1: [90, 90, 90, 90]})
+        self.assertAlmostEqual(m["expected_minutes"], 0.0)
+
+    def test_doubtful_flag_scales_down(self):
+        full = _live_minutes_model(self._player(chance=100.0), {1: [90, 90, 90]})
+        doubt = _live_minutes_model(self._player(chance=50.0), {1: [90, 90, 90]})
+        self.assertLess(doubt["expected_minutes"], full["expected_minutes"])
 
 
 if __name__ == "__main__":

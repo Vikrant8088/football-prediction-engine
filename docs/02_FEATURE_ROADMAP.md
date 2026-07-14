@@ -827,6 +827,108 @@ re-checking each season to see whether it survives.
 times inside branch-and-bound → O(1) prefix sums, ~2× faster, all 51 brute-force
 proofs still pass). 282 tests pass.*
 
+### Phase 6a — Training window & time-decay ⛔ *(done — a measured null on the FPL edge)*
+
+A deep-research pass (2026-07) on *genuine* ways to grow the edge rated one
+team-model lever cheap-and-worthwhile: tuning the **training window** and
+**Dixon-Coles time-decay `xi`** (the research reported ~4-season window + `xi≈0.001`
+moving match-prediction RPS ~10× more than the goal-model family spread). Our prior
+tuning pass had bracketed but never tested `xi≈0.001`, never varied the window (the
+harness is expanding-window), and measured only 1X2 log-loss — where Elo carries
+~72% of the ensemble and ignores `xi`. So the lever was genuinely untested on the
+channel that feeds the FPL edge: the scoreline **grid** (clean-sheet probability),
+which comes only from the two goal models.
+
+**Stage 1 — the goal-model screen** (`research/evaluation/benchmark_window_decay.py`,
+25 × window/`xi` cells, EPL Understat). A real, coherent signal: the shipped
+`xi=0.0065` is *too aggressive* (it discards almost everything older than a season).
+A gentler `xi≈0.001` predicted **both** clean sheets **and** 1X2 better (cs log-loss
+0.5520 vs 0.5559; wdl 1.0137 vs 1.0168), and the decay-less Poisson preferred a
+bounded ~5-season window. *But* the DC clean-sheet gain passed the t-test and
+**failed Wilcoxon** (concentrated, not broad), so it was carried to the endpoint,
+not believed.
+
+**Stage 2 — the FPL primary** (`research/evaluation/benchmark_fpl_window_decay.py`,
+pre-registered £100m squad + captain, paired head-to-head vs the shipped model, same
+8 seasons / 263 GW). The team-model "improvement" **did not transfer** — it *reversed*:
+
+| team model | edge vs `player_ppg` | vs shipped default (head-to-head) |
+|---|---|---|
+| `xi=0.001` (gentler, per research) | +4.17/GW | **−0.82/GW** (worse), n.s. |
+| **`xi=0.0065` (shipped)** | **+5.02/GW** | — |
+| `xi=0.012` (exploratory) | +5.33/GW | +0.34/GW, n.s. |
+| `xi=0.02` (exploratory) | +5.51/GW | +0.52/GW, n.s., **half from 2019-20** |
+
+- ⛔ **The pre-registered lever is a null — and the research's specific recommendation
+  (gentler decay + short window) actively *hurts* the FPL edge.** The setting that
+  improved the team model's own *calibration* (Stage 1) degraded the *product*. Had we
+  tuned on the Stage 1 metric and shipped `xi=0.001`, we'd have made the engine worse
+  while believing we'd improved it — the exact trap the two-stage design existed to
+  catch.
+- 🔎 **The insight worth keeping:** the edge rises *monotonically* with `xi`
+  (+4.17 → +5.02 → +5.33 → +5.51), the opposite direction from the calibration metric.
+  The FPL squad decision rewards **fixture discrimination** — telling this week's easy
+  fixture from a hard one — which a *more reactive* (aggressive-decay) model does
+  better, even as its average calibration worsens. **Calibration ≠ discrimination.**
+- ⚠️ The exploratory more-aggressive arms lean positive (+0.3 to +0.5/GW) but are **not
+  significant** (t p≈0.30–0.36, Wilcoxon p≈0.40), and **>½ the gain rides on 2019-20**
+  (drop it → +0.24/GW) — the Phase 5b fragility. In-sample selected, so unshippable
+  without a leakage-safe nested-tuning confirmation.
+
+**Verdict: the shipped `xi=0.0065` / expanding-window default stands.** The decay
+lever is a measured null on the FPL endpoint, with at most a small, unproven,
+season-fragile hint that a *touch* more decay might help — consistent with the
+research's core message that differences between good models sit near the noise floor.
+*(Team model gained a backward-compatible `dc_xi` parameter — default unchanged — to
+run this experiment; kept only to support a future confirmation, not shipped as a new
+default.)*
+
+### Phase 6b — Recent-form minutes model ✅ *(done — the first proven model-quality gain)*
+
+Phase 6a's decay lever failed, but pointed at the prize the deep-research pass named
+#1: the crude minutes model (`season minutes / gameweeks played`). Rebuilt as a
+recency-weighted model (`prediction_engine/fpl/minutes.py`) that estimates the three
+quantities the flat average conflates — **P(plays 60+)**, **P(plays at all)**,
+**expected minutes** — so a permanent substitute is no longer handed clean-sheet
+eligibility he cannot earn, and a recently-benched or recently-promoted player is read
+from recent form rather than a stale season average.
+
+**Gate A — a better minutes predictor?** (`benchmark_minutes_accuracy.py`, walk-forward
+within 8 seasons, squad-relevant pool.) Decisively yes: minutes MAE **22.0 vs crude
+28.8** (−23%), P(60+) Brier **0.169 vs 0.277** (−39%), both p<0.0001. Half-life 2
+matches is best on the clean-sheet-eligibility Brier.
+
+**Gate B — does it grow the FPL edge?** (`benchmark_fpl_minutes.py`, pre-registered
+£100m squad + captain, paired head-to-head vs the shipped crude model, 8 seasons /
+263 GW.)
+
+| minutes model | edge vs player_ppg | vs crude (head-to-head) |
+|---|---|---|
+| **crude (shipped)** | +5.02/GW | — |
+| recent-form HL=1 (twitchy) | +6.74/GW | +1.75, fails Wilcoxon |
+| **recent-form HL=2** | **+7.94/GW** | **+2.95, t p=0.0002, W p=0.0016, Holm ✓** |
+
+- ✅ **Proven.** Beats the shipped model by **+2.95/GW head-to-head**, significant on
+  BOTH tests after Holm, **positive in 7/8 seasons**, survives dropping the best season
+  (+2.14) and the defensive-contribution season (+3.04). The first model-quality
+  improvement in the project beyond "xG > goals" and the fixture edge itself.
+- The twitchier HL=1 over-reacts to one-off rotations and fails Wilcoxon; HL=2 — also
+  the best Gate-A clean-sheet predictor — is the pick.
+- ⬆️ **Understated live.** The backtest cannot use FPL's injury/availability flag
+  (never published historically), the single biggest minutes signal. Live, the
+  projection has it, so the real gain is larger than the backtested +2.95.
+
+*Mechanism: the crude model over-rates benched, rotated and permanent-substitute
+players, handing them appearance and clean-sheet points they cannot earn; in a 15-man
+squad, picking one who then scores 0 is punishing, so correctly avoiding them adds real
+points.*
+
+*Engineering: `project_player` gained an optional `minutes_model` (default None
+reproduces the shipped flat average byte-for-byte); the appearance term is now
+E[app] = P(plays) + P(60+), which collapses to the old 2·P(60+) under the crude model.
+293 tests pass. Not yet wired into the live `project_fixture` default or committed —
+pending the decision to crown it champion.*
+
 ### Phase 4e — Serving + drift *(pending)*
 
 - `prediction_engine/serving/` — FastAPI service returning the same payload.
