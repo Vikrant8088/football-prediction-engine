@@ -55,8 +55,11 @@ FIRST_SEASON = 2015
 LAST_SEASON = 2025
 
 # The per-match fields a projection or a scoring reconstruction needs.
+# npg/npxG are non-penalty goals / xG: penalty xG = xG - npxG per match, the
+# leakage-safe penalty signal (Phase 6c). A player only accrues penalty xG when
+# he actually takes the kick, so this doubles as the taker identifier.
 KEEP_FIELDS = ("season", "date", "xG", "xA", "goals", "assists", "time",
-               "h_team", "a_team", "h_goals", "a_goals")
+               "h_team", "a_team", "h_goals", "a_goals", "npg", "npxG")
 
 UNDERSTAT_SOURCE = "understat"
 LEAGUE = "EPL"

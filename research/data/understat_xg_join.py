@@ -91,6 +91,10 @@ def inject_understat_xg(frame: pd.DataFrame, season: str,
     frame = frame.copy()
     xg = frame["expected_goals"].to_numpy(dtype=float).copy()
     xa = frame["expected_assists"].to_numpy(dtype=float).copy()
+    # Non-penalty xG, injected alongside total xG so the projection can model
+    # penalties separately (penalty xG = xG - npxG). Defaults to total xG, so a
+    # match Understat has no npxG for is treated as all open-play (0 penalty).
+    npxg = xg.copy()
 
     covered_minutes = 0
     played_minutes = 0
@@ -107,15 +111,19 @@ def inject_understat_xg(frame: pd.DataFrame, season: str,
         if match is not None:
             xg[i] = float(match["xG"])
             xa[i] = float(match["xA"])
+            npxg[i] = (float(match["npxG"]) if match.get("npxG") is not None
+                       else float(match["xG"]))
             if minutes > 0:
                 covered_minutes += int(minutes)
                 covered_rows += 1
         else:
             xg[i] = 0.0
             xa[i] = 0.0
+            npxg[i] = 0.0
 
     frame["expected_goals"] = xg
     frame["expected_assists"] = xa
+    frame["expected_goals_np"] = npxg
 
     summary = {
         "season": season,

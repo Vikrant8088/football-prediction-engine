@@ -929,6 +929,51 @@ E[app] = P(plays) + P(60+), which collapses to the old 2·P(60+) under the crude
 293 tests pass. Not yet wired into the live `project_fixture` default or committed —
 pending the decision to crown it champion.*
 
+### Phase 6c — Penalty / set-piece split ⛔ *(done — a measured null on the FPL edge)*
+
+The biggest *named* blind spot from the feature review: the engine doesn't model
+who takes penalties. Investigated properly. **What we found first:** a player's xG
+rate *already includes* the penalties he takes (a penalty is ~0.76 xG), so the
+engine was never blind to takers — it rates them higher on average. The real defect
+is subtler: the shipped model scales a player's *whole* xG — penalties included — by
+the open-play **fixture multiplier**, over-inflating a taker's penalty value in easy
+fixtures (you don't win proportionally more penalties against a weak side).
+
+**Data:** no scraping needed — the `getPlayerMatches` endpoint we already ingest
+returns non-penalty xG (`npxG`) per match, so penalty xG = xG − npxG, leakage-safe,
+and it doubles as the taker identifier (only takers accrue it). Extended the
+ingestion to keep it (xG values verified byte-stable; 2,141 penalty-shot matches).
+
+**Signal screen:** 99 genuine takers; penalties are a material share of the premium
+takers' xG (Bruno 31%, Ronaldo 20%, Kane 18%, Haaland 15%, Salah 14%) — so the
+correction is real and lands on captain-worthy picks, but small (~0.2–0.5 pts for a
+taker in an extreme fixture).
+
+**Model:** split each player's xG — open-play keeps the fixture multiplier, the
+penalty part uses its own (flat, pre-specified: `penalty_multiplier = 1.0`, not
+tuned on the edge).
+
+**Gate B** (`benchmark_fpl_penalties.py`, pre-registered £100m-squad primary,
+head-to-head vs the recent-form-minutes champion, only the split varies):
+
+| model | edge vs player_ppg | vs champion (head-to-head) |
+|---|---|---|
+| **champion (penalties lumped)** | +7.97/GW | — |
+| penalty split (penalties flat) | +8.10/GW | **+0.163/GW**, t p=0.60, W p=0.53 |
+
+- ⛔ **Null.** Not significant on either test, positive in only 4/8 seasons, and
+  dropping the best season (2022-23) flips it negative (−0.06). The split is *more
+  principled* but the correction is too small to move the squad decision — consistent
+  with the research (no verified penalty effect) and with xG already capturing takers.
+- The lumped model **stands**. The `npxg` ingestion and the backward-compatible
+  `split_penalties` parameter (default off) are kept — harmless, and they'd support a
+  future recency-weighted taker model or set-piece work if that's ever motivated. Not
+  shipped as a default.
+
+*Takeaway: "we don't model penalties" sounded like a big gap, but the gap was already
+~90% filled by xG. The remaining 10% (not over-scaling penalties by the fixture) is
+real but below the noise floor of the squad decision.*
+
 ### Phase 4e — Serving + drift *(pending)*
 
 - `prediction_engine/serving/` — FastAPI service returning the same payload.

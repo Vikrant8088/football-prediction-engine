@@ -102,8 +102,8 @@ FORMATIONS = [
 # legitimate prediction-time filter, not hindsight.
 PICKABLE_PPG = 3.0
 
-RATE_FIELDS = ("xg_per_90", "xa_per_90", "saves_per_90", "bonus_per_90",
-               "dc_per_90", "cards_per_90")
+RATE_FIELDS = ("xg_per_90", "npxg_per_90", "xa_per_90", "saves_per_90",
+               "bonus_per_90", "dc_per_90", "cards_per_90")
 
 
 def _rates_from_history(rows: list, gameweeks_elapsed: int) -> dict:
@@ -118,10 +118,15 @@ def _rates_from_history(rows: list, gameweeks_elapsed: int) -> dict:
     def total(field):
         return sum(r[field] for r in rows)
 
+    # Non-penalty xG: present only when Understat xG was injected; fall back to
+    # total xG (all open-play) for the FPL-xG path, so penalty xG comes out 0.
+    total_npxg = sum(r.get("expected_goals_np", r["expected_goals"]) for r in rows)
+
     return {
         "minutes": minutes,
         "gameweeks": max(gameweeks_elapsed, 1),
         "xg_per_90": (total("expected_goals") / per_90) if per_90 else 0.0,
+        "npxg_per_90": (total_npxg / per_90) if per_90 else 0.0,
         "xa_per_90": (total("expected_assists") / per_90) if per_90 else 0.0,
         "saves_per_90": (total("saves") / per_90) if per_90 else 0.0,
         "bonus_per_90": (total("bonus") / per_90) if per_90 else 0.0,
@@ -130,12 +135,14 @@ def _rates_from_history(rows: list, gameweeks_elapsed: int) -> dict:
     }
 
 
-def _project_gameweek(model, rates, fixtures, history_rates, position, minutes_model=None):
+def _project_gameweek(model, rates, fixtures, history_rates, position, minutes_model=None,
+                      split_penalties=False, penalty_multiplier=1.0):
     """Sum a player's projection over every fixture he plays this gameweek.
 
     `minutes_model` is the prebuilt {expected_minutes, p_60, p_play} for this
     player (None -> project_player falls back to the crude flat average, the
-    shipped behaviour)."""
+    shipped behaviour). `split_penalties`/`penalty_multiplier` control the
+    penalty-vs-open-play xG split (Phase 6c)."""
     total = 0.0
     for fixture in fixtures:
         team, opponent = fixture["team"], fixture["opponent"]
@@ -158,6 +165,7 @@ def _project_gameweek(model, rates, fixtures, history_rates, position, minutes_m
         total += project_player(
             projection_input, context, rates[team],
             gameweeks=history_rates["gameweeks"], minutes_model=minutes_model,
+            split_penalties=split_penalties, penalty_multiplier=penalty_multiplier,
         )["expected_points"]
     return total
 
@@ -188,7 +196,8 @@ class _GridCache:
 def run_season(season: str, matches: pd.DataFrame,
                xg_source: str = "fpl", understat_matches=None,
                dc_xi=None, max_train_seasons=None,
-               minutes_mode="crude", minutes_half_life=2.0) -> list:
+               minutes_mode="crude", minutes_half_life=2.0,
+               penalty_split=False, penalty_multiplier=1.0) -> list:
     """Walk forward through one season, gameweek by gameweek.
 
     `xg_source`:
@@ -248,6 +257,7 @@ def run_season(season: str, matches: pd.DataFrame,
                     projected = _project_gameweek(
                         model, rates, fixtures, history_rates, positions[player_id],
                         minutes_model=minutes_model,
+                        split_penalties=penalty_split, penalty_multiplier=penalty_multiplier,
                     )
                     if projected is None:
                         continue
@@ -276,7 +286,8 @@ def run_season(season: str, matches: pd.DataFrame,
 
 def run_backtest(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
                  dc_xi=None, max_train_seasons=None,
-                 minutes_mode="crude", minutes_half_life=2.0) -> pd.DataFrame:
+                 minutes_mode="crude", minutes_half_life=2.0,
+                 penalty_split=False, penalty_multiplier=1.0) -> pd.DataFrame:
     matches = load_understat_matches("EPL")
     understat_matches = ensure_player_matches() if xg_source == "understat" else None
     predictions = []
@@ -285,7 +296,9 @@ def run_backtest(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
                                       understat_matches=understat_matches,
                                       dc_xi=dc_xi, max_train_seasons=max_train_seasons,
                                       minutes_mode=minutes_mode,
-                                      minutes_half_life=minutes_half_life))
+                                      minutes_half_life=minutes_half_life,
+                                      penalty_split=penalty_split,
+                                      penalty_multiplier=penalty_multiplier))
 
     frame = pd.DataFrame(predictions)
     frame["global_mean"] = frame["actual"].mean()   # constant floor
@@ -299,7 +312,8 @@ def _cache_path(tag: str = "fpl"):
 
 def cached_predictions(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
                        refresh: bool = False, dc_xi=None, max_train_seasons=None,
-                       cache_tag=None, minutes_mode="crude", minutes_half_life=2.0) -> pd.DataFrame:
+                       cache_tag=None, minutes_mode="crude", minutes_half_life=2.0,
+                       penalty_split=False, penalty_multiplier=1.0) -> pd.DataFrame:
     """The walk-forward predictions, computed once.
 
     Producing them refits the team model once per gameweek (~7 minutes). Every
@@ -326,7 +340,8 @@ def cached_predictions(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
 
     frame = run_backtest(seasons, xg_source=xg_source, dc_xi=dc_xi,
                          max_train_seasons=max_train_seasons,
-                         minutes_mode=minutes_mode, minutes_half_life=minutes_half_life)
+                         minutes_mode=minutes_mode, minutes_half_life=minutes_half_life,
+                         penalty_split=penalty_split, penalty_multiplier=penalty_multiplier)
     path.parent.mkdir(parents=True, exist_ok=True)
     frame.to_csv(path, index=False)
     logger.info("cached %d predictions to %s", len(frame), path)

@@ -128,6 +128,8 @@ def project_player(
     team_rate: Dict[str, float],
     gameweeks: int = GAMEWEEKS_PER_SEASON,
     minutes_model: Dict[str, float] = None,
+    split_penalties: bool = False,
+    penalty_multiplier: float = 1.0,
 ) -> Dict[str, float]:
     """Expected FPL points for one player in one fixture, broken into its parts.
 
@@ -168,7 +170,20 @@ def project_player(
         if team_rate["conceded_per_match"] > 0 else 1.0
     )
 
-    exp_goals = float(player["xg_per_90"]) * minutes_share * attack_multiplier
+    # Goals: by default the player's whole xG rate is scaled by the open-play
+    # fixture multiplier. With `split_penalties`, the non-penalty part is scaled
+    # by the fixture (open play really does depend on how good the match-up is)
+    # while the penalty part uses its own multiplier - a penalty's value hangs on
+    # who takes it and whether one is awarded, not on how many open-play goals the
+    # team is expected to score. penalty xG per 90 = total - non-penalty.
+    xg_per_90 = float(player["xg_per_90"])
+    if split_penalties and "npxg_per_90" in player:
+        npxg_per_90 = float(player["npxg_per_90"])
+        penalty_xg_per_90 = max(0.0, xg_per_90 - npxg_per_90)
+        exp_goals = (npxg_per_90 * attack_multiplier
+                     + penalty_xg_per_90 * penalty_multiplier) * minutes_share
+    else:
+        exp_goals = xg_per_90 * minutes_share * attack_multiplier
     exp_assists = float(player["xa_per_90"]) * minutes_share * attack_multiplier
 
     # E[appearance] = 1 * P(1-59 min) + 2 * P(60+ min) = (p_play - p_60) + 2*p_60.

@@ -143,6 +143,25 @@ rotated/sub players (points they cannot earn); avoiding them in a 15-man squad a
 real points — a *discrimination* gain, unlike the Phase 6a decay null. Understated
 live: the backtest cannot see FPL's injury flag, the biggest minutes signal.
 
+### Evidence log — Penalty / set-piece split (Phase 6c, run `fpl_penalties_*`)
+
+The biggest *named* blind spot, investigated properly — and a **null on the edge**.
+Key realisation first: a player's xG already *includes* the penalties he takes
+(~0.76 xG each), so the engine already rates takers higher; the only defect is that
+the shipped model scales that penalty xG by the open-play *fixture multiplier*,
+over-inflating a taker in easy games. Understat's per-match `npxG` (fetched by
+extending the existing endpoint — no scraping) gives penalty xG = xG − npxG,
+leakage-safe, and identifies takers (only they accrue it). Signal is material for
+premium takers (penalties are 14–31% of Bruno/Kane/Salah/Haaland's xG) but the
+per-fixture correction is small (~0.2–0.5 pts). **Gate B** (pre-registered £100m
+primary, head-to-head vs the recent-form-minutes champion, only the split varies):
++8.10 vs +7.97/GW — a head-to-head gain of **+0.163/GW, NOT significant** (t p=0.60,
+Wilcoxon p=0.53), positive in only 4/8 seasons, negative once the best season is
+dropped. The split is more principled but below the squad decision's noise floor.
+**Lumped model stands**; the `npxg` ingestion and off-by-default `split_penalties`
+parameter are kept for possible future set-piece / recency-taker work. Consistent
+with the deep-research finding of no verified penalty effect.
+
 ### Evidence log — Training window & time-decay (Phase 6a, runs `window_decay_*` + `fpl_window_decay_*`)
 
 A deep-research pass rated window/decay tuning the cheapest team-model lever. Tested
