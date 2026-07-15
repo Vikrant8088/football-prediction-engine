@@ -974,6 +974,35 @@ head-to-head vs the recent-form-minutes champion, only the split varies):
 ~90% filled by xG. The remaining 10% (not over-scaling penalties by the fixture) is
 real but below the noise floor of the squad decision.*
 
+### Phase 6d — Opponent / venue adjustment of player rates ⛔ *(done — a null, killed by a cheap screen)*
+
+The next named blind spot: a player's xG/xA rate is his own average, with no explicit
+opponent or home/away adjustment. Screened before building (no full experiment
+needed), and it is a **null** — the aggregate effects are real but already captured
+by the team-level fixture multiplier, and there is no predictive player-specific
+residual to add:
+
+- **Venue:** mean home xG/90 0.147 vs away 0.122 (+20%, 69% of players higher at
+  home) — a real, uniform effect. But the split-half predictability of a *player's*
+  home-minus-away split is **r=0.05** — noise. That +20% is already applied by the
+  team model's home advantage (higher expected goals at home → higher fixture
+  multiplier at home), so a player-level venue term just re-applies it.
+- **Opponent:** players score +0.020 xG/90 more vs weak defences (real, aggregate),
+  but the split-half predictability of a *player's* opponent-sensitivity split is
+  **r=−0.06** — noise. And a player shares his team's schedule, so the fixture
+  multiplier (`expected_goals_for / team_avg`) already adjusts each projection for the
+  specific opponent. Nothing player-specific left to add.
+
+The screen is decisive precisely because it finds **no additive signal** — unlike
+Phase 6c, where the penalty signal was material and forced the full edge test. Model
+unchanged.
+
+*Pattern worth noting across Phases 6a/6c/6d: every subtle player-**rate** refinement
+(decay, penalties, opponent, venue) is a null — the fixture multiplier and xG already
+capture the aggregate, and player-specific residuals are below the squad decision's
+noise floor. The one thing that moved the edge (Phase 6b, minutes) was structural —
+**whether a player is on the pitch at all**, not how his rate is fine-tuned.*
+
 ### Phase 4e — Serving + drift *(pending)*
 
 - `prediction_engine/serving/` — FastAPI service returning the same payload.

@@ -143,6 +143,20 @@ rotated/sub players (points they cannot earn); avoiding them in a 15-man squad a
 real points — a *discrimination* gain, unlike the Phase 6a decay null. Understated
 live: the backtest cannot see FPL's injury flag, the biggest minutes signal.
 
+### Evidence log — Opponent / venue-adjusted player rates (Phase 6d, screen only)
+
+Killed by a cheap screen, no full experiment needed. Both halves are a **null**: the
+aggregate effects are real but already captured by the team-level fixture multiplier,
+and the player-specific residual is noise. **Venue:** +20% home xG/90 (0.147 vs 0.122,
+69% of players higher at home) but the split-half predictability of a player's
+home-minus-away split is r=0.05 — the home boost is already applied by the team model's
+home advantage. **Opponent:** +0.020 xG/90 vs weak defences but player-specific
+opponent-sensitivity split-half r=−0.06, and the fixture multiplier already adjusts
+each projection for the opponent (players share their team's schedule). No additive
+signal to model. Consistent with the Phase 6a/6c pattern: subtle player-rate
+refinements are below the squad decision's noise floor; only structural minutes
+(Phase 6b) moved the edge.
+
 ### Evidence log — Penalty / set-piece split (Phase 6c, run `fpl_penalties_*`)
 
 The biggest *named* blind spot, investigated properly — and a **null on the edge**.
