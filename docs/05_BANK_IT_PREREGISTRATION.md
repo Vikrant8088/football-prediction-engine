@@ -35,7 +35,9 @@ efficient, so the recent end is the honest expectation.
   starter captained.
 - **Baseline squad:** the identical construction from `player_ppg`.
 - **Metric:** mean over scored gameweeks of
-  `(our XI actual points, captain doubled) − (baseline XI actual points, captain doubled)`.
+  `(our XI actual points) − (baseline XI actual points)`, where each squad's captain
+  is doubled — or its **vice-captain** if the captain plays 0 minutes (FPL's rule).
+  Both squads lock a captain *and* a vice-captain before the deadline.
 
 This is the **same endpoint validated in `benchmark_fpl_optimizer`** (£100m, with
 captain). It is deliberately not the flattering cell: captaincy *reduces* our measured
@@ -98,8 +100,11 @@ gain. A single pre-specified endpoint needs no multiplicity correction.
 - **Rebuild-from-scratch** each gameweek — no carried squad, no transfers or hits. This
   matches the backtest that produced the proven number. A transfer-realistic variant, if
   built, is a **separate, separately pre-registered** test.
-- **No autosubs:** a locked starter who plays 0 minutes scores 0. Applied identically to
-  both squads.
+- **Vice-captain:** each squad locks a captain and a vice-captain (the 2nd-highest-
+  projected starter). If the captain plays 0 minutes, the vice-captain is doubled
+  instead; if both play 0, nobody is doubled. Applied identically to both squads.
+- **No outfield autosubs:** a locked starter (other than the captain→vice case) who
+  plays 0 minutes scores 0. Applied identically to both squads.
 - **The real game:** budget exactly £100.0m, quota 2/5/5/3, max 3 per club.
 
 ---
@@ -122,4 +127,8 @@ gain. A single pre-specified endpoint needs no multiplicity correction.
 
 Any change to this protocol after publication is recorded here with date and reason.
 
-- *(none — as pre-registered 2026-07-16)*
+- **2026-07-16 — vice-captain rule added.** The original draft doubled the captain
+  unconditionally. FPL promotes the vice-captain when the captain plays 0 minutes, so
+  each squad now locks a vice-captain and the scorer applies the promotion. Made before
+  any live data existed; applies identically to both squads, so it does not bias the
+  comparison — it only makes the scoring match the real game. *(Reason: correctness.)*

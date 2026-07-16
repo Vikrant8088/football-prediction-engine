@@ -28,25 +28,71 @@ logger = logging.getLogger(__name__)
 SEASON_GAMEWEEKS = 38
 
 
-def score_squad(actuals: Dict[int, float], xi_ids: List[int], captain_id: int) -> float:
-    """Actual FPL points of a starting XI, with the captain counted twice.
+def _effective_captain(captain_id: int, vice_captain_id: Optional[int],
+                       minutes: Optional[Dict[int, float]]) -> Optional[int]:
+    """Whose score is doubled, applying FPL's vice-captain rule.
 
-    A player absent from `actuals` scored nothing that gameweek (did not feature);
-    v1 does not autosub him. `actuals` keys are FPL player ids.
+    If we know minutes and the captain played 0, the vice-captain is promoted; if
+    the vice-captain also played 0, nobody is doubled. With no minutes information
+    (`minutes` None) the captain is doubled unconditionally — the legacy behaviour,
+    and what keeps this identical to the optimizer's `xi_actual_points`.
     """
-    total = sum(float(actuals.get(int(pid), 0.0)) for pid in xi_ids)
-    total += float(actuals.get(int(captain_id), 0.0))     # captain: doubled
+    if minutes is None:
+        return captain_id
+    if float(minutes.get(int(captain_id), 0.0)) > 0:
+        return captain_id
+    if vice_captain_id is not None and float(minutes.get(int(vice_captain_id), 0.0)) > 0:
+        return vice_captain_id
+    return None                                    # captain and vice both blanked
+
+
+def score_squad(points: Dict[int, float], xi_ids: List[int], captain_id: int,
+                vice_captain_id: Optional[int] = None,
+                minutes: Optional[Dict[int, float]] = None) -> float:
+    """Actual FPL points of a starting XI, with the (effective) captain counted twice.
+
+    A player absent from `points` scored nothing that gameweek (did not feature);
+    v1 does not autosub him. `minutes`, when supplied, activates the vice-captain
+    rule via `_effective_captain`. All keys are FPL player ids.
+    """
+    total = sum(float(points.get(int(pid), 0.0)) for pid in xi_ids)
+    effective = _effective_captain(captain_id, vice_captain_id, minutes)
+    if effective is not None:
+        total += float(points.get(int(effective), 0.0))     # captaincy: doubled
     return float(total)
 
 
-def score_artifact(artifact: dict, actuals: Dict[int, float]) -> dict:
-    """Score a locked gameweek artifact. Returns {gameweek, ours[, baseline, gain]}."""
+def _split_actuals(actuals: Dict[int, object]):
+    """Accept either {id: points} or {id: {"points", "minutes"}}; return (points,
+    minutes). minutes is None when no per-player minutes were supplied, which makes
+    the scorer fall back to unconditional captain doubling (no vice-captain rule)."""
+    points, minutes = {}, {}
+    for pid, value in actuals.items():
+        pid = int(pid)
+        if isinstance(value, dict):
+            points[pid] = float(value.get("points", 0.0))
+            minutes[pid] = float(value.get("minutes", 0.0))
+        else:
+            points[pid] = float(value)
+    return points, (minutes or None)
+
+
+def score_artifact(artifact: dict, actuals: Dict[int, object]) -> dict:
+    """Score a locked gameweek artifact. Returns {gameweek, ours[, baseline, gain]}.
+
+    `actuals` may carry minutes (see `_split_actuals`); when it does, the vice-
+    captain rule applies to both our squad and the baseline.
+    """
+    points, minutes = _split_actuals(actuals)
     our_xi = [row["player_id"] for row in artifact["xi"]]
-    ours = score_squad(actuals, our_xi, artifact["captain_id"])
+    ours = score_squad(points, our_xi, artifact["captain_id"],
+                       vice_captain_id=artifact.get("vice_captain_id"), minutes=minutes)
     record = {"gameweek": int(artifact["gameweek"]), "ours": ours}
     baseline = artifact.get("baseline")
     if baseline is not None:
-        record["baseline"] = score_squad(actuals, baseline["xi"], baseline["captain_id"])
+        record["baseline"] = score_squad(
+            points, baseline["xi"], baseline["captain_id"],
+            vice_captain_id=baseline.get("vice_captain_id"), minutes=minutes)
         record["gain"] = ours - record["baseline"]
     return record
 
@@ -124,16 +170,19 @@ class SeasonLedger:
         return cls(payload["season"], payload.get("records"))
 
 
-def gameweek_actuals(season: str, gameweek: int) -> Dict[int, float]:
-    """Actual FPL points per player id for a completed gameweek, from the archive.
+def gameweek_actuals(season: str, gameweek: int) -> Dict[int, dict]:
+    """Actual points AND minutes per player id for a completed gameweek, from the
+    archive: {player_id: {"points": p, "minutes": m}}.
 
-    Double gameweeks are summed, matching how the squad was scored. The community
-    archive lags the live API by a few days; the live season's same-week scoring
-    would read FPL's `event/{gw}/live` endpoint instead (a small follow-up), but the
-    ledger machinery is identical either way.
+    Minutes are needed for the vice-captain rule (a captain who played 0 is replaced
+    by the vice-captain). Double gameweeks are summed, matching how the squad was
+    scored. The community archive lags the live API by a few days; the live season's
+    same-week scoring would read FPL's `event/{gw}/live` endpoint instead (a small
+    follow-up), but the ledger machinery is identical either way.
     """
     from research.data.fpl_archive import load_gameweeks
     frame = load_gameweeks(season)
     week = frame[frame["gameweek"] == gameweek]
-    return {int(pid): float(points)
-            for pid, points in week.groupby("player_id")["total_points"].sum().items()}
+    grouped = week.groupby("player_id").agg({"total_points": "sum", "minutes": "sum"})
+    return {int(pid): {"points": float(row["total_points"]), "minutes": float(row["minutes"])}
+            for pid, row in grouped.iterrows()}

@@ -28,6 +28,27 @@ class TestScoreSquad(unittest.TestCase):
         actuals = {1: 5.0}                        # ids 2, 3 did not feature
         self.assertAlmostEqual(scorer.score_squad(actuals, [1, 2, 3], captain_id=2), 5.0)
 
+    def test_vice_captain_promoted_when_captain_blanks(self):
+        points = {1: 0.0, 2: 8.0, 3: 2.0}
+        minutes = {1: 0.0, 2: 90.0, 3: 90.0}      # captain 1 played 0 -> vice 2 doubled
+        self.assertAlmostEqual(
+            scorer.score_squad(points, [1, 2, 3], captain_id=1,
+                               vice_captain_id=2, minutes=minutes), 0 + 8 + 2 + 8)
+
+    def test_captain_kept_when_he_plays(self):
+        points = {1: 6.0, 2: 8.0, 3: 2.0}
+        minutes = {1: 90.0, 2: 90.0, 3: 90.0}     # captain played -> captain doubled
+        self.assertAlmostEqual(
+            scorer.score_squad(points, [1, 2, 3], captain_id=1,
+                               vice_captain_id=2, minutes=minutes), 6 + 8 + 2 + 6)
+
+    def test_no_double_when_captain_and_vice_both_blank(self):
+        points = {1: 0.0, 2: 0.0, 3: 5.0}
+        minutes = {1: 0.0, 2: 0.0, 3: 90.0}       # neither plays -> nobody doubled
+        self.assertAlmostEqual(
+            scorer.score_squad(points, [1, 2, 3], captain_id=1,
+                               vice_captain_id=2, minutes=minutes), 5.0)
+
 
 class TestScoreArtifact(unittest.TestCase):
     def _artifact(self):
@@ -49,6 +70,17 @@ class TestScoreArtifact(unittest.TestCase):
         artifact = {"gameweek": 1, "captain_id": 1, "xi": [{"player_id": 1}]}
         record = scorer.score_artifact(artifact, {1: 5.0})
         self.assertNotIn("gain", record)
+
+    def test_vice_captain_rule_applies_when_actuals_carry_minutes(self):
+        artifact = {
+            "gameweek": 5, "captain_id": 10, "vice_captain_id": 11,
+            "xi": [{"player_id": 10}, {"player_id": 11}, {"player_id": 12}],
+        }
+        actuals = {10: {"points": 0.0, "minutes": 0.0},     # captain blanked
+                   11: {"points": 7.0, "minutes": 90.0},    # vice played -> doubled
+                   12: {"points": 3.0, "minutes": 90.0}}
+        record = scorer.score_artifact(artifact, actuals)
+        self.assertAlmostEqual(record["ours"], 0 + 7 + 3 + 7)
 
 
 class TestPairedSummary(unittest.TestCase):

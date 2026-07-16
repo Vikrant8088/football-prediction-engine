@@ -139,6 +139,10 @@ class TestPickSquadAndArtifact(unittest.TestCase):
         self.assertEqual(len(artifact["xi"]), 11)
         self.assertEqual(len(artifact["bench"]), 4)
         self.assertEqual(sum(1 for r in artifact["xi"] if r["captain"]), 1)
+        # Exactly one vice-captain, in the XI, and not the captain.
+        self.assertEqual(sum(1 for r in artifact["xi"] if r["vice_captain"]), 1)
+        self.assertIn("vice_captain_id", artifact)
+        self.assertNotEqual(artifact["captain_id"], artifact["vice_captain_id"])
         # Must round-trip through JSON (no numpy types leaking in).
         json.dumps(artifact)
         # And render without error.

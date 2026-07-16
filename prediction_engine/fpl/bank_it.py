@@ -134,7 +134,8 @@ def baseline_ppg(players: pd.DataFrame, minutes_history: Optional[Dict[int, list
 # Artifact: the committed record of what we predicted, before the deadline.
 # ---------------------------------------------------------------------------
 
-def _row_record(row: pd.Series, is_captain: bool = False) -> dict:
+def _row_record(row: pd.Series, is_captain: bool = False,
+                is_vice: bool = False) -> dict:
     return {
         "player_id": int(row["player_id"]),
         "player": str(row["player"]),
@@ -144,7 +145,18 @@ def _row_record(row: pd.Series, is_captain: bool = False) -> dict:
         "expected_points": round(float(row["expected_points"]), 3),
         "available": bool(row["available"]),
         "captain": bool(is_captain),
+        "vice_captain": bool(is_vice),
     }
+
+
+def _vice_of(frame: pd.DataFrame, squad, value_column: str):
+    """The vice-captain: the highest-`value_column` starter who is not the captain.
+    FPL promotes him to captain if the captain plays 0 minutes."""
+    ranked = frame.loc[squad.xi].sort_values(value_column, ascending=False)
+    for idx in ranked.index:
+        if idx != squad.captain:
+            return idx
+    return squad.captain              # 11-man XI always has a distinct second; guard only
 
 
 def _baseline_block(frame: pd.DataFrame, baseline_squad) -> dict:
@@ -152,11 +164,13 @@ def _baseline_block(frame: pd.DataFrame, baseline_squad) -> dict:
     score it after the gameweek, alongside the human-readable XI."""
     defenders, midfielders, forwards = baseline_squad.formation
     xi = frame.loc[baseline_squad.xi].sort_values("player_ppg", ascending=False)
+    vice_idx = _vice_of(frame, baseline_squad, "player_ppg")
     return {
         "name": "player_ppg",
         "formation": "%d-%d-%d" % (defenders, midfielders, forwards),
         "squad_cost": round(float(baseline_squad.cost), 1),
         "captain_id": int(frame.loc[baseline_squad.captain, "player_id"]),
+        "vice_captain_id": int(frame.loc[vice_idx, "player_id"]),
         "xi": [int(frame.loc[idx, "player_id"]) for idx in baseline_squad.xi],
         "bench": [int(frame.loc[idx, "player_id"]) for idx in baseline_squad.bench],
         "xi_names": [str(frame.loc[idx, "player"]) for _, idx in
@@ -176,6 +190,7 @@ def build_artifact(frame: pd.DataFrame, squad, gameweek: int,
                                          ascending=[True, False])
     bench = frame.loc[squad.bench].sort_values(["position_id", "expected_points"],
                                                ascending=[True, False])
+    vice_idx = _vice_of(frame, squad, "expected_points")
     defenders, midfielders, forwards = squad.formation
     artifact = {
         "gameweek": int(gameweek),
@@ -187,7 +202,9 @@ def build_artifact(frame: pd.DataFrame, squad, gameweek: int,
         "squad_cost": round(float(squad.cost), 1),
         "projected_points": round(float(squad.projected), 3),
         "captain_id": int(frame.loc[squad.captain, "player_id"]),
-        "xi": [_row_record(row, is_captain=(idx == squad.captain))
+        "vice_captain_id": int(frame.loc[vice_idx, "player_id"]),
+        "xi": [_row_record(row, is_captain=(idx == squad.captain),
+                           is_vice=(idx == vice_idx))
                for idx, row in xi.iterrows()],
         "bench": [_row_record(row) for _, row in bench.iterrows()],
     }
@@ -211,9 +228,9 @@ def render_markdown(artifact: dict) -> str:
         "|---|---|---|---|---|---|",
     ]
     for r in artifact["xi"]:
+        mark = "(C)" if r["captain"] else ("(V)" if r.get("vice_captain") else "")
         lines.append("| %s | %s | %s | %.1f | %.2f | %s |" % (
-            r["position"], r["player"], r["team"], r["price"], r["expected_points"],
-            "(C)" if r["captain"] else ""))
+            r["position"], r["player"], r["team"], r["price"], r["expected_points"], mark))
     lines += ["", "## Bench", "", "| pos | player | team | £ | xPts |", "|---|---|---|---|---|"]
     for r in artifact["bench"]:
         lines.append("| %s | %s | %s | %.1f | %.2f |" % (

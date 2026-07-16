@@ -123,7 +123,7 @@ Provably optimal (branch-and-bound, verified against exhaustive enumeration).
 Write to a versioned live log, e.g. `research/results/live/2026-27/GW01.{json,md}`:
 - target gameweek, `deadline_time`, and the run timestamp;
 - engine/version identifier and the projection config (minutes model, xG source);
-- the XI, bench, captain, formation, total cost;
+- the XI, bench, captain, **vice-captain**, formation, total cost;
 - the full per-player projection table (so the scorer needs no re-run);
 - the baseline squad(s) for the same gameweek (Section 6).
 
@@ -133,8 +133,10 @@ Write to a versioned live log, e.g. `research/results/live/2026-27/GW01.{json,md
 Once fixtures are `finished`:
 - pull actual points per player (`bootstrap-static` totals delta, or
   `element-summary/{id}` per-gameweek);
-- `xi_actual_points(frame_with_actual, squad, with_captain=True)` for us and for
-  each baseline;
+- score each locked squad with `scorer.score_squad`, applying the **vice-captain
+  rule** (captain doubled, or the vice-captain if the captain played 0 minutes) — for
+  us and for each baseline; this needs per-player minutes, which `gameweek_actuals`
+  now returns alongside points;
 - append `{gameweek, ours, baseline(s), gain, our_rank_if_entered}` to a season
   ledger and recompute the running paired test.
 
