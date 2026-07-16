@@ -204,7 +204,7 @@ definition must be fixed in the pre-registration doc before GW1.**
 | # | Deliverable | Status |
 |---|---|---|
 | M1 | GW-frame assembler + `python -m prediction_engine.fpl.bank_it` that prints & writes the squad artifact | **DONE** — `bank_it.py` + `test_bank_it.py` (6 tests) green; dry-run on 2025/26 GW20 produced a legal optimal £95.2m squad end-to-end |
-| M2 | Pre-registration doc (endpoint, baseline incl. early-season rule, decision rule, horizon) committed | Pending — committed **before** GW1 data exists |
+| M2 | Pre-registration doc (endpoint, baseline incl. early-season rule, decision rule, horizon) committed | **DONE** — [docs/05_BANK_IT_PREREGISTRATION.md](05_BANK_IT_PREREGISTRATION.md), committed 2026-07-16 before the game opened; its git commit is the timestamp |
 | M3 | 2026/27 scoring-rules re-check | Pending — `scoring.py` verified/updated against confirmed rules |
 | M4 | Post-GW scorer + season ledger + running paired test | **DONE** — `scorer.py` + `test_scorer.py` (10 tests) green; `score_squad` proven to match the optimizer's `xi_actual_points` on real data; full loop demoed over 2025/26 (below) |
 | M5 | Run live from GW1 | Pending — first squad committed before the GW1 deadline |
