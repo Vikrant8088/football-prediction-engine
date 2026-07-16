@@ -197,7 +197,8 @@ def run_season(season: str, matches: pd.DataFrame,
                xg_source: str = "fpl", understat_matches=None,
                dc_xi=None, max_train_seasons=None,
                minutes_mode="crude", minutes_half_life=2.0,
-               penalty_split=False, penalty_multiplier=1.0) -> list:
+               penalty_split=False, penalty_multiplier=1.0,
+               elo_promoted_penalty=0.0) -> list:
     """Walk forward through one season, gameweek by gameweek.
 
     `xg_source`:
@@ -241,7 +242,8 @@ def run_season(season: str, matches: pd.DataFrame,
                 train = train[train["season"].isin(keep)]
 
             if train["season"].nunique() >= MIN_TRAINING_SEASONS:
-                model = _GridCache(ScorelineEnsemble(dc_xi=dc_xi).fit(train))
+                model = _GridCache(ScorelineEnsemble(
+                    dc_xi=dc_xi, elo_promoted_penalty=elo_promoted_penalty).fit(train))
                 rates = team_scoring_rates(train)
                 logger.info("%s GW%-2d  training on %d matches", season, gameweek, len(train))
 
@@ -287,7 +289,8 @@ def run_season(season: str, matches: pd.DataFrame,
 def run_backtest(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
                  dc_xi=None, max_train_seasons=None,
                  minutes_mode="crude", minutes_half_life=2.0,
-                 penalty_split=False, penalty_multiplier=1.0) -> pd.DataFrame:
+                 penalty_split=False, penalty_multiplier=1.0,
+                 elo_promoted_penalty=0.0) -> pd.DataFrame:
     matches = load_understat_matches("EPL")
     understat_matches = ensure_player_matches() if xg_source == "understat" else None
     predictions = []
@@ -298,7 +301,8 @@ def run_backtest(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
                                       minutes_mode=minutes_mode,
                                       minutes_half_life=minutes_half_life,
                                       penalty_split=penalty_split,
-                                      penalty_multiplier=penalty_multiplier))
+                                      penalty_multiplier=penalty_multiplier,
+                                      elo_promoted_penalty=elo_promoted_penalty))
 
     frame = pd.DataFrame(predictions)
     frame["global_mean"] = frame["actual"].mean()   # constant floor
@@ -313,7 +317,8 @@ def _cache_path(tag: str = "fpl"):
 def cached_predictions(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
                        refresh: bool = False, dc_xi=None, max_train_seasons=None,
                        cache_tag=None, minutes_mode="crude", minutes_half_life=2.0,
-                       penalty_split=False, penalty_multiplier=1.0) -> pd.DataFrame:
+                       penalty_split=False, penalty_multiplier=1.0,
+                       elo_promoted_penalty=0.0) -> pd.DataFrame:
     """The walk-forward predictions, computed once.
 
     Producing them refits the team model once per gameweek (~7 minutes). Every
@@ -341,7 +346,8 @@ def cached_predictions(seasons=SEASONS_WITH_XG, xg_source: str = "fpl",
     frame = run_backtest(seasons, xg_source=xg_source, dc_xi=dc_xi,
                          max_train_seasons=max_train_seasons,
                          minutes_mode=minutes_mode, minutes_half_life=minutes_half_life,
-                         penalty_split=penalty_split, penalty_multiplier=penalty_multiplier)
+                         penalty_split=penalty_split, penalty_multiplier=penalty_multiplier,
+                         elo_promoted_penalty=elo_promoted_penalty)
     path.parent.mkdir(parents=True, exist_ok=True)
     frame.to_csv(path, index=False)
     logger.info("cached %d predictions to %s", len(frame), path)

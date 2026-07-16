@@ -1003,6 +1003,51 @@ capture the aggregate, and player-specific residuals are below the squad decisio
 noise floor. The one thing that moved the edge (Phase 6b, minutes) was structural —
 **whether a player is on the pitch at all**, not how his rate is fine-tuned.*
 
+### Phase 6e — Promoted-team cold-start prior ⛔ *(done — a measured null on the FPL edge)*
+
+The first *team-model* lever after the rate-refinement nulls, and the most
+legitimate: a **fixture-discrimination** gap, which is the actual source of the FPL
+edge. Every season the model cold-starts 3 newly-promoted teams at the
+league-average Elo 1500 — but they are consistently much weaker (**concede +24%,
+score −29%** vs the league, measured across all 8 seasons), and with K=20 Elo takes
+~15 games to work that out. So their fixtures — favourable for the *opponent's* clean
+sheet — are mis-ranked well into the first season.
+
+**The fix:** `EloModel(promoted_penalty=p)` starts a team that was not in the
+previous season `p` points below 1500 (and predicts unseen teams there too).
+Backward-compatible (default 0 = shipped cold-start); wired through `ScorelineEnsemble`
+and the backtest. 303 tests pass.
+
+**Gate A** (`benchmark_promoted_elo.py`, season-level Elo screen): the prior does
+predict promoted-team fixtures a little better — best at **penalty=100** (promoted
+log-loss 0.9583 vs 0.9625; overall 0.9956 → 0.9917 too) — but the gain is small
+(~0.004) and not robustly significant.
+
+**Gate B** (`benchmark_fpl_promoted.py`, pre-registered £100m primary, head-to-head
+vs the champion, penalties 100 & 150, Holm):
+
+| model | edge vs player_ppg | vs champion (head-to-head) |
+|---|---|---|
+| **champion (no prior)** | +7.97/GW | — |
+| promoted prior = 100 | +7.94/GW | **+0.004/GW**, t p=0.99, W p=0.77 |
+| promoted prior = 150 | +7.92/GW | −0.023/GW |
+
+- ⛔ **Null.** Essentially zero effect on the edge, not significant, negative once the
+  best season is dropped.
+- **Why (the instructive part):** the gap is real, but the backtest **refits the team
+  model every gameweek**, so by the scored range (GW6+) it already has ~5+ of the
+  promoted team's results and has learned they're weak *from data*. The prior only
+  seeds GW1–5, which aren't scored — the weekly refit heals the cold-start before it
+  matters. Model unchanged; the `promoted_penalty` param is kept (off by default).
+
+*The Phase 6 pattern, now across five experiments: the ONLY lever that moved the FPL
+edge was **minutes** (Phase 6b) — genuinely new information about whether a player is
+on the pitch. Every other lever (decay, penalties, opponent/venue, promoted
+cold-start) was a null, each because the engine **already had that information** by
+the time it mattered — via the fixture multiplier, via xG, or via the weekly refit.
+The accessible edge in this approach is minutes and fixtures; rate/strength precision
+beyond what the model already infers does not move the squad decision.*
+
 ### Phase 4e — Serving + drift *(pending)*
 
 - `prediction_engine/serving/` — FastAPI service returning the same payload.

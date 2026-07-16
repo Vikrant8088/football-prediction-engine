@@ -143,6 +143,21 @@ rotated/sub players (points they cannot earn); avoiding them in a 15-man squad a
 real points — a *discrimination* gain, unlike the Phase 6a decay null. Understated
 live: the backtest cannot see FPL's injury flag, the biggest minutes signal.
 
+### Evidence log — Promoted-team cold-start prior (Phase 6e, runs `promoted_elo_*` + `fpl_promoted_*`)
+
+The first team-model lever (a fixture-discrimination gap, the edge's real source) —
+and still a **null**. Promoted teams concede +24% / score −29% vs the league, but the
+model cold-starts them at the average Elo 1500. `EloModel(promoted_penalty=p)` starts
+them lower. **Gate A** (season-level Elo screen): the prior predicts promoted-team
+fixtures a bit better (best penalty=100, promoted log-loss 0.9583 vs 0.9625) but small
+and not robustly significant. **Gate B** (£100m primary, head-to-head vs champion):
++0.004/GW at penalty=100 (t p=0.99, W p=0.77) — a clean null. Why: the backtest
+refits weekly, so by the scored range (GW6+) the model already has the promoted team's
+results and the prior's seed washes out. Model unchanged; `promoted_penalty` kept off
+by default. Extends the Phase 6 pattern — only minutes (genuinely new info) moved the
+edge; every lever the model already infers (fixture multiplier / xG / weekly refit) is
+a null.
+
 ### Evidence log — Opponent / venue-adjusted player rates (Phase 6d, screen only)
 
 Killed by a cheap screen, no full experiment needed. Both halves are a **null**: the

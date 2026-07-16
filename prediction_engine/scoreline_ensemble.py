@@ -63,15 +63,20 @@ def outcome_masks(size: int):
 class ScorelineEnsemble(PredictionModel):
     """The champion ensemble, plus a consistent scoreline grid."""
 
-    def __init__(self, dc_xi: float = None):
+    def __init__(self, dc_xi: float = None, elo_promoted_penalty: float = 0.0):
         """`dc_xi` overrides the Dixon-Coles-xG time-decay rate (per day). Left as
         None it reproduces the shipped model exactly (the library default,
         xi=0.0065). It is a parameter so the Phase 6a window/decay experiment can
         test a gentler decay without forking this class; the default is unchanged
-        until that experiment proves a new value on the FPL primary endpoint."""
+        until that experiment proves a new value on the FPL primary endpoint.
+
+        `elo_promoted_penalty` starts a newly-promoted team that many Elo points
+        below league average (Phase 6e). Default 0.0 = the shipped cold-start."""
         builders = dict(BASE_BUILDERS)
         if dc_xi is not None:
             builders["dixon_coles_xg"] = lambda: DixonColesXGModel(xi=dc_xi)
+        if elo_promoted_penalty:
+            builders["elo"] = lambda: EloModel(promoted_penalty=elo_promoted_penalty)
         self._ensemble = EnsembleModel(builders)
 
     @property

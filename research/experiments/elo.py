@@ -77,15 +77,25 @@ def _fit_ordered_logit(elo_diff: np.ndarray, outcome_idx: np.ndarray):
 
 class EloModel(PredictionModel):
     def __init__(
-        self, k_factor: float = 20.0, home_advantage: float = 100.0, initial_rating: float = 1500.0
+        self, k_factor: float = 20.0, home_advantage: float = 100.0, initial_rating: float = 1500.0,
+        promoted_penalty: float = 0.0,
     ):
         # k_factor and home_advantage are literature-typical values for
         # football Elo (see clubelo.com / eloratings.net conventions), not
         # tuned against this dataset - tuning them is a natural follow-up
         # experiment, not done here.
+        #
+        # promoted_penalty (Phase 6e) starts a team that was NOT in the previous
+        # season this many Elo points BELOW `initial_rating`, instead of at the
+        # league-average 1500 the plain model assumes. Promoted teams concede ~+24%
+        # / score ~-29% vs the league, and with K=20 Elo takes ~15 games to work
+        # that out - so their fixtures (favourable for the OPPONENT's clean sheet)
+        # are mis-ranked for much of their first season. Default 0.0 = the shipped
+        # cold-start (every unseen team at 1500), reproduced exactly.
         self.k_factor = k_factor
         self.home_advantage = home_advantage
         self.initial_rating = initial_rating
+        self.promoted_penalty = promoted_penalty
         self._ratings = None
         self._logit_params = None  # (beta, c1, c2)
 
@@ -94,7 +104,16 @@ class EloModel(PredictionModel):
         elo_diffs = np.empty(len(df))
         outcome_idx = np.empty(len(df), dtype=int)
 
+        # Season-aware promoted reset: a team appearing in a season it was not in
+        # the previous season (within this training window) is dropped to
+        # initial_rating - promoted_penalty at its first match of that season. The
+        # window's first season has no prior to compare against, so its teams are
+        # never penalised (we cannot know who was promoted into it).
+        reset_targets = self._promoted_first_matches(df) if self.promoted_penalty else {}
+
         for i, row in enumerate(df.itertuples()):
+            for team in reset_targets.get(i, ()):  # 0-2 teams reset here
+                ratings[team] = self.initial_rating - self.promoted_penalty
             r_home = ratings[row.home_team]
             r_away = ratings[row.away_team]
             diff = r_home + self.home_advantage - r_away
@@ -114,6 +133,35 @@ class EloModel(PredictionModel):
 
         return dict(ratings), elo_diffs, outcome_idx
 
+    def _promoted_first_matches(self, df: pd.DataFrame):
+        """Map positional row index -> teams to reset there. A team is reset at its
+        first match of a season it was NOT in the previous season (relative to the
+        seasons present in `df`), which captures both first-time and relegated-then-
+        promoted sides. Uses only in-window data, so it is leakage-safe."""
+        seasons = sorted(df["season"].unique())
+        prior_of = {seasons[k]: seasons[k - 1] for k in range(1, len(seasons))}
+        team_seasons = defaultdict(set)
+        home = df["home_team"].to_numpy()
+        away = df["away_team"].to_numpy()
+        season = df["season"].to_numpy()
+        for s, h, a in zip(season, home, away):
+            team_seasons[h].add(s)
+            team_seasons[a].add(s)
+
+        targets = defaultdict(list)
+        seen = set()
+        for i in range(len(df)):
+            s = season[i]
+            ps = prior_of.get(s)
+            for team in (home[i], away[i]):
+                key = (team, s)
+                if key in seen:
+                    continue
+                seen.add(key)
+                if ps is not None and ps not in team_seasons[team]:
+                    targets[i].append(team)
+        return dict(targets)
+
     def fit(self, train_df: pd.DataFrame) -> "EloModel":
         self._ratings, elo_diffs, outcome_idx = self._replay(train_df)
         self._logit_params = _fit_ordered_logit(elo_diffs, outcome_idx)
@@ -124,11 +172,15 @@ class EloModel(PredictionModel):
             raise RuntimeError("fit() must be called before predict_proba()")
         beta, c1, c2 = self._logit_params
 
+        # A team unseen in the training window is, in a closed league, a newly
+        # promoted side, so it inherits the same promoted prior (initial_rating -
+        # penalty) rather than the league-average default.
+        unseen_rating = self.initial_rating - self.promoted_penalty
         diffs = np.array(
             [
-                self._ratings.get(row.home_team, self.initial_rating)
+                self._ratings.get(row.home_team, unseen_rating)
                 + self.home_advantage
-                - self._ratings.get(row.away_team, self.initial_rating)
+                - self._ratings.get(row.away_team, unseen_rating)
                 for row in fixtures_df.itertuples()
             ]
         )
