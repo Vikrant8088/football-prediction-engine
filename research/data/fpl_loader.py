@@ -12,7 +12,7 @@ dropping a club.
 
 import json
 import logging
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 
@@ -127,3 +127,51 @@ def unmapped_teams(engine_teams: List[str]) -> List[str]:
     Empty list means the join is complete."""
     known = set(engine_teams)
     return sorted(t for t in load_teams()["team"] if t not in known)
+
+
+def load_fixtures() -> pd.DataFrame:
+    """Every fixture with its gameweek, teams (canonical names) and status.
+
+    From FPL's `fixtures` endpoint. `gameweek` is None for a fixture not yet
+    assigned to a gameweek. Team ids are resolved through the same canonical
+    mapping the projection engine is trained on, so `home_team`/`away_team` join
+    straight onto it.
+    """
+    payload = _load_dataset("fixtures")
+    teams = {t["id"]: canonical_team(t["name"]) for t in _load_dataset("bootstrap-static")["teams"]}
+    rows = []
+    for fixture in payload:
+        rows.append({
+            "fixture_id": fixture["id"],
+            "gameweek": fixture["event"],          # None until scheduled
+            "home_team": teams[fixture["team_h"]],
+            "away_team": teams[fixture["team_a"]],
+            "kickoff_time": fixture.get("kickoff_time"),
+            "finished": bool(fixture.get("finished")),
+        })
+    return pd.DataFrame(rows)
+
+
+def next_gameweek() -> Optional[dict]:
+    """The upcoming gameweek as {gameweek, deadline_time}, or None off-season.
+
+    Prefers FPL's own `is_next` flag; falls back to the earliest gameweek not yet
+    finished. Returns None when every gameweek is finished (the game is between
+    seasons and the next one is not yet published).
+    """
+    events = _load_dataset("bootstrap-static")["events"]
+    for event in events:
+        if event.get("is_next"):
+            return {"gameweek": int(event["id"]), "deadline_time": event["deadline_time"]}
+    upcoming = [e for e in events if not e.get("finished")]
+    if not upcoming:
+        return None
+    event = min(upcoming, key=lambda e: e["deadline_time"])
+    return {"gameweek": int(event["id"]), "deadline_time": event["deadline_time"]}
+
+
+def fixtures_for_gameweek(gameweek: int) -> List[tuple]:
+    """The (home_team, away_team) pairs scheduled for `gameweek`, canonical names."""
+    fixtures = load_fixtures()
+    week = fixtures[fixtures["gameweek"] == gameweek]
+    return [(row["home_team"], row["away_team"]) for _, row in week.iterrows()]

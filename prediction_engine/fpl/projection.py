@@ -281,9 +281,11 @@ def project_fixture(engine, players: pd.DataFrame, home_team: str, away_team: st
             projection = project_player(player, context, rates[team],
                                         minutes_model=minutes_model)
             rows.append({
+                "player_id": int(player["id"]),
                 "player": player["web_name"],
                 "team": team,
                 "position": scoring.POSITION_NAMES[int(player["position"])],
+                "position_id": int(player["position"]),
                 "price": player["price"],
                 "opponent": away_team if is_home else home_team,
                 "home": is_home,
