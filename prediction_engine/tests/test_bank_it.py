@@ -246,6 +246,61 @@ class TestBaselinePpg(unittest.TestCase):
         self.assertAlmostEqual(ppg[3], 3.5)         # last-season ppg
         self.assertAlmostEqual(ppg[1], 0.0)         # no history, no prior -> 0
 
+    def test_opening_weeks_use_last_season_not_a_two_game_average(self):
+        # docs/05 pre-registers this: through GW5 the baseline is last season's ppg,
+        # even for a player who already has a (noisy) current-season average.
+        ppg = bank_it.baseline_ppg(self._players(), minutes_history={1: [90, 90]},
+                                   prior_ppg={1: 6.0}, gameweek=3)
+        self.assertAlmostEqual(ppg[1], 6.0, msg="GW1-5 must use last season's ppg")
+
+    def test_switches_to_the_current_season_after_the_opening_weeks(self):
+        ppg = bank_it.baseline_ppg(self._players(), minutes_history={1: [90] * 20},
+                                   prior_ppg={1: 6.0},
+                                   gameweek=bank_it.EARLY_SEASON_GAMEWEEKS + 1)
+        self.assertAlmostEqual(ppg[1], 5.0, msg="from GW6 the current season takes over")
+
+    def test_gameweek_one_baseline_is_not_degenerate(self):
+        # THE case this exists for. At GW1 nobody has a current-season average, so
+        # without last-season ppg every player ties on zero and the baseline squad is
+        # meaningless — which would void the pre-registered comparison at GW1.
+        prior = {1: 5.0, 2: 4.0, 3: 3.5}
+        ppg = bank_it.baseline_ppg(self._players(), minutes_history={},
+                                   prior_ppg=prior, gameweek=1)
+        self.assertEqual(ppg, {1: 5.0, 2: 4.0, 3: 3.5})
+        self.assertGreater(len(set(ppg.values())), 1, "the baseline must discriminate")
+
+
+class TestPreviousSeason(unittest.TestCase):
+    def test_steps_back_one_season(self):
+        self.assertEqual(bank_it.previous_season("2026-27"), "2025-26")
+        self.assertEqual(bank_it.previous_season("2020-21"), "2019-20")
+
+
+class TestLastSeasonPpgJoin(unittest.TestCase):
+    def test_joins_on_the_stable_code_not_the_reassigned_id(self):
+        # FPL reassigns element ids every summer. Here last season's id 7 and this
+        # season's id 99 are the same human (code 154561); id 7 this season is someone
+        # else entirely. An id join would hand that player the wrong history.
+        players = pd.DataFrame([{"id": 99, "code": 154561},
+                                {"id": 7, "code": 999999}])
+        gw = pd.DataFrame([
+            {"player_id": 7, "gameweek": 1, "total_points": 10},
+            {"player_id": 7, "gameweek": 2, "total_points": 6},
+        ])
+        meta = {7: {"code": 154561}}
+
+        import research.data.fpl_archive as archive
+        real_gw, real_meta = archive.load_gameweeks, archive.load_player_meta
+        archive.load_gameweeks = lambda season, *a, **k: gw
+        archive.load_player_meta = lambda season, *a, **k: meta
+        try:
+            prior = bank_it.last_season_ppg(players, season="2025-26")
+        finally:
+            archive.load_gameweeks, archive.load_player_meta = real_gw, real_meta
+
+        self.assertEqual(prior, {99: 8.0})       # (10 + 6) / 2 gameweeks, to id 99
+        self.assertNotIn(7, prior)               # NOT to whoever now wears id 7
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -191,20 +191,30 @@ def load_team_names(season: str, force: bool = False) -> Dict[int, str]:
 
 
 def load_player_meta(season: str, force: bool = False) -> Dict[int, dict]:
-    """element id -> {position, team, name}, from players_raw.csv.
+    """element id -> {position, team, name, code}, from players_raw.csv.
 
     Needed because 2018/19 and 2019/20 `merged_gw` rows carry neither position nor
     team; both are looked up here by the `element` id, which IS present.
+
+    `code` is FPL's PERMANENT player code, stable across seasons — unlike the element
+    id, which is reassigned every summer. It is the only safe key for joining one
+    season's history onto another's squad; an id join would silently hand one player's
+    record to whoever inherited his number.
     """
     frame = read_csv_bytes_resilient(_ensure_dataset(season, "players_raw", force),
                                      label=f"{season}/players_raw")
     teams = load_team_names(season, force)
+    has_code = "code" in frame.columns
     meta = {}
     for _, row in frame.iterrows():
+        code = None
+        if has_code and pd.notna(row["code"]):
+            code = int(row["code"])
         meta[int(row["id"])] = {
             "position": int(row["element_type"]),
             "team": teams.get(int(row["team"])),
             "name": ("%s %s" % (row["first_name"], row["second_name"])).strip(),
+            "code": code,
         }
     return meta
 

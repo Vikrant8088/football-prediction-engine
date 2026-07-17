@@ -81,6 +81,10 @@ def load_players() -> pd.DataFrame:
         per_90 = minutes / MINUTES_PER_MATCH if minutes > 0 else 0.0
         rows.append({
             "id": element["id"],
+            # FPL's permanent player code. `id` is reassigned every season, so `code`
+            # is the only safe key for joining a previous season's history onto this
+            # season's squad.
+            "code": int(element["code"]),
             "web_name": element["web_name"],
             "full_name": f"{element['first_name']} {element['second_name']}".strip(),
             "team": teams[element["team"]],

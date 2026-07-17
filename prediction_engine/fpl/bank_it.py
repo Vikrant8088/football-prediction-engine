@@ -180,22 +180,87 @@ def pick_squad(frame: pd.DataFrame, budget: float = TOTAL_SQUAD_BUDGET):
     return select_squad(frame, "expected_points", squad_budget=budget)
 
 
+# docs/05 pre-registers this: the opening weeks use LAST season's ppg, because a
+# current-season average built on one or two games is noise — and at GW1 it does not
+# exist at all, which would leave the baseline squad degenerate (every player tied on
+# zero) and the comparison meaningless.
+EARLY_SEASON_GAMEWEEKS = 5
+
+
+def previous_season(season: str) -> str:
+    """'2026-27' -> '2025-26'."""
+    start = int(season.split("-")[0])
+    return "%d-%s" % (start - 1, str(start)[-2:])
+
+
+def last_season_ppg(players: pd.DataFrame, season: str = None) -> Dict[int, float]:
+    """{current player id: last season's points-per-gameweek}.
+
+    Joined on FPL's permanent `code`, never on the element id: ids are reassigned
+    every summer, so an id join would silently credit one player with another's
+    season. Players with no last season (new signings, promoted clubs) are simply
+    absent — the caller treats them as 0 rather than inventing a history.
+    """
+    from research.data.fpl_archive import ALL_SEASONS, load_gameweeks, load_player_meta
+
+    if season is None:
+        # Deliberately NOT ALL_SEASONS[-1]: the moment the current season is added to
+        # that list, it would return the season we are playing rather than the one
+        # before it, quietly leaking live points into the "prior" baseline.
+        season = previous_season(current_season())
+        if season not in ALL_SEASONS:
+            season = ALL_SEASONS[-1]
+            logger.warning("no archive for the previous season; falling back to %s", season)
+    frame = load_gameweeks(season)
+    # Points per gameweek he actually had a fixture — the same denominator the
+    # backtest's player_ppg uses. Double gameweeks sum into their one gameweek.
+    per_gameweek = frame.groupby(["player_id", "gameweek"])["total_points"].sum()
+    totals = per_gameweek.groupby(level=0).agg(["sum", "count"])
+
+    meta = load_player_meta(season)
+    by_code = {}
+    for player_id, row in totals.iterrows():
+        info = meta.get(int(player_id)) or {}
+        code, games = info.get("code"), int(row["count"])
+        if code is None or games <= 0:
+            continue
+        by_code[int(code)] = float(row["sum"]) / games
+
+    prior = {}
+    for player_id, code in zip(players["id"].astype(int), players["code"].astype(int)):
+        ppg = by_code.get(int(code))
+        if ppg is not None:
+            prior[int(player_id)] = ppg
+    logger.info("last-season ppg (%s): %d/%d current players matched by code",
+                season, len(prior), len(players))
+    return prior
+
+
 def baseline_ppg(players: pd.DataFrame, minutes_history: Optional[Dict[int, list]],
-                 prior_ppg: Optional[Dict[int, float]] = None) -> Dict[int, float]:
-    """Season-to-date points-per-gameweek per player id — the pre-registered baseline.
+                 prior_ppg: Optional[Dict[int, float]] = None,
+                 gameweek: Optional[int] = None) -> Dict[int, float]:
+    """Points-per-gameweek per player id — the pre-registered `player_ppg` baseline.
 
     ppg = total points / gameweeks the player actually had a fixture (the same
-    denominator the backtest's `player_ppg` uses). A player with no fixture yet
-    (opening weeks, new signings) falls back to `prior_ppg` — last season's ppg,
-    supplied at pre-registration — else 0. Uses only pre-deadline information, so
-    the baseline squad can be locked before the deadline exactly as ours is.
-    """
+    denominator the backtest uses). Per docs/05, gameweeks 1-%d instead use LAST
+    season's ppg, since a one- or two-game average is noise and at GW1 there is no
+    average at all. From GW%d it switches to the current season, falling back to last
+    season's for a player with no history yet. A player with neither scores 0, which
+    correctly makes him unpickable by the baseline rather than falsely attractive.
+
+    Uses only pre-deadline information, so the baseline squad locks exactly as ours does.
+    """ % (EARLY_SEASON_GAMEWEEKS, EARLY_SEASON_GAMEWEEKS + 1)
     prior_ppg = prior_ppg or {}
     minutes_history = minutes_history or {}
+    early = gameweek is not None and gameweek <= EARLY_SEASON_GAMEWEEKS
+
     ppg = {}
     for player_id, points in zip(players["id"].astype(int), players["total_points"].astype(float)):
         played = len(minutes_history.get(player_id, []))
-        ppg[player_id] = (points / played) if played > 0 else float(prior_ppg.get(player_id, 0.0))
+        if early or played == 0:
+            ppg[player_id] = float(prior_ppg.get(player_id, 0.0))
+        else:
+            ppg[player_id] = points / played
     return ppg
 
 
@@ -351,8 +416,18 @@ def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BU
         raise ValueError("no legal squad exists for gameweek %d" % gameweek)
 
     # The baseline squad, locked from the same frame with only pre-deadline info.
+    # prior_ppg is computed, not merely accepted: docs/05 pre-registers last season's
+    # ppg for the opening weeks, and without it GW1's baseline would be every player
+    # tied on zero — a degenerate squad, and a meaningless comparison.
+    if prior_ppg is None:
+        try:
+            prior_ppg = last_season_ppg(players)
+        except Exception as exc:            # a missing archive must not block the squad
+            logger.warning("no last-season ppg (%s); baseline falls back to "
+                           "current-season only", exc)
+            prior_ppg = {}
     frame["player_ppg"] = frame["player_id"].map(
-        baseline_ppg(players, minutes_history, prior_ppg)).fillna(0.0)
+        baseline_ppg(players, minutes_history, prior_ppg, gameweek=gameweek)).fillna(0.0)
     baseline_squad = select_squad(frame, "player_ppg", squad_budget=budget)
 
     minutes_model = "recent-form (half-life 2)" if minutes_history else "crude flat-average"
