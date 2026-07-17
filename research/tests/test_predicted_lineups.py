@@ -130,6 +130,54 @@ class TestFailsClosedOnEmptyParse(unittest.TestCase):
         self.assertIn("has_start_pct=True", pl.diagnose(FIXTURE))
 
 
+class TestFetchRetriesTransients(unittest.TestCase):
+    """The site answers 200 with a challenge page intermittently (seen live: two CI
+    runs three minutes apart returned 0 teams then 20). Retrying keeps that transient
+    from punching an unfillable hole in the archive."""
+
+    class _Response:
+        def __init__(self, text):
+            self.text = text
+
+        def raise_for_status(self):
+            pass
+
+    def _patch(self, pages):
+        """Serve `pages` in order; record how many requests were made."""
+        calls = []
+
+        def fake_get(url, **kwargs):
+            calls.append(url)
+            return self._Response(pages[min(len(calls) - 1, len(pages) - 1)])
+
+        return fake_get, calls
+
+    def setUp(self):
+        self._real_get = pl.requests.get
+        self._real_sleep = pl.time.sleep
+        pl.time.sleep = lambda *_: None          # don't serve the crawl delay in tests
+        pl._LAST_FETCH[0] = 0.0
+
+    def tearDown(self):
+        pl.requests.get = self._real_get
+        pl.time.sleep = self._real_sleep
+
+    def test_retries_until_the_real_page_arrives(self):
+        fake_get, calls = self._patch(["<html><title>Just a moment...</title></html>",
+                                       FIXTURE])
+        pl.requests.get = fake_get
+        page = pl.fetch_html(attempts=3)
+        self.assertIn(pl.LINEUP_MARKER, page)
+        self.assertEqual(len(calls), 2, "should have retried exactly once")
+
+    def test_gives_up_after_attempts_and_returns_the_last_page(self):
+        fake_get, calls = self._patch(["<html><title>Just a moment...</title></html>"])
+        pl.requests.get = fake_get
+        page = pl.fetch_html(attempts=3)
+        self.assertNotIn(pl.LINEUP_MARKER, page)   # caller then raises LineupFetchError
+        self.assertEqual(len(calls), 3)
+
+
 class TestCurrentSeason(unittest.TestCase):
     def test_july_starts_the_new_season(self):
         self.assertEqual(

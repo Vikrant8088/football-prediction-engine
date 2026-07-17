@@ -57,6 +57,11 @@ PARSER_VERSION = 1
 MIN_FETCH_GAP_SECONDS = 10
 _LAST_FETCH = [0.0]
 
+# The site intermittently serves a 200 that is not the real page, so a fetch is only
+# believed once this marker appears. Retries stay within the crawl delay.
+LINEUP_MARKER = "Start %"
+FETCH_ATTEMPTS = 3
+
 # The site 403s an obvious bot agent, as FPL's own endpoint does.
 USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
@@ -100,15 +105,31 @@ def diagnose(page: str) -> str:
                "<table" in page.lower()))
 
 
-def fetch_html(url: str = SOURCE_URL, timeout: int = 30) -> str:
-    """Fetch the team-news page, honouring the published crawl delay."""
-    gap = time.time() - _LAST_FETCH[0]
-    if gap < MIN_FETCH_GAP_SECONDS:
-        time.sleep(MIN_FETCH_GAP_SECONDS - gap)
-    response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=timeout)
-    _LAST_FETCH[0] = time.time()
-    response.raise_for_status()
-    return response.text
+def fetch_html(url: str = SOURCE_URL, timeout: int = 30,
+               attempts: int = FETCH_ATTEMPTS) -> str:
+    """Fetch the team-news page, honouring the published crawl delay.
+
+    Retries while the response carries no lineups. The site intermittently answers
+    **200 with a challenge/consent page** instead of the real one — observed directly:
+    two CI runs three minutes apart returned 0 teams and then 20. A transient like that
+    would otherwise punch an unfillable hole in the archive on that day, so it is worth
+    a couple of extra polite attempts. Returns the last page regardless; the caller
+    raises with diagnostics if it still carries nothing.
+    """
+    page = None
+    for attempt in range(1, attempts + 1):
+        gap = time.time() - _LAST_FETCH[0]
+        if gap < MIN_FETCH_GAP_SECONDS:
+            time.sleep(MIN_FETCH_GAP_SECONDS - gap)
+        response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=timeout)
+        _LAST_FETCH[0] = time.time()
+        response.raise_for_status()
+        page = response.text
+        if LINEUP_MARKER in page:
+            return page
+        logger.warning("attempt %d/%d carried no lineups (%s)",
+                       attempt, attempts, diagnose(page))
+    return page
 
 
 def parse(page: str) -> List[dict]:
