@@ -94,6 +94,20 @@ def score_artifact(artifact: dict, actuals: Dict[int, object]) -> dict:
             points, baseline["xi"], baseline["captain_id"],
             vice_captain_id=baseline.get("vice_captain_id"), minutes=minutes)
         record["gain"] = ours - record["baseline"]
+
+    # Declared variants (e.g. the Phase 6f predicted-lineup candidate). Each is scored
+    # against the SAME actuals and reported both absolutely and as a gain over the
+    # primary — the paired A/B that says whether the candidate earns its place.
+    for name, block in (artifact.get("variants") or {}).items():
+        scored = score_squad(points, block["xi"], block["captain_id"],
+                             vice_captain_id=block.get("vice_captain_id"),
+                             minutes=minutes)
+        record.setdefault("variants", {})[name] = {
+            "points": scored,
+            "gain_vs_ours": scored - ours,
+        }
+        if "baseline" in record:
+            record["variants"][name]["gain_vs_baseline"] = scored - record["baseline"]
     return record
 
 
@@ -150,10 +164,29 @@ class SeasonLedger:
         base = {"season": self.season, "scored_gameweeks": len(self.records)}
         if not paired:
             base.update(paired_summary([], []))
-            return base
-        base.update(paired_summary([r["ours"] for r in paired],
-                                   [r["baseline"] for r in paired]))
+        else:
+            base.update(paired_summary([r["ours"] for r in paired],
+                                       [r["baseline"] for r in paired]))
+        base["variants"] = self.variant_summaries()
         return base
+
+    def variant_summaries(self) -> dict:
+        """Each declared variant vs the PRIMARY, paired by gameweek — the forward A/B.
+
+        Scored only on gameweeks where the variant was actually locked, so a feed that
+        was missing for a week cannot silently borrow the primary's result.
+        """
+        names = set()
+        for record in self.records:
+            names.update((record.get("variants") or {}).keys())
+
+        summaries = {}
+        for name in sorted(names):
+            rows = [r for r in self.records if name in (r.get("variants") or {})]
+            summaries[name] = paired_summary(
+                [r["variants"][name]["points"] for r in rows],
+                [r["ours"] for r in rows])
+        return summaries
 
     def to_dict(self) -> dict:
         return {"season": self.season, "records": self.records, "summary": self.summary()}

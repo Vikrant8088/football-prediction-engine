@@ -87,6 +87,32 @@ gain. A single pre-specified endpoint needs no multiplicity correction.
 
 ---
 
+## Declared variant: the predicted-lineup candidate (secondary, pre-specified)
+
+Phase 6f measured a large headroom for minutes information (+4.59/GW directional,
+8/8 seasons), and predicted lineups are the only pre-deadline route to a slice of it.
+That candidate **cannot be backtested** — nobody archived predicted XIs — so it can
+only be tested forward, here.
+
+- **The primary endpoint above is unchanged.** It remains the *proven* recent-form
+  champion with **no** lineup feed. An unproven candidate does not get to be the
+  headline.
+- Each gameweek, a **second squad** is locked alongside it, identical in every respect
+  except that its minutes model also consumes the pre-deadline `Start %`.
+- **Variant metric:** mean points/GW of the lineup squad **minus the primary squad**,
+  paired by gameweek. Same gameweek, same prices, same deadline, same actuals — so the
+  difference is the lineup signal and nothing else.
+- Same two-test rule (paired *t* **and** Wilcoxon, both p<0.05) and the same power
+  caveat: one season is unlikely to settle it alone.
+- Scored **only on gameweeks where the variant was actually locked**, so a week with a
+  missing feed cannot let it borrow the primary's result.
+- **Expectation, stated up front:** a *fraction* of +4.59, not the whole thing. The
+  live engine already uses FPL's injury flags, so the marginal prize is **rotation
+  only** — who the manager picks among *fit* players.
+
+Locking both is what makes this honest: simply switching the feed on would confound
+the lineup signal with everything else and leave us unable to say whether it helped.
+
 ## Secondary / context metrics (reported, never pass/fail)
 
 - **Overall rank percentile** among all FPL managers, if the squad is entered as a real
@@ -132,3 +158,19 @@ Any change to this protocol after publication is recorded here with date and rea
   each squad now locks a vice-captain and the scorer applies the promotion. Made before
   any live data existed; applies identically to both squads, so it does not bias the
   comparison — it only makes the scoring match the real game. *(Reason: correctness.)*
+
+- **2026-07-17 — predicted-lineup variant declared** (see the section above). Each
+  gameweek now locks a *third* squad whose minutes model consumes the pre-deadline
+  `Start %`, tested against the primary as a paired A/B. **The primary endpoint is
+  untouched** and still uses no lineup feed — this adds a separately-declared secondary
+  test rather than altering the pre-registered one. Declared before any live data
+  existed. *(Reason: Phase 6f showed a large minutes headroom, and the candidate cannot
+  be backtested — locking both variants is the only way to attribute the effect instead
+  of confounding it with a silent switch.)*
+
+- **2026-07-17 — last-season ppg implemented.** The GW1–5 baseline rule above was
+  pre-registered but never coded; at GW1 every player tied on zero, which would have
+  made the baseline squad degenerate and the comparison meaningless on day one. Now
+  computed, joined on FPL's permanent player `code` (element ids are reassigned each
+  summer, so an id join would credit a player with another's history). *(Reason: the
+  code did not keep a promise this document had already made.)*

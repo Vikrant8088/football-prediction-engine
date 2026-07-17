@@ -83,6 +83,55 @@ class TestScoreArtifact(unittest.TestCase):
         self.assertAlmostEqual(record["ours"], 0 + 7 + 3 + 7)
 
 
+class TestVariantScoring(unittest.TestCase):
+    """The declared-variant A/B: the lineups candidate is scored against the SAME
+    actuals as the primary, so the comparison is paired by construction."""
+
+    def _artifact(self):
+        return {
+            "gameweek": 1, "captain_id": 10,
+            "xi": [{"player_id": 10}, {"player_id": 11}],
+            "baseline": {"xi": [20, 21], "captain_id": 20},
+            "variants": {"lineups": {"xi": [10, 30], "captain_id": 30}},
+        }
+
+    ACTUALS = {10: 5.0, 11: 1.0, 20: 2.0, 21: 1.0, 30: 9.0}
+
+    def test_variant_scored_and_compared_to_primary_and_baseline(self):
+        record = scorer.score_artifact(self._artifact(), self.ACTUALS)
+        self.assertAlmostEqual(record["ours"], 5 + 1 + 5)          # 11
+        self.assertAlmostEqual(record["baseline"], 2 + 1 + 2)      # 5
+        variant = record["variants"]["lineups"]
+        self.assertAlmostEqual(variant["points"], 5 + 9 + 9)       # 23
+        self.assertAlmostEqual(variant["gain_vs_ours"], 23 - 11)
+        self.assertAlmostEqual(variant["gain_vs_baseline"], 23 - 5)
+
+    def test_ledger_reports_a_running_ab_for_each_variant(self):
+        ledger = scorer.SeasonLedger("2026-27", [
+            {"gameweek": 1, "ours": 50.0, "baseline": 45.0, "gain": 5.0,
+             "variants": {"lineups": {"points": 54.0, "gain_vs_ours": 4.0}}},
+            {"gameweek": 2, "ours": 60.0, "baseline": 58.0, "gain": 2.0,
+             "variants": {"lineups": {"points": 58.0, "gain_vs_ours": -2.0}}},
+        ])
+        summary = ledger.summary()
+        self.assertAlmostEqual(summary["mean_gain_per_gw"], 3.5)          # primary
+        ab = summary["variants"]["lineups"]
+        self.assertAlmostEqual(ab["mean_gain_per_gw"], 1.0)               # (4 + -2)/2
+        self.assertEqual(ab["gameweeks"], 2)
+
+    def test_variant_only_scored_on_gameweeks_it_was_locked(self):
+        # A week where the feed was missing must not let the variant borrow the
+        # primary's result and flatter itself.
+        ledger = scorer.SeasonLedger("2026-27", [
+            {"gameweek": 1, "ours": 50.0, "baseline": 45.0, "gain": 5.0,
+             "variants": {"lineups": {"points": 54.0, "gain_vs_ours": 4.0}}},
+            {"gameweek": 2, "ours": 60.0, "baseline": 58.0, "gain": 2.0},   # no feed
+        ])
+        ab = ledger.summary()["variants"]["lineups"]
+        self.assertEqual(ab["gameweeks"], 1, "only the locked gameweek counts")
+        self.assertAlmostEqual(ab["mean_gain_per_gw"], 4.0)
+
+
 class TestPairedSummary(unittest.TestCase):
     def test_matches_hand_computed_gain(self):
         ours = [10.0, 12.0, 8.0]
