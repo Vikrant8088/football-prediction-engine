@@ -45,7 +45,11 @@ import pandas as pd
 from scipy.stats import poisson
 
 from prediction_engine.fpl import scoring
-from prediction_engine.fpl.minutes import DEFAULT_HALF_LIFE, recent_form_minutes
+from prediction_engine.fpl.minutes import (
+    DEFAULT_HALF_LIFE,
+    lineup_minutes,
+    recent_form_minutes,
+)
 from prediction_engine.fpl.scoring import (
     APPEARANCE_LONG,
     APPEARANCE_SHORT,
@@ -235,33 +239,56 @@ def project_player(
     }
 
 
-def _live_minutes_model(player: pd.Series, minutes_history: Dict[int, list]):
-    """Build the recent-form minutes model for a live player, or None to fall back
-    to the crude flat average.
+def _live_minutes_model(player: pd.Series, minutes_history: Dict[int, list],
+                        start_pct: Dict[int, float] = None):
+    """Build the live minutes model for a player, or None to fall back to the crude
+    flat average.
 
     Uses the player's current-season per-match minutes (recency-weighted) AND the
     live availability flag - `chance_of_playing` scales a doubtful player down and
     zeroes an injured one. The flag is the single biggest minutes signal and is
     exactly what the historical backtest could NOT see, so the live projection is
     strictly better-informed than the backtested +2.95 pts/GW gain implies.
+
+    `start_pct` ({player_id: 0-100}) optionally supplies a pre-deadline predicted
+    lineup, which adds the one thing the flag cannot: **rotation** - who the manager
+    picks among *fit* players (Phase 6f). It is OFF unless supplied, and a player
+    missing from it simply keeps the recent-form model, so the shipped engine is
+    unchanged by default and a partial feed degrades per-player rather than wholesale.
     """
-    if minutes_history is None:
+    if minutes_history is None and not start_pct:
         return None
-    sequence = minutes_history.get(int(player["id"]))
-    if not sequence:
-        return None    # no recent history for this player -> crude fallback
+    player_id = int(player["id"])
     availability = float(player["chance_of_playing"]) / 100.0
-    return recent_form_minutes(sequence, half_life_matches=DEFAULT_HALF_LIFE,
-                               availability=availability)
+
+    recent = None
+    sequence = (minutes_history or {}).get(player_id)
+    if sequence:
+        recent = recent_form_minutes(sequence, half_life_matches=DEFAULT_HALF_LIFE,
+                                     availability=availability)
+
+    if start_pct and player_id in start_pct:
+        # `recent` is passed UNSCALED-by-nothing here on purpose: lineup_minutes reads
+        # only its cameo shape, and applies availability to the start probability
+        # itself, so the flag is never counted twice.
+        return lineup_minutes(start_pct[player_id], recent=recent,
+                              availability=availability)
+    return recent      # None -> caller's crude fallback
 
 
 def project_fixture(engine, players: pd.DataFrame, home_team: str, away_team: str,
-                    minutes_history: Dict[int, list] = None) -> pd.DataFrame:
+                    minutes_history: Dict[int, list] = None,
+                    start_pct: Dict[int, float] = None) -> pd.DataFrame:
     """Expected points for every player in one fixture, best first.
 
     `minutes_history` maps FPL player id -> current-season per-match minutes. When
     supplied, each player is projected with the Phase 6b recent-form minutes model
     (the proven champion); omitted, it falls back to the crude flat average.
+
+    `start_pct` maps FPL player id -> predicted Start % (0-100) from a pre-deadline
+    predicted lineup. UNPROVEN and off by default: it is the Phase 6f candidate, and
+    unlike everything else here it cannot be backtested (nobody archived predicted
+    XIs), so it can only ever be validated forward through Bank-It.
     """
     grid = engine.scoreline_grid(home_team, away_team)
     rates = team_scoring_rates(engine.matches)
@@ -277,7 +304,7 @@ def project_fixture(engine, players: pd.DataFrame, home_team: str, away_team: st
         if squad.empty:
             raise ValueError(f"No FPL players found for team '{team}'")
         for _, player in squad.iterrows():
-            minutes_model = _live_minutes_model(player, minutes_history)
+            minutes_model = _live_minutes_model(player, minutes_history, start_pct)
             projection = project_player(player, context, rates[team],
                                         minutes_model=minutes_model)
             rows.append({

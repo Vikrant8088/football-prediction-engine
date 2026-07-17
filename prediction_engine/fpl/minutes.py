@@ -40,6 +40,22 @@ MINUTES_FOR_LONG_APPEARANCE = 60
 # Wilcoxon; 2 is the champion. This is the system's default minutes model.
 DEFAULT_HALF_LIFE = 2.0
 
+# Shape of a Premier League appearance, MEASURED on 2025/26 rather than guessed
+# (29,757 player-fixtures; 11,498 appearances; 8,360 starts from the FPL bootstrap):
+#
+#   P_60_GIVEN_START  7,815 player-fixtures reached 60+ / 8,360 starts = 0.935.
+#                     A starter usually completes the hour. Slightly optimistic, since
+#                     a substitute introduced before the half-hour also reaches 60 and
+#                     is counted here; the archive carries no `starts` column to
+#                     separate them.
+#   MEAN_MINUTES_WHEN_LONG   E[minutes | reached 60]  = 85.3
+#   MEAN_MINUTES_WHEN_CAMEO  E[minutes | 1-59]        = 22.2
+#
+# These only matter when a predicted-lineup Start % is supplied (`lineup_minutes`).
+P_60_GIVEN_START = 0.935
+MEAN_MINUTES_WHEN_LONG = 85.3
+MEAN_MINUTES_WHEN_CAMEO = 22.2
+
 
 def _clip(value, low, high):
     return max(low, min(high, value))
@@ -85,4 +101,55 @@ def recent_form_minutes(minutes_sequence, half_life_matches=4.0, availability=1.
         "expected_minutes": _clip(exp_min * availability, 0.0, FULL_MATCH_MINUTES),
         "p_60": _clip(p_60 * availability, 0.0, 1.0),
         "p_play": _clip(p_play * availability, 0.0, 1.0),
+    }
+
+
+def lineup_minutes(start_pct, recent=None, availability=1.0):
+    """Minutes from a predicted-lineup **Start %**, the freshest rotation signal there
+    is (Phase 6f: perfect minutes knowledge is worth ~+4.6 pts/GW over recent form).
+
+    `start_pct` is P(the manager picks him), 0-100, from a pre-deadline predicted
+    lineup. It is NOT P(60+) and NOT P(plays): a starter is occasionally hooked before
+    the hour, and a non-starter can still come off the bench. So the three quantities
+    the projection needs are rebuilt from it explicitly:
+
+        p_60   = P(start) x P(reaches 60 | start)
+        p_play = P(start) + P(no start) x P(cameo | no start)
+        E[min] = p_60 x E[min | 60+] + P(1-59) x E[min | cameo]
+
+    P(cameo | no start) comes from the player's OWN recent history (`recent`), not a
+    league constant: a fringe forward who always gets 20 minutes is a different animal
+    from a reserve keeper who never moves. Without history it is 0 — if he does not
+    start we assume he does not feature, which is the conservative read.
+
+    `availability` (FPL's `chance_of_playing`) still applies on top: the feed can be
+    stale, and FPL's own flag is the official word on a player being unavailable.
+
+    Known imprecision, stated rather than hidden: the 1-59 minute bucket lumps a
+    starter hooked on the hour together with a late substitute, so both are valued at
+    MEAN_MINUTES_WHEN_CAMEO (~22). The archive carries no `starts` column to separate
+    them. It costs ~1.5 minutes on a nailed starter (~2%), which is well inside the
+    noise of everything downstream.
+
+    Returns the same {expected_minutes, p_60, p_play} contract as every other model
+    here, so the projection is indifferent to which one produced it.
+    """
+    p_start = _clip((float(start_pct) / 100.0) * availability, 0.0, 1.0)
+    p_60 = _clip(p_start * P_60_GIVEN_START, 0.0, 1.0)
+
+    p_cameo_given_no_start = 0.0
+    if recent is not None:
+        p_60_hist = float(recent["p_60"])
+        p_play_hist = float(recent["p_play"])
+        if p_60_hist < 1.0:
+            p_cameo_given_no_start = _clip(
+                (p_play_hist - p_60_hist) / (1.0 - p_60_hist), 0.0, 1.0)
+
+    p_play = _clip(p_start + (1.0 - p_start) * p_cameo_given_no_start, 0.0, 1.0)
+    expected = (p_60 * MEAN_MINUTES_WHEN_LONG
+                + max(0.0, p_play - p_60) * MEAN_MINUTES_WHEN_CAMEO)
+    return {
+        "expected_minutes": _clip(expected, 0.0, FULL_MATCH_MINUTES),
+        "p_60": p_60,
+        "p_play": p_play,
     }
