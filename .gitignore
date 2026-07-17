@@ -25,6 +25,17 @@ venv.bak/
 *.pickle
 *.pkl
 
+# ...except these two, which are NOT bulk data and whose whole purpose is to be
+# version-timestamped. Both are small (~KB), append-only, and unrecoverable if lost:
+#   - live/    Bank-It's pre-deadline squad artifacts. The git commit IS the
+#              pre-registration timestamp (docs/05); a gitignored artifact could be
+#              edited after kickoff with no audit trail, defeating the whole point.
+#   - lineups/ pre-deadline predicted-lineup snapshots. You cannot re-fetch what a
+#              predicted XI *was* last week — that is precisely why this signal is
+#              not backtestable today, and why these must never be lost.
+!research/results/live/**
+!research/data/lineups/**
+
 # Logs
 *.log
 
