@@ -143,6 +143,27 @@ rotated/sub players (points they cannot earn); avoiding them in a 15-man squad a
 real points — a *discrimination* gain, unlike the Phase 6a decay null. Understated
 live: the backtest cannot see FPL's injury flag, the biggest minutes signal.
 
+### Evidence log — The minutes ceiling (Phase 6f, run `minutes_ceiling_fast_*`) ✅ LARGE HEADROOM
+
+Bounds feature #7 (pre-match lineups) before paying for it. Give the minutes model
+**perfect foreknowledge** of each gameweek's actual minutes — a deliberate leak, so an
+upper bound on any lineup signal — and measure the headroom over the Phase 6b champion.
+The **budgeted** primary (`benchmark_fpl_minutes_ceiling.py`, £100m + captain) proved
+pathologically slow: perfect-minutes projections are finely-spaced continuous values
+with almost no ties, the worst case for the branch-and-bound squad solver (6+ CPU-hours,
+~1,000 solves, unfinished, killed). The **directional** run
+(`benchmark_fpl_minutes_ceiling_fast.py`, greedy *unbudgeted* legal XI, frames from
+cache), 263 GWs / 8 seasons: `player_ppg` 50.61 → recent-form champion 55.62 (**+5.01/GW**)
+→ **PERFECT 60.22 (+9.60/GW)**. **Headroom +4.59 pts/GW** (t p≈0, Wilcoxon p≈0, won
+158/263, **positive 8/8 seasons**, +1.61 to +12.67). Perfect minutes would roughly
+**double** the edge over the crowd → **lineups are worth chasing** (the first GO after
+four nulls). Caveats: directional not the £100m figure (budget would compress it);
+perfect is an upper bound so real lineups capture only a fraction; and **the live system
+already scales minutes by `chance_of_playing`** while this backtest champion is blind to
+flags — so part of the headroom is already banked live, and the remaining prize is
+specifically **rotation** (who a manager picks among *fit* players), which flags cannot
+give. Not backtestable → must be validated forward via Bank-It (`docs/04`, `docs/05`).
+
 ### Evidence log — Promoted-team cold-start prior (Phase 6e, runs `promoted_elo_*` + `fpl_promoted_*`)
 
 The first team-model lever (a fixture-discrimination gap, the edge's real source) —

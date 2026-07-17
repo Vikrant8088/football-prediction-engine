@@ -1040,13 +1040,65 @@ vs the champion, penalties 100 & 150, Holm):
   seeds GW1–5, which aren't scored — the weekly refit heals the cold-start before it
   matters. Model unchanged; the `promoted_penalty` param is kept (off by default).
 
-*The Phase 6 pattern, now across five experiments: the ONLY lever that moved the FPL
+### Phase 6f — The minutes ceiling ✅ *(done — a large headroom; the first GO after four nulls)*
+
+Five experiments in, the pattern was unambiguous: only **minutes** moves the edge.
+Live predicted lineups are the research's #1 claimed FPL signal, but they **cannot be
+backtested** (nobody archived predicted XIs). So before investing in a feed, bound the
+whole opportunity: give the minutes model **perfect foreknowledge** of exactly how long
+every player actually played, and measure how much the edge grows over the shipped
+recent-form model. Perfect deliberately leaks actuals — it is an upper bound, never a
+shippable model — so any real lineup signal is strictly worse.
+
+**The budgeted test** (`benchmark_fpl_minutes_ceiling.py`, the £100m + captain primary)
+was written and run, but is **pathologically slow**: perfect-minutes projections are
+finely-spaced continuous values with almost no ties, precisely the worst case for the
+branch-and-bound squad solver. It burned 6+ CPU-hours over ~1,000 solves without
+finishing, and was killed. The prediction frames it built are cached, so:
+
+**The directional test** (`benchmark_fpl_minutes_ceiling_fast.py`, greedy *unbudgeted*
+legal XI, both frames read from cache — no knapsack, seconds not hours), 263 gameweeks
+over 8 seasons:
+
+| picker | actual pts/GW | edge vs `player_ppg` |
+|---|---|---|
+| `player_ppg` baseline | 50.61 | — |
+| **recent-form minutes (shipped champion)** | 55.62 | **+5.01/GW** |
+| **PERFECT minutes (ceiling)** | 60.22 | **+9.60/GW** |
+
+- ✅ **Headroom: +4.59 pts/GW** (t p≈0.0000, Wilcoxon p≈0.0000), won 158/263 gameweeks,
+  **positive in 8/8 seasons** (+1.61 to +12.67). Perfect minutes would roughly **double**
+  the edge over the crowd.
+- **Verdict: live predicted lineups are worth chasing.** The first GO signal after four
+  consecutive nulls — and it fits the pattern exactly: minutes is the one lever that
+  moves the edge, and a lot of it is still on the table.
+
+**Caveats, stated rather than buried:**
+
+1. **Directional, not the pre-registered figure.** Scored on the unbudgeted XI, not
+   £100m + captain; a budget would likely *compress* the headroom. The direction is
+   robust (8/8 seasons, p≈0), so the decision survives even if the true budgeted number
+   is much smaller.
+2. **Perfect is an upper bound.** Real predicted lineups are imperfect and capture only
+   a *fraction* of +4.59.
+3. **The live system is already better informed than this champion.** The backtest is
+   blind to FPL's injury flags (published only for the current moment), while the live
+   projection already scales minutes by `chance_of_playing`. Part of this headroom is
+   therefore **already captured live**. The remaining prize is the part flags cannot
+   give: **rotation** — who a manager actually picks among *fit* players.
+4. **Not backtestable → validate forward.** A lineup upgrade must be proven live,
+   through the Bank-It pipeline (`docs/04`, pre-registered in `docs/05`).
+
+*The Phase 6 pattern, now across six experiments: the ONLY lever that moved the FPL
 edge was **minutes** (Phase 6b) — genuinely new information about whether a player is
 on the pitch. Every other lever (decay, penalties, opponent/venue, promoted
 cold-start) was a null, each because the engine **already had that information** by
 the time it mattered — via the fixture multiplier, via xG, or via the weekly refit.
 The accessible edge in this approach is minutes and fixtures; rate/strength precision
-beyond what the model already infers does not move the squad decision.*
+beyond what the model already infers does not move the squad decision. Phase 6f closes
+the loop: it confirms minutes is not just the only lever that worked, but one with
+**substantial headroom remaining** — which is why predicted lineups, and nothing else,
+are the next thing worth building.*
 
 ### Phase 4e — Serving + drift *(pending)*
 

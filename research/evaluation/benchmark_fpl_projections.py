@@ -256,6 +256,17 @@ def run_season(season: str, matches: pd.DataFrame,
                     if minutes_mode == "recent":
                         minutes_model = recent_form_minutes(
                             minutes_history[player_id], half_life_matches=minutes_half_life)
+                    elif minutes_mode == "perfect":
+                        # CEILING DIAGNOSTIC ONLY - deliberately leaks this
+                        # gameweek's ACTUAL minutes to bound the maximum edge any
+                        # lineup/minutes signal could ever add. Never a shippable
+                        # model.
+                        actual = float(sum(f["minutes"] for f in fixtures))
+                        minutes_model = {
+                            "expected_minutes": actual,
+                            "p_60": 1.0 if actual >= 60 else 0.0,
+                            "p_play": 1.0 if actual > 0 else 0.0,
+                        }
                     projected = _project_gameweek(
                         model, rates, fixtures, history_rates, positions[player_id],
                         minutes_model=minutes_model,
