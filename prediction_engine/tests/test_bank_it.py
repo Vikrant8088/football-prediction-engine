@@ -6,7 +6,10 @@ optimizer-ready gameweek frame, correctly for double and blank gameweeks. These
 tests pin exactly that, with an injected fake projector so no engine is needed.
 """
 
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 import pandas as pd
 
@@ -35,7 +38,7 @@ def _fixture_row(player_id, player, team, position_id, price, expected_points,
 
 class TestBuildGameweekFrame(unittest.TestCase):
     def _projector_from(self, fixture_rows):
-        def projector(engine, players, home, away, minutes_history=None):
+        def projector(engine, players, home, away, minutes_history=None, start_pct=None):
             return pd.DataFrame(fixture_rows[(home, away)])
         return projector
 
@@ -147,6 +150,80 @@ class TestPickSquadAndArtifact(unittest.TestCase):
         json.dumps(artifact)
         # And render without error.
         self.assertIn("Starting XI", bank_it.render_markdown(artifact))
+
+
+class TestLineupSnapshotSelection(unittest.TestCase):
+    """The pre-deadline filter is an integrity control, not a convenience.
+
+    A snapshot fetched after the deadline knows things we could not have known when
+    the squad was locked — late team news, even the confirmed XI. Reading one would
+    silently turn the forward test into hindsight and void the claim Bank-It exists
+    to make. So this is pinned hard.
+    """
+
+    DEADLINE = "2026-08-21T17:30:00Z"
+
+    def _write(self, folder, fetched_at, teams=20):
+        path = Path(folder) / ("GW01_%s.json" % fetched_at.replace(":", "").replace("-", ""))
+        path.write_text(json.dumps({
+            "source": "test", "fetched_at": fetched_at, "season": "2026-27",
+            "gameweek": 1, "team_count": teams, "teams": [],
+        }), encoding="utf-8")
+        return path
+
+    def test_picks_the_newest_snapshot_before_the_deadline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            season_dir = Path(tmp) / "2026-27"
+            season_dir.mkdir()
+            self._write(season_dir, "2026-08-19T09:00:00Z")
+            self._write(season_dir, "2026-08-21T09:00:00Z")     # newest, still before
+            found = bank_it.latest_snapshot_before(self.DEADLINE, "2026-27", Path(tmp))
+            self.assertIsNotNone(found)
+            self.assertEqual(found[0]["fetched_at"], "2026-08-21T09:00:00Z")
+
+    def test_never_reads_a_snapshot_published_after_the_deadline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            season_dir = Path(tmp) / "2026-27"
+            season_dir.mkdir()
+            self._write(season_dir, "2026-08-20T09:00:00Z")     # legitimate
+            self._write(season_dir, "2026-08-21T18:00:00Z")     # AFTER the deadline
+            found = bank_it.latest_snapshot_before(self.DEADLINE, "2026-27", Path(tmp))
+            self.assertEqual(found[0]["fetched_at"], "2026-08-20T09:00:00Z",
+                             "a post-deadline snapshot is hindsight and must be ignored")
+
+    def test_returns_none_when_every_snapshot_is_too_late(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            season_dir = Path(tmp) / "2026-27"
+            season_dir.mkdir()
+            self._write(season_dir, "2026-08-21T18:00:00Z")
+            self.assertIsNone(
+                bank_it.latest_snapshot_before(self.DEADLINE, "2026-27", Path(tmp)))
+
+    def test_missing_archive_degrades_rather_than_raises(self):
+        # A missing feed must never block the squad.
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertIsNone(
+                bank_it.latest_snapshot_before(self.DEADLINE, "2026-27", Path(tmp)))
+            start_pct, provenance = bank_it.lineup_start_pct(
+                pd.DataFrame([{"id": 1, "web_name": "X", "full_name": "X Y",
+                               "team": "Arsenal"}]),
+                "2026-27", self.DEADLINE, Path(tmp))
+            self.assertEqual(start_pct, {})
+            self.assertIsNone(provenance)
+
+
+class TestFramePassesStartPct(unittest.TestCase):
+    def test_start_pct_reaches_the_projector(self):
+        seen = {}
+
+        def projector(engine, players, home, away, minutes_history=None, start_pct=None):
+            seen["start_pct"] = start_pct
+            return pd.DataFrame([_fixture_row(1, "A", "T1", 3, 5.0, 4.0, "T2")])
+
+        bank_it.build_gameweek_frame(engine=None, players=None,
+                                     fixtures=[("T1", "T2")],
+                                     start_pct={1: 90}, projector=projector)
+        self.assertEqual(seen["start_pct"], {1: 90})
 
 
 class TestBaselinePpg(unittest.TestCase):
