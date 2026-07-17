@@ -79,9 +79,25 @@ TEAM_NAME_FIXES = {
 }
 
 
+class LineupFetchError(RuntimeError):
+    """The page came back, but carried no lineups — a failed fetch in disguise."""
+
+
 def _text(fragment: str) -> str:
     """Tag-stripped, entity-decoded, whitespace-collapsed text."""
     return re.sub(r"\s+", " ", html_module.unescape(re.sub(r"<[^>]+>", "", fragment))).strip()
+
+
+def diagnose(page: str) -> str:
+    """Why a page yielded nothing — enough to tell a bot-challenge/consent wall from a
+    genuine layout change without needing the payload itself."""
+    title = re.search(r"(?is)<title[^>]*>(.*?)</title>", page)
+    return ("bytes=%d title=%r has_start_pct=%s has_heading=%s has_table=%s"
+            % (len(page),
+               _text(title.group(1))[:90] if title else None,
+               "Start %" in page,
+               "Predicted Lineup" in page,
+               "<table" in page.lower()))
 
 
 def fetch_html(url: str = SOURCE_URL, timeout: int = 30) -> str:
@@ -237,11 +253,19 @@ def archive_now(season: str = None, gameweek: int = None,
     if gameweek is None:
         gameweek, deadline = upcoming_gameweek()
 
-    snapshot = build_snapshot(fetch_html(), season, gameweek=gameweek,
-                              deadline_time=deadline)
+    page = fetch_html()
+    snapshot = build_snapshot(page, season, gameweek=gameweek, deadline_time=deadline)
+
+    # Fail CLOSED on an empty parse. "A partial snapshot beats no snapshot" is true of
+    # 18/20 teams; it is false of 0/20, which is not data but a failed fetch wearing
+    # data's clothes — a bot challenge or consent wall still answers 200. Archiving it
+    # would poison an unrecoverable dataset with a file that *looks* like a record, and
+    # (worse) do so silently. Refuse to save, and make the caller fail.
+    if snapshot["team_count"] == 0:
+        raise LineupFetchError("parsed 0 teams — not archiving. %s" % diagnose(page))
     if snapshot["team_count"] < EXPECTED_TEAMS:
-        # Loud, but never fatal: a half-parsed snapshot still beats no snapshot, and
-        # the raw counts are recorded so a re-parse can spot it later.
+        # A genuine partial IS worth keeping: it is real data, and the counts are
+        # recorded so a later re-parse can spot it. Callers still flag it.
         logger.warning("parsed only %d/%d teams — the page layout may have changed",
                        snapshot["team_count"], EXPECTED_TEAMS)
     save_snapshot(snapshot, archive_dir)
@@ -259,11 +283,17 @@ def main(argv: List[str] = None) -> int:
                         help="target gameweek (default: the upcoming one)")
     args = parser.parse_args(argv)
 
-    snapshot = archive_now(season=args.season, gameweek=args.gameweek)
+    try:
+        snapshot = archive_now(season=args.season, gameweek=args.gameweek)
+    except LineupFetchError as exc:
+        print("ERROR: %s" % exc)
+        return 1
     print("archived %s GW=%s — %d teams, %d players (%s)" % (
         snapshot["season"], snapshot["gameweek"], snapshot["team_count"],
         snapshot["player_count"], snapshot["fetched_at"]))
-    return 0
+    # A partial parse still exits non-zero so CI goes red: the data is saved (and
+    # committable), but silence would let a degraded feed rot the archive unnoticed.
+    return 0 if snapshot["team_count"] >= EXPECTED_TEAMS else 1
 
 
 if __name__ == "__main__":

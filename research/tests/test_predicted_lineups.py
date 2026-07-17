@@ -103,6 +103,33 @@ class TestSnapshot(unittest.TestCase):
             self.assertIn("preseason", path.name)
 
 
+class TestFailsClosedOnEmptyParse(unittest.TestCase):
+    """A 200 that carries no lineups (bot challenge, consent wall) must never be
+    archived. An empty snapshot is not data — it is a failed fetch wearing data's
+    clothes, and the archive is unrecoverable, so silence is the worst outcome."""
+
+    CHALLENGE_PAGE = "<html><head><title>Just a moment...</title></head><body></body></html>"
+
+    def test_empty_parse_raises_and_archives_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            original = pl.fetch_html
+            pl.fetch_html = lambda *a, **k: self.CHALLENGE_PAGE
+            try:
+                with self.assertRaises(pl.LineupFetchError):
+                    pl.archive_now(season="2026-27", gameweek=1, archive_dir=archive)
+            finally:
+                pl.fetch_html = original
+            self.assertEqual(list(archive.rglob("*.json")), [],
+                             "an empty parse must leave the archive untouched")
+
+    def test_diagnose_distinguishes_a_challenge_from_a_real_page(self):
+        challenge = pl.diagnose(self.CHALLENGE_PAGE)
+        self.assertIn("Just a moment", challenge)
+        self.assertIn("has_start_pct=False", challenge)
+        self.assertIn("has_start_pct=True", pl.diagnose(FIXTURE))
+
+
 class TestCurrentSeason(unittest.TestCase):
     def test_july_starts_the_new_season(self):
         self.assertEqual(

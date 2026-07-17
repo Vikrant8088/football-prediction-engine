@@ -46,7 +46,13 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
+      # continue-on-error, then an explicit failure gate below. Rationale: a GENUINE
+      # partial (say 18/20 clubs) is real, unrecoverable data and must still be
+      # committed — but the job must go red so a degraded feed cannot rot the archive
+      # unnoticed. An EMPTY parse saves nothing, so the commit step below no-ops.
       - name: Archive snapshot
+        id: archive
+        continue-on-error: true
         run: python -m research.data.predicted_lineups
 
       - name: Commit the snapshot
@@ -62,3 +68,11 @@ jobs:
             git pull --rebase origin main
             git push origin HEAD:main
           fi
+
+      # Never let a bad fetch pass as success. An empty parse archives nothing; a
+      # partial archives real data but still fails here, loudly.
+      - name: Fail if the archive was empty or incomplete
+        if: steps.archive.outcome != 'success'
+        run: |
+          echo "::error::Archiver reported an empty or partial parse — see the 'Archive snapshot' step for diagnostics (title/markers reveal a bot challenge vs a layout change)."
+          exit 1
