@@ -1,0 +1,64 @@
+# Archive pre-deadline predicted lineups.
+#
+# This dataset is unrecoverable: you cannot go back and ask what a predicted XI *was*
+# last Saturday. That is exactly why the signal is not backtestable today (Phase 6f),
+# and why the archive must never miss a gameweek. So it runs in CI rather than on a
+# laptop that might be closed on a Saturday morning.
+#
+# Daily, deliberately. The snapshot we will actually *use* is the last one before each
+# deadline — but deadlines move (Friday games, midweek rounds), and GitHub's cron is
+# only best-effort anyway. Running daily needs no deadline arithmetic: at consumption
+# time we simply take the latest snapshot before the deadline. It also buys the
+# prediction *trajectory* for free, which answers a real question later — how much
+# more accurate is a T-2h prediction than a T-48h one?
+#
+# Cost: ~60KB/run, ~16MB/season.
+
+name: Archive predicted lineups
+
+on:
+  schedule:
+    # 09:00 UTC daily — shortly before a typical Saturday 10:00 UTC (11:00 BST)
+    # deadline. Best-effort: GitHub may delay cron under load, which is precisely
+    # why nothing depends on the exact minute.
+    - cron: "0 9 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: archive-lineups
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # The archiver is deliberately standalone: stdlib + requests, no pandas, no
+      # ingested data lake. Keeps this job fast and hard to break.
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Archive snapshot
+        run: python -m research.data.predicted_lineups
+
+      - name: Commit the snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/data/lineups/
+          if git diff --cached --quiet; then
+            echo "No new snapshot to commit."
+          else
+            git commit -m "chore(lineups): archive predicted-lineup snapshot [skip ci]"
+            # Rebase before pushing: a human commit may have landed since checkout.
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

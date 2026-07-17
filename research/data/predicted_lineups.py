@@ -43,6 +43,12 @@ logger = logging.getLogger(__name__)
 SOURCE = "fantasyfootballpundit"
 SOURCE_URL = "https://www.fantasyfootballpundit.com/fantasy-premier-league-team-news/"
 
+# The gameweek label is read straight from FPL's own public endpoint rather than the
+# ingested raw lake, so the archiver is STANDALONE: `requests` and nothing else. That
+# is what lets it run in CI (where no data is ingested and pandas is not installed) —
+# and CI is the only scheduler that cannot be defeated by a closed laptop.
+FPL_BOOTSTRAP_URL = "https://fantasy.premierleague.com/api/bootstrap-static/"
+
 # Bumped whenever the parser's output shape or semantics change, so a snapshot is
 # always interpretable years later.
 PARSER_VERSION = 1
@@ -193,6 +199,31 @@ def current_season(today: datetime = None) -> str:
 EXPECTED_TEAMS = 20
 
 
+def upcoming_gameweek():
+    """(gameweek, deadline_time) for the next gameweek, from FPL's public API.
+
+    Returns (None, None) between seasons, or if the endpoint is unreachable — a
+    snapshot is never worth losing over a missing label.
+    """
+    try:
+        response = requests.get(FPL_BOOTSTRAP_URL, headers={"User-Agent": USER_AGENT},
+                                timeout=30)
+        response.raise_for_status()
+        events = response.json().get("events", [])
+    except Exception as exc:
+        logger.warning("could not read the upcoming gameweek (%s); archiving anyway", exc)
+        return None, None
+
+    for event in events:
+        if event.get("is_next"):
+            return int(event["id"]), event.get("deadline_time")
+    pending = [e for e in events if not e.get("finished") and e.get("deadline_time")]
+    if pending:
+        event = min(pending, key=lambda e: e["deadline_time"])
+        return int(event["id"]), event.get("deadline_time")
+    return None, None
+
+
 def archive_now(season: str = None, gameweek: int = None,
                 archive_dir: Path = ARCHIVE_DIR) -> dict:
     """Fetch, parse and archive one pre-deadline snapshot.
@@ -204,13 +235,7 @@ def archive_now(season: str = None, gameweek: int = None,
     season = season or current_season()
     deadline = None
     if gameweek is None:
-        try:
-            from research.data.fpl_loader import next_gameweek
-            upcoming = next_gameweek()
-            if upcoming:
-                gameweek, deadline = upcoming["gameweek"], upcoming["deadline_time"]
-        except Exception as exc:                     # never lose a snapshot over metadata
-            logger.warning("could not read the upcoming gameweek (%s); archiving anyway", exc)
+        gameweek, deadline = upcoming_gameweek()
 
     snapshot = build_snapshot(fetch_html(), season, gameweek=gameweek,
                               deadline_time=deadline)
