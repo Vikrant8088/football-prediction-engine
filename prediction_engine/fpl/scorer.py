@@ -27,6 +27,13 @@ logger = logging.getLogger(__name__)
 
 SEASON_GAMEWEEKS = 38
 
+# The backtest scored from GW6 (`FIRST_SCORED_GAMEWEEK`): before that, no model has
+# enough of the season to say anything, and the live engine's rates are cold-started
+# from last season. The proven +3/GW therefore describes GW6-38, not GW1-38 — so the
+# forward primary is scored over the same range. GW1-5 are still locked and scored, but
+# reported separately as exploratory rather than folded into the pre-registered claim.
+FIRST_VALIDATED_GAMEWEEK = 6
+
 
 def _effective_captain(captain_id: int, vice_captain_id: Optional[int],
                        minutes: Optional[Dict[int, float]]) -> Optional[int]:
@@ -160,29 +167,57 @@ class SeasonLedger:
         return [self._records[gw] for gw in sorted(self._records)]
 
     def summary(self) -> dict:
-        paired = [r for r in self.records if "baseline" in r]
-        base = {"season": self.season, "scored_gameweeks": len(self.records)}
+        """The PRE-REGISTERED primary: gameweeks from FIRST_VALIDATED_GAMEWEEK only.
+
+        GW1-5 are deliberately excluded from the headline — the backtest never scored
+        them, and the engine's rates there are cold-started from last season. They are
+        still recorded and reported, via `exploratory_summary()`, but folding untested
+        gameweeks into a claim the backtest never made would overstate it.
+        """
+        validated = [r for r in self.records
+                     if int(r["gameweek"]) >= FIRST_VALIDATED_GAMEWEEK]
+        paired = [r for r in validated if "baseline" in r]
+        base = {
+            "season": self.season,
+            "scored_gameweeks": len(validated),
+            "range": "GW%d-%d (the backtest's validated range)" % (
+                FIRST_VALIDATED_GAMEWEEK, SEASON_GAMEWEEKS),
+        }
         if not paired:
             base.update(paired_summary([], []))
         else:
             base.update(paired_summary([r["ours"] for r in paired],
                                        [r["baseline"] for r in paired]))
-        base["variants"] = self.variant_summaries()
+        base["variants"] = self.variant_summaries(records=validated)
+        base["exploratory"] = self.exploratory_summary()
         return base
 
-    def variant_summaries(self) -> dict:
+    def exploratory_summary(self) -> dict:
+        """GW1-5, reported honestly and separately: outside the validated range, on
+        cold-started rates. Evidence, never the headline."""
+        early = [r for r in self.records
+                 if int(r["gameweek"]) < FIRST_VALIDATED_GAMEWEEK and "baseline" in r]
+        summary = {"range": "GW1-%d" % (FIRST_VALIDATED_GAMEWEEK - 1),
+                   "status": "EXPLORATORY — outside the backtest's validated range; "
+                             "rates cold-started from last season"}
+        summary.update(paired_summary([r["ours"] for r in early],
+                                      [r["baseline"] for r in early]))
+        return summary
+
+    def variant_summaries(self, records: Optional[List[dict]] = None) -> dict:
         """Each declared variant vs the PRIMARY, paired by gameweek — the forward A/B.
 
         Scored only on gameweeks where the variant was actually locked, so a feed that
         was missing for a week cannot silently borrow the primary's result.
         """
+        records = self.records if records is None else records
         names = set()
-        for record in self.records:
+        for record in records:
             names.update((record.get("variants") or {}).keys())
 
         summaries = {}
         for name in sorted(names):
-            rows = [r for r in self.records if name in (r.get("variants") or {})]
+            rows = [r for r in records if name in (r.get("variants") or {})]
             summaries[name] = paired_summary(
                 [r["variants"][name]["points"] for r in rows],
                 [r["ours"] for r in rows])

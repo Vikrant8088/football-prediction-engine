@@ -70,14 +70,20 @@ gain. A single pre-specified endpoint needs no multiplicity correction.
 
 ## Decision rule (fixed)
 
-- **Test statistic:** mean gain/GW over the season.
+- **Test statistic:** mean gain/GW over the scored range.
+- **Scored range: GW6–38** (33 gameweeks), *not* the full 38. This matches the range the
+  backtest actually scored (`FIRST_SCORED_GAMEWEEK = 6`): before GW6 no model has enough
+  of the season to say anything, and the live engine's player rates are cold-started
+  from last season. Claiming GW1–38 would assert proof over five gameweeks the backtest
+  never tested. **GW1–5 are still locked and scored, but reported separately as
+  exploratory** (see below) and excluded from the headline.
 - **Significance:** paired *t* **and** Wilcoxon signed-rank, **both p < 0.05** (this
-  project's two-test rule), evaluated over the **full 38-gameweek season**.
+  project's two-test rule), evaluated over that range.
 - **Interim:** a single read at **GW19**, reported and explicitly labelled *INTERIM*. It
   is not the verdict, and its p-values are not corrected for the look.
 - **Success:** mean gain/GW > 0 **and** both tests pass → the forward edge is confirmed.
 - **Null:** mean gain/GW ≤ 0 → the backtest was optimistic; recorded as such, not buried.
-- **Power caveat (stated up front):** one season is ~38 paired points, and gameweek gains
+- **Power caveat (stated up front):** one season is ~33 paired points, and gameweek gains
   have a large spread (SD ≈ 15–20 pts in backtest). A true ~+3/GW edge therefore has
   **low power to reach p < 0.05 in a single season** — as the 2025/26 dry-run of the
   pipeline showed (+5.24/GW yet p ≈ 0.07). So the season outcome is **evidence weighed
@@ -126,6 +132,16 @@ the lineup signal with everything else and leave us unable to say whether it hel
 - **Rebuild-from-scratch** each gameweek — no carried squad, no transfers or hits. This
   matches the backtest that produced the proven number. A transfer-realistic variant, if
   built, is a **separate, separately pre-registered** test.
+- **Opening-week cold start (GW1–5):** FPL zeroes every season-to-date stat between
+  seasons, so on opening day `xg_per_90` is 0 for **everyone** — Haaland would project
+  exactly as any other nailed-on striker (1.95 xPts: appearance points only). For GW1–5
+  the engine therefore substitutes **last season's per-90 rates**, joined on FPL's
+  permanent player `code`, for players who have yet to feature. This is a cold start,
+  not an override: a player with real current-season minutes keeps his own numbers.
+  It is **unvalidated by construction** — the backtest never scored GW1–5 — which is
+  precisely why those gameweeks are reported as exploratory and excluded from the
+  headline. Known blind spot: a summer signing with no previous Premier League season
+  has no rates at all and stays invisible until he plays.
 - **Vice-captain:** each squad locks a captain and a vice-captain (the 2nd-highest-
   projected starter). If the captain plays 0 minutes, the vice-captain is doubled
   instead; if both play 0, nobody is doubled. Applied identically to both squads.
@@ -167,6 +183,19 @@ Any change to this protocol after publication is recorded here with date and rea
   existed. *(Reason: Phase 6f showed a large minutes headroom, and the candidate cannot
   be backtested — locking both variants is the only way to attribute the effect instead
   of confounding it with a silent switch.)*
+
+- **2026-07-17 — scored range corrected to GW6–38, and opening-week rates cold-started.**
+  This document originally claimed a "full 38-gameweek season" horizon. That was an
+  error on my part: the backtest scores from GW6 (`FIRST_SCORED_GAMEWEEK = 6`), so the
+  proven +3/GW describes **33** gameweeks, not 38, and the original wording would have
+  asserted proof over five gameweeks nobody ever tested. Separately, FPL zeroes all
+  season-to-date stats between seasons, so without last season's rates the GW1 squad
+  would have been picked on appearance points alone (Haaland 1.95 xPts, identical to
+  every other nailed striker — measured, not supposed). Both fixed: the primary is now
+  scored GW6–38, GW1–5 are locked and reported as **exploratory**, and opening-week
+  rates are cold-started from last season. Declared before any live data existed.
+  *(Reason: the horizon overstated the proof, and the engine was broken in the exact
+  gameweeks the horizon covered.)*
 
 - **2026-07-17 — last-season ppg implemented.** The GW1–5 baseline rule above was
   pre-registered but never coded; at GW1 every player tied on zero, which would have

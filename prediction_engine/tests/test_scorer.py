@@ -108,9 +108,9 @@ class TestVariantScoring(unittest.TestCase):
 
     def test_ledger_reports_a_running_ab_for_each_variant(self):
         ledger = scorer.SeasonLedger("2026-27", [
-            {"gameweek": 1, "ours": 50.0, "baseline": 45.0, "gain": 5.0,
+            {"gameweek": 6, "ours": 50.0, "baseline": 45.0, "gain": 5.0,
              "variants": {"lineups": {"points": 54.0, "gain_vs_ours": 4.0}}},
-            {"gameweek": 2, "ours": 60.0, "baseline": 58.0, "gain": 2.0,
+            {"gameweek": 7, "ours": 60.0, "baseline": 58.0, "gain": 2.0,
              "variants": {"lineups": {"points": 58.0, "gain_vs_ours": -2.0}}},
         ])
         summary = ledger.summary()
@@ -123,9 +123,9 @@ class TestVariantScoring(unittest.TestCase):
         # A week where the feed was missing must not let the variant borrow the
         # primary's result and flatter itself.
         ledger = scorer.SeasonLedger("2026-27", [
-            {"gameweek": 1, "ours": 50.0, "baseline": 45.0, "gain": 5.0,
+            {"gameweek": 6, "ours": 50.0, "baseline": 45.0, "gain": 5.0,
              "variants": {"lineups": {"points": 54.0, "gain_vs_ours": 4.0}}},
-            {"gameweek": 2, "ours": 60.0, "baseline": 58.0, "gain": 2.0},   # no feed
+            {"gameweek": 7, "ours": 60.0, "baseline": 58.0, "gain": 2.0},   # no feed
         ])
         ab = ledger.summary()["variants"]["lineups"]
         self.assertEqual(ab["gameweeks"], 1, "only the locked gameweek counts")
@@ -147,11 +147,54 @@ class TestPairedSummary(unittest.TestCase):
         self.assertFalse(summary["significant"])
 
 
+class TestValidatedRange(unittest.TestCase):
+    """The headline must describe the range the backtest actually proved (GW6+).
+
+    GW1-5 sit outside it — no model has enough season yet, and the live engine's rates
+    are cold-started from last season. Folding them into the primary would claim more
+    than the backtest ever did.
+    """
+
+    def _ledger(self):
+        # GW1-5 flatter us wildly; GW6+ is modest. If the split is wrong, the headline
+        # inherits the flattering exploratory weeks.
+        records = [{"gameweek": gw, "ours": 90.0, "baseline": 40.0, "gain": 50.0}
+                   for gw in (1, 2, 3, 4, 5)]
+        records += [{"gameweek": gw, "ours": 52.0, "baseline": 50.0, "gain": 2.0}
+                    for gw in (6, 7, 8)]
+        return scorer.SeasonLedger("2026-27", records)
+
+    def test_primary_excludes_the_unvalidated_opening_weeks(self):
+        summary = self._ledger().summary()
+        self.assertEqual(summary["scored_gameweeks"], 3, "only GW6+ counts")
+        self.assertAlmostEqual(summary["mean_gain_per_gw"], 2.0,
+                               msg="the +50 exploratory weeks must not inflate the claim")
+
+    def test_opening_weeks_are_reported_separately_not_discarded(self):
+        early = self._ledger().summary()["exploratory"]
+        self.assertEqual(early["gameweeks"], 5)
+        self.assertAlmostEqual(early["mean_gain_per_gw"], 50.0)
+        self.assertIn("EXPLORATORY", early["status"])
+
+    def test_variant_ab_also_uses_the_validated_range(self):
+        ledger = scorer.SeasonLedger("2026-27", [
+            {"gameweek": 1, "ours": 90.0, "baseline": 40.0,
+             "variants": {"lineups": {"points": 190.0, "gain_vs_ours": 100.0}}},
+            {"gameweek": 6, "ours": 52.0, "baseline": 50.0,
+             "variants": {"lineups": {"points": 55.0, "gain_vs_ours": 3.0}}},
+        ])
+        ab = ledger.summary()["variants"]["lineups"]
+        self.assertEqual(ab["gameweeks"], 1)
+        self.assertAlmostEqual(ab["mean_gain_per_gw"], 3.0)
+
+
 class TestSeasonLedger(unittest.TestCase):
     def _records(self):
+        # GW6+ deliberately: the primary summary covers only the backtest's validated
+        # range, so a ledger fixture built on GW1-2 would summarise to nothing.
         return [
-            {"gameweek": 1, "ours": 60.0, "baseline": 55.0, "gain": 5.0},
-            {"gameweek": 2, "ours": 50.0, "baseline": 52.0, "gain": -2.0},
+            {"gameweek": 6, "ours": 60.0, "baseline": 55.0, "gain": 5.0},
+            {"gameweek": 7, "ours": 50.0, "baseline": 52.0, "gain": -2.0},
         ]
 
     def test_add_overwrites_same_gameweek(self):

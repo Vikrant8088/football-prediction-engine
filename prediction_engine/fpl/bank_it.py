@@ -236,6 +236,101 @@ def last_season_ppg(players: pd.DataFrame, season: str = None) -> Dict[int, floa
     return prior
 
 
+# The per-90 rates the projection consumes. All are season-to-date in FPL's bootstrap,
+# which means they are all ZERO on the opening day of a season.
+RATE_FIELDS = ("xg_per_90", "xa_per_90", "saves_per_90", "bonus_per_90",
+               "dc_per_90", "cards_per_90")
+
+
+def last_season_rates(players: pd.DataFrame, season: str = None) -> Dict[int, dict]:
+    """{current player id: last season's per-90 rates}, joined on the permanent `code`.
+
+    Why this must exist: FPL resets every season-to-date stat to zero, so on the
+    opening day `expected_goals` is 0.00 for everyone and `xg_per_90` collapses to 0.
+    Without this, a GW1 squad is picked on appearance points and clean sheets alone —
+    Haaland projects the same as any other nailed-on striker. The rates are computed
+    exactly as the backtest's `_rates_from_history` does (totals over minutes/90), so
+    the cold-start speaks the same language as the validated model.
+
+    Honest limits: a player with no previous PREMIER LEAGUE season is simply absent —
+    a summer signing from abroad has no history here and stays invisible until he
+    plays. And last season is not current form: it cannot see transfers, the World
+    Cup, or pre-season.
+    """
+    from research.data.fpl_archive import ALL_SEASONS, load_gameweeks, load_player_meta
+
+    if season is None:
+        season = previous_season(current_season())
+        if season not in ALL_SEASONS:
+            season = ALL_SEASONS[-1]
+            logger.warning("no archive for the previous season; falling back to %s", season)
+
+    frame = load_gameweeks(season)
+    totals = frame.groupby("player_id").agg({
+        "minutes": "sum", "expected_goals": "sum", "expected_assists": "sum",
+        "saves": "sum", "bonus": "sum", "yellow_cards": "sum", "red_cards": "sum",
+        **({"defensive_contribution": "sum"}
+           if "defensive_contribution" in frame.columns else {}),
+    })
+
+    meta = load_player_meta(season)
+    by_code = {}
+    for player_id, row in totals.iterrows():
+        info = meta.get(int(player_id)) or {}
+        code = info.get("code")
+        minutes = float(row["minutes"])
+        if code is None or minutes <= 0:
+            continue
+        per_90 = minutes / 90.0
+        by_code[int(code)] = {
+            "xg_per_90": float(row["expected_goals"]) / per_90,
+            "xa_per_90": float(row["expected_assists"]) / per_90,
+            "saves_per_90": float(row["saves"]) / per_90,
+            "bonus_per_90": float(row["bonus"]) / per_90,
+            "dc_per_90": (float(row["defensive_contribution"]) / per_90
+                          if "defensive_contribution" in totals.columns else 0.0),
+            "cards_per_90": (float(row["yellow_cards"]) + 3.0 * float(row["red_cards"])) / per_90,
+        }
+
+    rates = {}
+    for player_id, code in zip(players["id"].astype(int), players["code"].astype(int)):
+        prior = by_code.get(int(code))
+        if prior is not None:
+            rates[int(player_id)] = prior
+    logger.info("last-season rates (%s): %d/%d current players matched by code",
+                season, len(rates), len(players))
+    return rates
+
+
+def apply_early_season_rates(players: pd.DataFrame,
+                             prior_rates: Dict[int, dict]) -> pd.DataFrame:
+    """Substitute last season's per-90 rates for the opening weeks, returning a copy.
+
+    Only fills rates that are absent this season (a player with real current-season
+    minutes keeps his own numbers), so this is a cold-start, not an override.
+    """
+    if not prior_rates:
+        return players
+    patched = players.copy()
+    # Force float columns before writing. If a rate column ever arrives as int dtype,
+    # pandas truncates 0.777 to 0 on assignment WITHOUT complaining — which would zero
+    # the cold-start silently and hand us back the very GW1 bug this function exists to
+    # fix, while looking like it worked.
+    for field in RATE_FIELDS:
+        if field in patched.columns:
+            patched[field] = patched[field].astype(float)
+    filled = 0
+    for index, row in patched.iterrows():
+        prior = prior_rates.get(int(row["id"]))
+        if prior is None or float(row["minutes"]) > 0:
+            continue                      # he has played this season: trust the live data
+        for field in RATE_FIELDS:
+            patched.at[index, field] = prior[field]
+        filled += 1
+    logger.info("cold-start rates applied to %d players with no minutes this season", filled)
+    return patched
+
+
 def baseline_ppg(players: pd.DataFrame, minutes_history: Optional[Dict[int, list]],
                  prior_ppg: Optional[Dict[int, float]] = None,
                  gameweek: Optional[int] = None) -> Dict[int, float]:
@@ -422,6 +517,21 @@ def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BU
     if not fixtures:
         raise ValueError("no fixtures scheduled for gameweek %d" % gameweek)
 
+    # Opening weeks: FPL has zeroed every season-to-date stat, so without last
+    # season's rates every xg_per_90 is 0 and the squad is picked on appearance
+    # points alone. Cold-start those rates for players yet to feature.
+    early = bool(gameweek and gameweek <= EARLY_SEASON_GAMEWEEKS)
+    cold_started = 0
+    if early:
+        try:
+            prior_rates = last_season_rates(players)
+            before = players
+            players = apply_early_season_rates(players, prior_rates)
+            cold_started = int((before["minutes"] == 0).sum()) if prior_rates else 0
+        except Exception as exc:            # never block the squad on a missing archive
+            logger.warning("no last-season rates (%s); opening-week projections will be "
+                           "weak", exc)
+
     # The PRIMARY squad is always the proven recent-form champion, with no lineup
     # feed: docs/05 pre-registers it, and the backtest validated it. The Start %
     # variant below is a candidate under forward test, never the headline.
@@ -480,7 +590,14 @@ def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BU
                           else "crude flat-average"),
         "engine": "ScorelineEnsemble (Elo + Poisson-xG + Dixon-Coles-xG)",
         "fixtures": len(fixtures),
-        "early_season_baseline": bool(gameweek and gameweek <= EARLY_SEASON_GAMEWEEKS),
+        "early_season_baseline": early,
+        # GW1-5 sit OUTSIDE the range the backtest ever scored (it starts at GW6), and
+        # their rates are cold-started from last season. Flagged in the locked artifact
+        # so an exploratory gameweek can never be mistaken for a validated one.
+        "cold_started_rates": cold_started,
+        "scoring_status": ("EXPLORATORY — GW1-%d is outside the backtest's validated "
+                           "range (GW6+) and rates are cold-started from last season"
+                           % EARLY_SEASON_GAMEWEEKS) if early else "primary (validated range)",
         # Which lineup snapshot fed the variant, recorded in the locked artifact so
         # the committed prediction says exactly what it knew and when it knew it.
         "lineups": lineup_provenance or "off",
