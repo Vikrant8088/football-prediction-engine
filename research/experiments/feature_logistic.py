@@ -46,7 +46,12 @@ class FeatureLogisticModel(PredictionModel):
         self._std = None
 
     def _design_matrix(self, df: pd.DataFrame, fit: bool) -> np.ndarray:
-        X = df[self.feature_cols].to_numpy(dtype=float)
+        # `copy=True` is load-bearing, not defensive tidiness. Under pandas
+        # copy-on-write `to_numpy()` may hand back a READ-ONLY view of the caller's
+        # frame, and the NaN fill below writes into this array: without the copy it
+        # raises "assignment destination is read-only" on modern numpy, and on older
+        # versions it silently mutated the caller's DataFrame instead.
+        X = df[self.feature_cols].to_numpy(dtype=float, copy=True)
         if fit:
             self._mean = np.nanmean(X, axis=0)
             std = np.nanstd(X, axis=0)

@@ -59,3 +59,28 @@ class TestFeatureLogisticModel(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDoesNotMutateCallerFrame(unittest.TestCase):
+    """The design matrix fills missing values in place, so it must own its array.
+
+    Caught by CI on its first run: under pandas copy-on-write `to_numpy()` returns a
+    READ-ONLY view, and the fill raised "assignment destination is read-only". On
+    older versions the same code silently wrote through into the caller's DataFrame
+    instead — a far worse failure, because the training frame would be quietly edited.
+    """
+
+    def test_source_frame_is_untouched_by_the_nan_fill(self):
+        import numpy as np
+        import pandas as pd
+        from research.experiments.feature_logistic import FeatureLogisticModel
+
+        df = pd.DataFrame({
+            "f1": [1.0, 2.0, np.nan, 4.0],
+            "f2": [0.5, np.nan, 1.5, 2.0],
+            "result": ["H", "D", "A", "H"],
+        })
+        before = df.copy()
+        FeatureLogisticModel(feature_cols=["f1", "f2"]).fit(df)
+        pd.testing.assert_frame_equal(df, before)
+        self.assertTrue(df["f1"].isna().any(), "the caller's NaNs must survive")
