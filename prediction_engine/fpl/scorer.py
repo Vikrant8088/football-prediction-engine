@@ -106,15 +106,24 @@ def score_artifact(artifact: dict, actuals: Dict[int, object]) -> dict:
     # against the SAME actuals and reported both absolutely and as a gain over the
     # primary — the paired A/B that says whether the candidate earns its place.
     for name, block in (artifact.get("variants") or {}).items():
+        if "xi" not in block:                  # e.g. a track that could not field an XI
+            continue
         scored = score_squad(points, block["xi"], block["captain_id"],
                              vice_captain_id=block.get("vice_captain_id"),
                              minutes=minutes)
+        # A carried-squad track can PAY to assemble its team (-4 per transfer beyond
+        # the free ones). Scoring it gross would credit it with points it never had,
+        # and would flatter exactly the policies that transfer most.
+        hits = float(block.get("hits", 0.0))
+        net = scored - hits
         record.setdefault("variants", {})[name] = {
-            "points": scored,
-            "gain_vs_ours": scored - ours,
+            "points": net,
+            "gross_points": scored,
+            "hits": hits,
+            "gain_vs_ours": net - ours,
         }
         if "baseline" in record:
-            record["variants"][name]["gain_vs_baseline"] = scored - record["baseline"]
+            record["variants"][name]["gain_vs_baseline"] = net - record["baseline"]
     return record
 
 
@@ -189,6 +198,10 @@ class SeasonLedger:
             base.update(paired_summary([r["ours"] for r in paired],
                                        [r["baseline"] for r in paired]))
         base["variants"] = self.variant_summaries(records=validated)
+        # The transfer A/B, reported at the top level because it is the open question
+        # the live season exists to settle (see `carried`), not a footnote.
+        base["carried_head_to_head"] = self.head_to_head(
+            "carried_ours", "carried_ppg", records=validated)
         base["exploratory"] = self.exploratory_summary()
         return base
 
@@ -222,6 +235,30 @@ class SeasonLedger:
                 [r["variants"][name]["points"] for r in rows],
                 [r["ours"] for r in rows])
         return summaries
+
+    def head_to_head(self, challenger: str, control: str,
+                     records: Optional[List[dict]] = None) -> dict:
+        """One variant against ANOTHER, paired by gameweek.
+
+        `variant_summaries` compares every variant to the primary, which cannot answer
+        the question the carried-squad tracks exist for: `carried_ours` versus
+        `carried_ppg` — the same squad, the same policy, differing only in which
+        projection chose the transfer. Scored only on gameweeks where BOTH were
+        locked, so a week one track missed cannot be silently borrowed from the other.
+        """
+        records = self.records if records is None else records
+        rows = [r for r in records
+                if challenger in (r.get("variants") or {})
+                and control in (r.get("variants") or {})]
+        summary = {
+            "challenger": challenger,
+            "control": control,
+            "paired_gameweeks": len(rows),
+        }
+        summary.update(paired_summary(
+            [r["variants"][challenger]["points"] for r in rows],
+            [r["variants"][control]["points"] for r in rows]))
+        return summary
 
     def to_dict(self) -> dict:
         return {"season": self.season, "records": self.records, "summary": self.summary()}

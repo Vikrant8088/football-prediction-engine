@@ -119,6 +119,50 @@ only be tested forward, here.
 Locking both is what makes this honest: simply switching the feed on would confound
 the lineup signal with everything else and leave us unable to say whether it helped.
 
+## Declared variant: the carried-squad transfer A/B (secondary, pre-specified)
+
+Declared **2026-07-20**, before the season opened and before any live gameweek was
+locked. This is the "separate, separately pre-registered test" that the *Fixed
+procedural choices* section below anticipated.
+
+**Why it exists.** `benchmark_fpl_transfers` (4 seasons, 131 paired gameweeks)
+established two things and failed to establish a third:
+
+| | result |
+|---|---|
+| Acting beats holding | **+7.17 net pts/GW**, both tests, positive 4/4 seasons — **proven** |
+| Blind random transfers | **29.88/GW** vs 44.28 for holding — so the gain is not an artifact of a rotting null |
+| **Our projection beats `player_ppg` at *choosing* transfers** | **−1.56/GW**, *t* p=0.31, W p=0.34 — **a null, directionally negative** |
+
+The third is the open question, and it is the one that decides how the live team
+should actually be run. 131 gameweeks did not settle it, so it goes to the season.
+
+**The two tracks.** Both carry a squad and run the *same* policy — one free transfer
+a week, made whenever it improves the projected XI, **never taking a hit** (the
+policy the backtest pre-specified, not a tuned one):
+
+- `carried_ours` — maintained by our projections
+- `carried_ppg` — maintained by `player_ppg`
+
+**Both open from the identical fifteen** (the primary's opening squad), so from the
+first transfer onward the only difference between them is *which number chose it*.
+
+- **Variant metric:** mean net points/GW of `carried_ours` **minus** `carried_ppg`,
+  paired by gameweek, hits subtracted. Same two-test rule.
+- Scored **only on gameweeks where both tracks were locked**.
+- **The primary endpoint is untouched.** It still rebuilds a fresh £100m squad every
+  gameweek — that is what the 8-season proof describes, and neither track is allowed
+  to become the headline.
+- **Direction stated up front:** the backtest points *against* `carried_ours`. If the
+  season agrees, the honest conclusion is that our projections should not drive
+  transfers, and that must be reported as readily as a win would be.
+
+**Extra integrity control.** A carried squad is *stateful*, which the rebuild endpoint
+is not — so a state file edited after kickoff would silently destroy the test while
+still looking like a locked prediction. Two mitigations: state is written to
+`research/results/live/<season>/` and committed **before** each deadline, and
+`carried.step` **refuses to re-decide a gameweek it has already decided**.
+
 ## Secondary / context metrics (reported, never pass/fail)
 
 - **Overall rank percentile** among all FPL managers, if the squad is entered as a real
@@ -131,7 +175,9 @@ the lineup signal with everything else and leave us unable to say whether it hel
 
 - **Rebuild-from-scratch** each gameweek — no carried squad, no transfers or hits. This
   matches the backtest that produced the proven number. A transfer-realistic variant, if
-  built, is a **separate, separately pre-registered** test.
+  built, is a **separate, separately pre-registered** test — now built and declared
+  above (*the carried-squad transfer A/B*, 2026-07-20). **The primary remains
+  rebuild-from-scratch**; the carried tracks sit alongside it and never replace it.
 - **Opening-week cold start (GW1–5):** FPL zeroes every season-to-date stat between
   seasons, so on opening day `xg_per_90` is 0 for **everyone** — Haaland would project
   exactly as any other nailed-on striker (1.95 xPts: appearance points only). For GW1–5
@@ -203,3 +249,16 @@ Any change to this protocol after publication is recorded here with date and rea
   computed, joined on FPL's permanent player `code` (element ids are reassigned each
   summer, so an id join would credit a player with another's history). *(Reason: the
   code did not keep a promise this document had already made.)*
+
+- **2026-07-20 — carried-squad transfer A/B declared** (see the section above). Two
+  further tracks are locked each gameweek, `carried_ours` and `carried_ppg`, opening
+  from the primary's fifteen and differing only in which projection chooses the weekly
+  transfer. **The primary endpoint is untouched** and still rebuilds from scratch.
+  Declared before the season opened and before any live gameweek was locked. *(Reason:
+  the transfer backtest proved acting beats holding (+7.17 net pts/GW) but returned a
+  null, directionally negative, on whether OUR projections choose better transfers than
+  a season average (−1.56/GW, t p=0.31). That question decides how the live team is
+  actually run and 131 backtest gameweeks did not settle it, so it goes to the season
+  as a paired A/B rather than being resolved by assumption. The direction the evidence
+  currently points — against `carried_ours` — is stated up front so a loss cannot be
+  quietly reframed later.)*

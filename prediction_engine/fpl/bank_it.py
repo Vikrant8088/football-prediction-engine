@@ -47,6 +47,7 @@ from research.data.fpl_loader import (
     next_gameweek,
 )
 from research.data.lineup_resolver import resolve_snapshot
+from prediction_engine.fpl.carried import advance_tracks
 from research.data.predicted_lineups import ARCHIVE_DIR, current_season
 
 logger = logging.getLogger(__name__)
@@ -418,7 +419,7 @@ def _baseline_block(frame: pd.DataFrame, baseline_squad) -> dict:
 
 def build_artifact(frame: pd.DataFrame, squad, gameweek: int,
                    deadline: Optional[str], config: dict, baseline_squad=None,
-                   variants: dict = None) -> dict:
+                   variants: dict = None, extra_variants: dict = None) -> dict:
     """The full, JSON-serialisable record of this gameweek's prediction.
 
     When `baseline_squad` is supplied it is locked into the artifact too, so the
@@ -460,6 +461,11 @@ def build_artifact(frame: pd.DataFrame, squad, gameweek: int,
             name: _squad_block(frame, variant_squad, value_column, name, extra)
             for name, (variant_squad, value_column, extra) in variants.items()
         }
+    # Already-built blocks (the carried-squad tracks), which are not produced by
+    # `select_squad` because a carried squad is not re-optimised — it is inherited and
+    # then transferred. Merged here so the scorer sees one uniform `variants` map.
+    if extra_variants:
+        artifact.setdefault("variants", {}).update(extra_variants)
     return artifact
 
 
@@ -598,6 +604,22 @@ def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BU
         baseline_ppg(players, minutes_history, prior_ppg, gameweek=gameweek)).fillna(0.0)
     baseline_squad = select_squad(frame, "player_ppg", squad_budget=budget)
 
+    # The carried-squad A/B (see `carried`). Both tracks open from the PRIMARY's
+    # fifteen, so from the first transfer onward the only difference between them is
+    # which projection chose it. Must run after `player_ppg` exists on the frame,
+    # because `carried_ppg` steers by that column.
+    #
+    # A failure here must never block the deadline: the primary endpoint is the thing
+    # under pre-registration and it does not depend on these tracks.
+    carried_blocks = {}
+    try:
+        opening_ids = [int(frame.loc[idx, "player_id"])
+                       for idx in list(squad.xi) + list(squad.bench)]
+        carried_blocks = advance_tracks(frame, opening_ids, current_season(), gameweek)
+    except Exception as exc:
+        logger.warning("carried-squad tracks did not advance (%s); the primary "
+                       "endpoint is unaffected", exc)
+
     config = {
         "budget": budget,
         "xg_source": "fpl-opta (live bootstrap)",
@@ -623,7 +645,8 @@ def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BU
         "lineups": lineup_provenance or "off",
     }
     return build_artifact(frame, squad, gameweek, deadline, config,
-                          baseline_squad=baseline_squad, variants=variants)
+                          baseline_squad=baseline_squad, variants=variants,
+                          extra_variants=carried_blocks)
 
 
 def _build_parser() -> argparse.ArgumentParser:
