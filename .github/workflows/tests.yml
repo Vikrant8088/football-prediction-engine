@@ -1,0 +1,43 @@
+# Run the test suite on every push and pull request.
+#
+# Until now nothing enforced the tests: ~240 of them existed, and a regression could
+# be pushed clean. This is the cheapest robustness win available — every other test in
+# the repo only protects anything once something runs it.
+#
+# The suite is deliberately data-independent: tests that need the raw lake (an
+# ingested FPL bootstrap, Understat seasons) skip rather than fail, so a clean
+# checkout is green. That is what lets this run on every push without shipping data.
+
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Engine tests
+        run: python -m unittest discover -s prediction_engine/tests -p "test_*.py" -v
+
+      - name: Research tests
+        run: python -m unittest discover -s research/tests -p "test_*.py" -v
