@@ -521,13 +521,29 @@ def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BU
     # season's rates every xg_per_90 is 0 and the squad is picked on appearance
     # points alone. Cold-start those rates for players yet to feature.
     early = bool(gameweek and gameweek <= EARLY_SEASON_GAMEWEEKS)
-    cold_started = 0
+    cold_started = foreign_started = 0
     if early:
         try:
             prior_rates = last_season_rates(players)
             before = players
             players = apply_early_season_rates(players, prior_rates)
             cold_started = int((before["minutes"] == 0).sum()) if prior_rates else 0
+
+            # A signing with no Premier League history has no prior rates at all and
+            # would stay invisible to the optimiser. Understat covers the other four
+            # big leagues, so fall back to his previous league, scaled into PL terms
+            # by a measured transfer ratio. PL history always wins where it exists.
+            try:
+                from research.data.foreign_rates import (foreign_rates, match_players,
+                                                         previous_start_year)
+                foreign = match_players(players, foreign_rates(previous_start_year()),
+                                        only_missing_from=prior_rates)
+                if foreign:
+                    players = apply_early_season_rates(players, foreign)
+                    foreign_started = len(foreign)
+            except Exception as exc:
+                logger.warning("no foreign cold start (%s); signings from abroad stay "
+                               "invisible", exc)
         except Exception as exc:            # never block the squad on a missing archive
             logger.warning("no last-season rates (%s); opening-week projections will be "
                            "weak", exc)
@@ -595,6 +611,10 @@ def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BU
         # their rates are cold-started from last season. Flagged in the locked artifact
         # so an exploratory gameweek can never be mistaken for a validated one.
         "cold_started_rates": cold_started,
+        # Players whose rates came from another league entirely (signings with no PL
+        # history), scaled by the measured transfer ratio. Recorded because it is the
+        # least-evidenced input in the artifact.
+        "foreign_cold_started": foreign_started,
         "scoring_status": ("EXPLORATORY — GW1-%d is outside the backtest's validated "
                            "range (GW6+) and rates are cold-started from last season"
                            % EARLY_SEASON_GAMEWEEKS) if early else "primary (validated range)",

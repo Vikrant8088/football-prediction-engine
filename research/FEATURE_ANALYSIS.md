@@ -143,6 +143,41 @@ rotated/sub players (points they cannot earn); avoiding them in a 15-man squad a
 real points — a *discrimination* gain, unlike the Phase 6a decay null. Understated
 live: the backtest cannot see FPL's injury flag, the biggest minutes signal.
 
+### Evidence log — Foreign-league cold start for signings (Phase 6g, Gate A only) ✅ STRONG SIGNAL
+
+Closes a blind spot rather than chasing an edge. FPL zeroes every season-to-date stat
+between seasons, so at GW1 the engine cold-starts rates from last season — but a player
+who has never played in the Premier League has none, projects 0.00 xG/90, and is
+**invisible to the optimiser**. Every summer that hides exactly the signings managers
+care most about. Understat covers four other big leagues and **all of them were already
+in the raw lake** (2014–2025), so the data cost was zero.
+
+**The shrinkage is measured, not assumed.** Using the 442 players in our own cached
+per-match log who moved to the PL with 900+ prior foreign minutes, comparing their last
+two foreign seasons against their first PL season: **xG/90 ratio 0.81, r=0.845
+(r²=0.71); xA/90 ratio 0.84, r=0.762 (r²=0.58)**. Scaling a foreign rate by that ratio
+roughly **halves** the error against the player's actual first PL season versus assuming
+the league average (xG MAE 0.055 vs 0.115; xA 0.039 vs 0.065). **Survivorship checked:**
+the ratio is stable (0.80–0.85) from a 1-minute to an 1800-minute PL threshold, so it is
+not an artifact of dropping players who moved and flopped — rising r at higher thresholds
+is just less measurement noise in the "after" window.
+
+Live effect: 26 of the 304 current FPL players with no PL history are now visible —
+N.Jackson (Bayern), Nkunku (Milan), Luis Díaz (Bayern), Rashford (Barcelona), Højlund
+(Napoli), Antony (Betis). All previously projected 0.00.
+
+Identity is Understat's player **id**, not the name: the same id in two leagues is one
+player who moved mid-season (spells are **summed**, so he is judged on a whole season),
+while two ids sharing a name are two footballers and the name is **dropped entirely** —
+3 such collisions found in the real feed. A missing player stays invisible; a wrong one
+would hand another's finishing to him and the optimiser would buy him on it.
+
+⚠️ **Gate A only.** It has never been through Gate B — nobody has shown it improves the
+squad decision, and it cannot be backtested at GW1 (the backtest scores from GW6). One
+ratio is applied to all four leagues; per-league factors were not fitted because the
+sample thins once split. Understat covers five leagues, so the Eredivisie, Championship
+or Saudi League remain invisible.
+
 ### Evidence log — The minutes ceiling (Phase 6f, run `minutes_ceiling_fast_*`) ✅ LARGE HEADROOM
 
 Bounds feature #7 (pre-match lineups) before paying for it. Give the minutes model
