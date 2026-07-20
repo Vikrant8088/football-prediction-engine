@@ -1,0 +1,86 @@
+# Tell us the day FPL publishes the new season.
+#
+# Two blocked jobs depend on it and both have a hard deadline (GW1, Fri 21 Aug 2026,
+# 18:30 BST): the M3 rules re-check, and the data refresh + retrain. FPL does not
+# announce the rollover date and it drifts year to year — exactly the sort of thing a
+# human forgets to check and a daily job never does.
+#
+# It opens a GitHub ISSUE rather than merely failing. A red workflow is easy to
+# scroll past and carries no instructions; an issue is a place to put the checklist
+# and to tick it off. It is idempotent: once the issue exists, later runs find it and
+# do nothing, so this cannot spam a new issue every morning for a month.
+
+name: Watch for the new FPL season
+
+on:
+  schedule:
+    # 08:00 UTC daily — before the lineup archiver at 09:00, so if both fire on the
+    # rollover day the season alert lands first.
+    - cron: "0 8 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: watch-fpl-season
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # stdlib + requests only: no pandas, no ingested lake. Same reason the lineup
+      # archiver is standalone — a watcher that breaks is a watcher that misses.
+      - name: Install dependencies
+        run: pip install requests
+
+      # Exit 0 = still the finished season. Exit 1 = the new game is published.
+      # `|| true` because a non-zero exit here is the GOOD outcome, not a failure.
+      - name: Check whether FPL has rolled over
+        id: check
+        run: |
+          set +e
+          python -m research.data.fpl_season_watch --out alert
+          echo "rolled_over=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Open the kickoff checklist issue
+        if: steps.check.outputs.rolled_over == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          # Create the label FIRST: `gh issue list --label` errors on a label that
+          # does not exist yet, which on the very first rollover is always the case.
+          gh label create fpl-season-open \
+            --description "The new FPL season is published" \
+            --color B60205 2>/dev/null || true
+
+          # Idempotent: if the issue is already open, stop. Without this the job
+          # would file a fresh issue every morning until someone noticed.
+          existing=$(gh issue list --state open --label fpl-season-open \
+                       --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Issue #$existing is already open; nothing to do."
+            exit 0
+          fi
+
+          # Title and body are built by `fpl_season_watch`, which has tests. The shell
+          # only moves files: no quoting of backticks, asterisks or em-dashes through
+          # YAML -> shell -> jq, and nothing here that cannot be verified locally.
+          gh issue create \
+            --title "$(cat alert/issue_title.txt)" \
+            --label fpl-season-open \
+            --body-file alert/issue_body.md
+
+      - name: Still waiting
+        if: steps.check.outputs.rolled_over == '0'
+        run: echo "FPL is still serving the finished season. Nothing to do."
