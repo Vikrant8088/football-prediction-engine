@@ -50,8 +50,9 @@ SOURCE_URL = "https://www.fantasyfootballpundit.com/fantasy-premier-league-team-
 FPL_BOOTSTRAP_URL = "https://fantasy.premierleague.com/api/bootstrap-static/"
 
 # Bumped whenever the parser's output shape or semantics change, so a snapshot is
-# always interpretable years later.
-PARSER_VERSION = 1
+# always interpretable years later. v2: tolerant in-season headings (opponent/gameweek
+# suffix, spelling variants) and a per-team `health` block on every snapshot.
+PARSER_VERSION = 2
 
 # robots.txt: `Crawl-delay: 10`.
 MIN_FETCH_GAP_SECONDS = 10
@@ -72,8 +73,23 @@ _HEADING_RE = re.compile(r"(?is)<h[1-4][^>]*>.*?</h[1-4]>")
 _TABLE_RE = re.compile(r"(?is)<table[^>]*>.*?</table>")
 _ROW_RE = re.compile(r"(?is)<tr>(.*?)</tr>")
 _CELL_RE = re.compile(r"(?is)<t[dh][^>]*>(.*?)</t[dh]>")
-_TEAM_HEADING_RE = re.compile(r"^(?P<team>.+?)\s+Predicted Lineup\s*$", re.I)
+# Deliberately tolerant of in-season cosmetics. The archiver has only ever seen
+# PRESEASON pages, where the heading is exactly "Arsenal Predicted Lineup". Once
+# fixtures exist the site is very likely to append the opponent or gameweek
+# ("Arsenal Predicted Lineup vs Chelsea", "... (GW20)") or vary the spelling
+# ("Line-up", "XI"). The old anchored `...Predicted Lineup$` matched NONE of those and
+# would have yielded 0 teams — a silent, unrecoverable hole in the archive on the very
+# first real gameweek. This captures the team before the marker and ignores whatever
+# follows; it still refuses the section header ("Predicted Starting Lineups"), because
+# "Predicted" must be immediately followed by "Line…"/"XI", not "Starting".
+_TEAM_HEADING_RE = re.compile(r"^(?P<team>.+?)\s+Predicted\s+(?:Line[\s-]?up|XI)\b", re.I)
 _PCT_RE = re.compile(r"(\d{1,3})\s*%")
+
+# A predicted XI is eleven names. A team that parses with fewer lost even its starting
+# eleven — a partial parse, not a thin news day. Used to distinguish structural drift
+# (which must fail loudly) from a legitimately smaller slate (a blank/partial gameweek,
+# where fewer teams play but each still parses a full XI).
+MIN_PLAYERS_PER_TEAM = 11
 
 # FFP spells a few clubs its own way. Map to the FPL/engine canonical names; anything
 # not listed already matches. `research.data.fpl_loader.canonical_team` then carries
@@ -192,6 +208,29 @@ def parse(page: str) -> List[dict]:
              "players": teams[team]} for team in order]
 
 
+def parse_health(teams: List[dict]) -> dict:
+    """Per-team completeness, so a PARTIAL parse cannot pass as a whole one.
+
+    The all-or-nothing checks (0 teams, <20 teams) catch a page that failed entirely.
+    They do not catch the subtler in-season risk: the club headings still parse, but a
+    change to the *table* structure halves the players per team, so we keep archiving
+    snapshots that look fine and quietly carry half the signal. `degraded` is that
+    alarm — it fires when the MEDIAN team has lost its starting eleven, which is
+    structural drift, not the ordinary variation of a light news day.
+    """
+    counts = sorted(len(t["players"]) for t in teams)
+    n = len(counts)
+    median = counts[n // 2] if n else 0
+    return {
+        "min_players_per_team": counts[0] if n else 0,
+        "median_players_per_team": median,
+        "max_players_per_team": counts[-1] if n else 0,
+        "thin_teams": [t["team"] for t in teams
+                       if len(t["players"]) < MIN_PLAYERS_PER_TEAM],
+        "degraded": bool(n and median < MIN_PLAYERS_PER_TEAM),
+    }
+
+
 def build_snapshot(page: str, season: str, gameweek: Optional[int] = None,
                    deadline_time: Optional[str] = None) -> dict:
     teams = parse(page)
@@ -206,6 +245,7 @@ def build_snapshot(page: str, season: str, gameweek: Optional[int] = None,
         "teams": teams,
         "team_count": len(teams),
         "player_count": sum(len(t["players"]) for t in teams),
+        "health": parse_health(teams),
     }
 
 
@@ -289,6 +329,19 @@ def archive_now(season: str = None, gameweek: int = None,
         # recorded so a later re-parse can spot it. Callers still flag it.
         logger.warning("parsed only %d/%d teams — the page layout may have changed",
                        snapshot["team_count"], EXPECTED_TEAMS)
+    health = snapshot["health"]
+    if health["degraded"]:
+        # Teams parsed, but the median one lost its starting eleven: structural drift
+        # in the table, not a light news day. Save it (real data, recoverable context)
+        # but make sure the caller fails so it cannot rot the archive unnoticed.
+        logger.warning("DEGRADED parse: median %d players/team (< %d) — the table "
+                       "structure may have changed; thin teams: %s",
+                       health["median_players_per_team"], MIN_PLAYERS_PER_TEAM,
+                       ", ".join(health["thin_teams"]) or "none")
+    elif health["thin_teams"]:
+        logger.warning("%d team(s) parsed thin (< %d players): %s",
+                       len(health["thin_teams"]), MIN_PLAYERS_PER_TEAM,
+                       ", ".join(health["thin_teams"]))
     save_snapshot(snapshot, archive_dir)
     return snapshot
 
@@ -309,12 +362,16 @@ def main(argv: List[str] = None) -> int:
     except LineupFetchError as exc:
         print("ERROR: %s" % exc)
         return 1
-    print("archived %s GW=%s — %d teams, %d players (%s)" % (
+    print("archived %s GW=%s — %d teams, %d players, median %d/team (%s)" % (
         snapshot["season"], snapshot["gameweek"], snapshot["team_count"],
-        snapshot["player_count"], snapshot["fetched_at"]))
+        snapshot["player_count"], snapshot["health"]["median_players_per_team"],
+        snapshot["fetched_at"]))
     # A partial parse still exits non-zero so CI goes red: the data is saved (and
     # committable), but silence would let a degraded feed rot the archive unnoticed.
-    return 0 if snapshot["team_count"] >= EXPECTED_TEAMS else 1
+    # Two ways to be partial — too few teams, or teams too thin — and both count.
+    ok = (snapshot["team_count"] >= EXPECTED_TEAMS
+          and not snapshot["health"]["degraded"])
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

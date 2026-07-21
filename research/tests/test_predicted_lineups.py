@@ -74,6 +74,71 @@ class TestParse(unittest.TestCase):
         self.assertEqual(self.by_team["Arsenal"]["canonical_team"], "Arsenal")
 
 
+class TestInSeasonHeadings(unittest.TestCase):
+    """The archiver has only ever seen PRESEASON pages, where the heading is exactly
+    "Arsenal Predicted Lineup". Once fixtures exist the site is likely to append the
+    opponent or gameweek, or vary the spelling. The old anchored regex matched none of
+    those and would have punched a silent, unrecoverable hole in the archive on the
+    first real gameweek. These pin the tolerant behaviour."""
+
+    def _one_team(self, heading):
+        page = ("<h2>%s</h2>"
+                "<table><thead><tr><th>Player</th><th>Pos</th><th>Start %%</th></tr>"
+                "</thead><tbody>"
+                "<tr><td>David Raya</td><td>GK</td><td>90%%</td></tr>"
+                "</tbody></table>" % heading)
+        teams = pl.parse(page)
+        return teams[0]["team"] if teams else None
+
+    def test_opponent_suffix_still_resolves_the_team(self):
+        self.assertEqual(self._one_team("Arsenal Predicted Lineup vs Chelsea"), "Arsenal")
+
+    def test_gameweek_suffix_still_resolves_the_team(self):
+        self.assertEqual(self._one_team("Arsenal Predicted Lineup (GW20)"), "Arsenal")
+
+    def test_spelling_variants_resolve(self):
+        self.assertEqual(self._one_team("Arsenal Predicted Line-up"), "Arsenal")
+        self.assertEqual(self._one_team("Arsenal Predicted XI"), "Arsenal")
+
+    def test_multiword_team_names_are_captured_whole(self):
+        self.assertEqual(self._one_team("Aston Villa Predicted Lineup vs Spurs"),
+                         "Aston Villa")
+
+    def test_the_section_header_is_not_mistaken_for_a_team(self):
+        # "Predicted Starting Lineups" has a word between Predicted and Line, so it must
+        # not be captured — otherwise the page title becomes a phantom club.
+        self.assertIsNone(
+            self._one_team("Premier League Team News - Predicted Starting Lineups"))
+
+
+class TestParseHealth(unittest.TestCase):
+    """The all-or-nothing checks miss a PARTIAL parse: club headings resolve but a
+    table-structure change halves the players per team. `parse_health` is that alarm."""
+
+    def _team(self, name, n):
+        return {"team": name, "players": [{"name": "P%d" % i} for i in range(n)]}
+
+    def test_a_full_parse_is_not_degraded(self):
+        health = pl.parse_health([self._team("A", 18), self._team("B", 20)])
+        self.assertFalse(health["degraded"])
+        self.assertEqual(health["thin_teams"], [])
+        self.assertEqual(health["median_players_per_team"], 20)
+
+    def test_a_median_below_the_xi_is_degraded(self):
+        # Every team lost its alternatives AND part of its XI: structural drift.
+        teams = [self._team("A", 5), self._team("B", 6), self._team("C", 4)]
+        health = pl.parse_health(teams)
+        self.assertTrue(health["degraded"])
+        self.assertEqual(sorted(health["thin_teams"]), ["A", "B", "C"])
+
+    def test_one_thin_team_among_full_ones_is_flagged_but_not_degraded(self):
+        # A single light-news team is not a structural failure; it is recorded, not fatal.
+        teams = [self._team("A", 18), self._team("B", 19), self._team("C", 6)]
+        health = pl.parse_health(teams)
+        self.assertFalse(health["degraded"], "the median team is still whole")
+        self.assertEqual(health["thin_teams"], ["C"])
+
+
 class TestSnapshot(unittest.TestCase):
     def test_snapshot_records_provenance_and_counts(self):
         snap = pl.build_snapshot(FIXTURE, "2026-27", gameweek=1,

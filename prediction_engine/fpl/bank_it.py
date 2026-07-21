@@ -237,6 +237,74 @@ def last_season_ppg(players: pd.DataFrame, season: str = None) -> Dict[int, floa
     return prior
 
 
+def last_season_minutes(players: pd.DataFrame, season: str = None) -> Dict[int, list]:
+    """{current player id: last season's per-gameweek minutes, chronological}.
+
+    Without this, the rates cold-start is silently useless at GW1. FPL zeroes MINUTES
+    between seasons just as it zeroes the rates, so `_recent_minutes_history` (current
+    season only) is empty, the minutes model falls to the crude flat average of zero,
+    and every projection is multiplied by ~0 expected minutes — however good the
+    cold-started rates are. Measured in the GW1 dry-run: with rates cold-started but
+    minutes not, all 300 players still projected 0.0 and the squad was arbitrary.
+
+    Feeding last season's minutes as the opening-week "recent form" gives the model a
+    real sequence: a player who ended last season nailed projects ~90 minutes, a
+    fringe player proportionally fewer, and the summer availability flag still scales
+    an injured player down on top. Joined on the permanent `code` like every
+    cross-season join here; a player with no last season (signing, promoted club) is
+    absent and keeps the crude fallback rather than inventing minutes for him.
+    """
+    from research.data.fpl_archive import ALL_SEASONS, load_gameweeks, load_player_meta
+
+    if season is None:
+        season = previous_season(current_season())
+        if season not in ALL_SEASONS:
+            season = ALL_SEASONS[-1]
+            logger.warning("no archive for the previous season; minutes cold-start "
+                           "falls back to %s", season)
+    frame = load_gameweeks(season)
+    per_gameweek = (frame.groupby(["player_id", "gameweek"])["minutes"].sum()
+                    .reset_index())
+
+    meta = load_player_meta(season)
+    by_code = {}
+    for player_id, rows in per_gameweek.groupby("player_id"):
+        info = meta.get(int(player_id)) or {}
+        code = info.get("code")
+        if code is None:
+            continue
+        by_code[int(code)] = rows.sort_values("gameweek")["minutes"].tolist()
+
+    prior = {}
+    for player_id, code in zip(players["id"].astype(int), players["code"].astype(int)):
+        sequence = by_code.get(int(code))
+        if sequence:
+            prior[int(player_id)] = sequence
+    logger.info("last-season minutes (%s): %d/%d current players matched by code",
+                season, len(prior), len(players))
+    return prior
+
+
+def coldstart_minutes_history(players: pd.DataFrame,
+                              current_history: Optional[Dict[int, list]],
+                              prior_minutes: Optional[Dict[int, list]]) -> Dict[int, list]:
+    """Fill opening-week minutes for players with no current-season history yet.
+
+    A player who has already featured this season keeps his real, recency-weighted
+    minutes; only those with nothing yet inherit last season's sequence. So the prior
+    fades out on its own — at GW1 everyone uses it, and by the time a player has a few
+    games his own minutes dominate and the prior is dropped. `players` is accepted for
+    symmetry with the other cold-start helpers and to bound the fill to the current
+    squad, never inventing an id that is not in the game.
+    """
+    current_ids = set(players["id"].astype(int))
+    merged = dict(current_history or {})
+    for player_id, sequence in (prior_minutes or {}).items():
+        if int(player_id) in current_ids and not merged.get(int(player_id)):
+            merged[int(player_id)] = sequence
+    return merged
+
+
 # The per-90 rates the projection consumes. All are season-to-date in FPL's bootstrap,
 # which means they are all ZERO on the opening day of a season.
 RATE_FIELDS = ("xg_per_90", "xa_per_90", "saves_per_90", "bonus_per_90",
@@ -527,8 +595,21 @@ def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BU
     # season's rates every xg_per_90 is 0 and the squad is picked on appearance
     # points alone. Cold-start those rates for players yet to feature.
     early = bool(gameweek and gameweek <= EARLY_SEASON_GAMEWEEKS)
-    cold_started = foreign_started = 0
+    cold_started = foreign_started = minutes_cold_started = 0
     if early:
+        # Minutes first: the rates cold-start below is multiplied by expected minutes,
+        # and at GW1 those are zero for everyone (FPL wipes minutes too), so without
+        # this the whole opening-week projection collapses to zero. Found by the GW1
+        # dry-run (`test_gw1_coldstart`), which is why it now runs in CI.
+        try:
+            prior_minutes = last_season_minutes(players)
+            before_history = minutes_history or {}
+            minutes_history = coldstart_minutes_history(players, minutes_history,
+                                                        prior_minutes)
+            minutes_cold_started = len(minutes_history) - len(before_history)
+        except Exception as exc:
+            logger.warning("no last-season minutes (%s); opening-week minutes fall back "
+                           "to the crude average (near-zero at GW1)", exc)
         try:
             prior_rates = last_season_rates(players)
             before = players
@@ -633,6 +714,11 @@ def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BU
         # their rates are cold-started from last season. Flagged in the locked artifact
         # so an exploratory gameweek can never be mistaken for a validated one.
         "cold_started_rates": cold_started,
+        # Players whose EXPECTED MINUTES at the opening weeks come from last season,
+        # because they have not featured yet this season. Without this the cold-started
+        # rates above are multiplied by zero and the whole opening-week squad is
+        # arbitrary — the GW1 dry-run's finding.
+        "minutes_cold_started": minutes_cold_started,
         # Players whose rates came from another league entirely (signings with no PL
         # history), scaled by the measured transfer ratio. Recorded because it is the
         # least-evidenced input in the artifact.

@@ -262,3 +262,18 @@ Any change to this protocol after publication is recorded here with date and rea
   as a paired A/B rather than being resolved by assumption. The direction the evidence
   currently points — against `carried_ours` — is stated up front so a loss cannot be
   quietly reframed later.)*
+
+- **2026-07-21 — opening-week MINUTES cold-started (a fix the GW1 dry-run forced).**
+  The 2026-07-17 amendment cold-started opening-week *rates*. A full GW1 dry-run on a
+  synthetic rollover (`test_gw1_coldstart`) then exposed that this was not enough:
+  FPL zeroes MINUTES between seasons too, so at GW1 the recent-form model saw an empty
+  history, fell to the crude average of zero, and multiplied every cold-started rate by
+  ~0 — projecting all 300 players at 0.0, exactly the arbitrary squad Option C was
+  meant to prevent, just arriving through the minutes channel instead of the rate one.
+  Fixed by also cold-starting minutes from last season (`last_season_minutes`,
+  `coldstart_minutes_history`), joined on the permanent `code`, faded out per player as
+  soon as he features this season. This affects GW1–5 only — the **exploratory** range,
+  outside the pre-registered GW6–38 primary — so it changes no validated number; it
+  makes the opening-week squad sane rather than random. *(Reason: the dry-run found the
+  documented cold-start was silently defeated; the rehearsal existed precisely to catch
+  a GW1-only failure before the one deadline that cannot be re-tried.)*
