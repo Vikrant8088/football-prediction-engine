@@ -168,9 +168,16 @@ def _fetch_transports():
              {}, 3))
     else:
         # Jina returns cleaned HTML (not markdown) when asked, which our parser reads
-        # directly; the third-party hop and server-side render want a longer ceiling.
+        # directly. Keyless it works from a residential IP but 403s from a datacenter
+        # one (confirmed in CI) — its free tier throttles datacenter traffic. A FREE
+        # Jina key (jina.ai, no card) lifts that; supplied as JINA_API_KEY it rides as a
+        # Bearer header, never in the repo. The third-party hop wants a longer ceiling.
+        jina_headers = {"X-Return-Format": "html"}
+        jina_key = os.environ.get("JINA_API_KEY", "").strip()
+        if jina_key:
+            jina_headers["Authorization"] = "Bearer " + jina_key
         transports.append(
-            ("jina", lambda u: JINA_READER_PREFIX + u, {"X-Return-Format": "html"}, 3))
+            ("jina", lambda u: JINA_READER_PREFIX + u, jina_headers, 3))
     return transports
 
 

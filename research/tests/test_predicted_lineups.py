@@ -234,6 +234,20 @@ class TestFetchTransports(unittest.TestCase):
         with self.assertRaises(pl.LineupFetchError):
             pl._fetch_transports()
 
+    def test_a_free_jina_key_rides_as_a_bearer_header_never_in_the_url(self):
+        import os
+        self.addCleanup(lambda: os.environ.pop("JINA_API_KEY", None))
+        os.environ["JINA_API_KEY"] = "jina_test_key"
+        label, build, headers, _ = pl._fetch_transports()[1]
+        self.assertEqual(label, "jina")
+        self.assertEqual(headers.get("Authorization"), "Bearer jina_test_key")
+        self.assertNotIn("jina_test_key", build("https://x.com"),
+                         "the key must never appear in the request URL")
+
+    def test_jina_is_keyless_by_default(self):
+        _, _, headers, _ = pl._fetch_transports()[1]
+        self.assertNotIn("Authorization", headers)
+
 
 class TestPromotedFeedNames(unittest.TestCase):
     """FFP drops the 'City' that the promoted clubs carry in FPL. Without a mapping

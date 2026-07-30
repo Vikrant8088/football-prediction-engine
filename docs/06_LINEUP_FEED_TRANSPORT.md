@@ -20,12 +20,14 @@ We checked the alternatives before settling:
 | FotMob JSON API | now requires signed tokens — dead |
 | fpledits / thefantasytool | no per-player probability exposed; JS-rendered |
 | Confirmed-lineup APIs (API-Football, Sportmonks) | publish ~1 h before kickoff — **too late** for the FPL deadline |
-| **`r.jina.ai` (Jina Reader), free + keyless** | **works** — returns HTML the existing parser reads at 20 teams / 403 players, identical to a residential fetch |
-| Paid scraping proxy (ScraperAPI, ZenRows) | works too; the reliable upgrade if the free reader is rate-limited |
+| `r.jina.ai` (Jina Reader), **keyless** | works from a residential IP (HTML the parser reads at 20 teams / 403 players) but **403s from GitHub's datacenter IP** — free tiers throttle datacenter traffic |
+| **`r.jina.ai` with a FREE key** | **works from CI** — the free Jina key (no card) lifts the datacenter throttle |
+| Paid scraping proxy (ScraperAPI, ZenRows) | works too; the alternative if you prefer it |
 
 Days-ahead predicted lineups *with probabilities* only come from scraped fantasy sites,
-and those block datacenter IPs. So the fix is transport, not source — and a free reader
-that fetches server-side from its own IPs is enough.
+and those block datacenter IPs. So does every free *keyless* reader — datacenter
+throttling is universal, which is the honest catch: **there is no zero-signup cloud
+fix.** But one *free* key (Jina, ~2 min, no credit card) is enough.
 
 ## How it runs
 
@@ -33,26 +35,26 @@ that fetches server-side from its own IPs is enough.
 lineups:
 
 1. **direct** — all a residential/local run needs; the fallbacks are never reached.
-2. **the free Jina reader** (`r.jina.ai`, `X-Return-Format: html`) — the automatic cloud
-   fallback when direct is blocked. No key, no signup, no config. **This is why the
-   daily CI archiver works out of the box.**
+2. **the Jina reader** (`r.jina.ai`, `X-Return-Format: html`) — the cloud fallback when
+   direct is blocked. Keyless it 403s from CI; with `JINA_API_KEY` it rides a Bearer
+   header and serves CI.
 3. **a paid proxy** — used *instead of* Jina when `LINEUP_FETCH_PROXY` is set.
 
-### Optional: a paid proxy for extra reliability
+### To turn the CI archiver on (pick one, both free)
 
-Jina is a free public service, so it can rate-limit or wobble. If the archiver starts
-failing on it, set a paid scraping-proxy key as the reliable upgrade:
+**Option 1 — free Jina key (simplest):**
 
-1. Free tier from ScraperAPI / ZenRows / ScrapingBee (~1 000 req/mo; this needs ~30).
+1. Get a free key at <https://jina.ai/reader> (no credit card).
 2. GitHub repo → **Settings → Secrets and variables → Actions → New secret**, name
-   **`LINEUP_FETCH_PROXY`**, value the provider's template with a `{url}` placeholder:
+   **`JINA_API_KEY`**, value the key.
 
-   ```
-   https://api.scraperapi.com/?api_key=YOUR_KEY&url={url}
-   ```
+**Option 2 — scraping-proxy key:** free tier from ScraperAPI / ZenRows (~1 000 req/mo;
+this needs ~30). Add secret **`LINEUP_FETCH_PROXY`** = the template with a `{url}`
+placeholder, e.g. `https://api.scraperapi.com/?api_key=YOUR_KEY&url={url}`.
 
-The key lives only in the secret — never in code or git, exactly like the API-Football
-rule. Unset, Jina is used.
+Either key lives only in the secret — never in code or git, exactly like the
+API-Football rule. With neither set, the CI archiver fails (correctly — the feed is
+genuinely unreachable from a datacenter without one); local runs are unaffected.
 
 ### Local, from a residential IP (also zero cost)
 

@@ -51,15 +51,17 @@ jobs:
       # committed — but the job must go red so a degraded feed cannot rot the archive
       # unnoticed. An EMPTY parse saves nothing, so the commit step below no-ops.
       #
-      # FFP blocks GitHub's datacenter IPs (a 204 stub, confirmed across retries), so
-      # the fetch falls back to the free keyless Jina reader (r.jina.ai), which returns
-      # HTML the parser reads unchanged — no secret needed. `LINEUP_FETCH_PROXY` is an
-      # OPTIONAL secret (a paid scraping-proxy template) for anyone who wants more
-      # reliability than a free public service; unset, Jina is used. See docs/06.
+      # FFP blocks GitHub's datacenter IPs (a 204 stub, confirmed across retries), and
+      # so does every FREE-KEYLESS reader (Jina 403s from CI) — datacenter throttling is
+      # universal. One FREE key fixes it: JINA_API_KEY (jina.ai, no card) rides as a
+      # Bearer header and lets the reader serve CI. LINEUP_FETCH_PROXY is the alternative
+      # (a paid scraping-proxy template). Set EITHER as a repo secret; see docs/06. With
+      # neither, this fails (correctly — the feed is genuinely unreachable from CI).
       - name: Archive snapshot
         id: archive
         continue-on-error: true
         env:
+          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
           LINEUP_FETCH_PROXY: ${{ secrets.LINEUP_FETCH_PROXY }}
         run: python -m research.data.predicted_lineups
 
