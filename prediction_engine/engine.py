@@ -125,15 +125,28 @@ class PredictionEngine:
         """The history the champion was trained on."""
         return self._matches
 
-    def scoreline_grid(self, home_team: str, away_team: str) -> np.ndarray:
+    def scoreline_grid(self, home_team: str, away_team: str,
+                       allow_unseen: bool = False) -> np.ndarray:
         """P(home_goals=h, away_goals=a) for a fixture. Its home/draw/away
-        regions sum to the champion's 1X2 probabilities exactly."""
-        self._check_team(home_team)
-        self._check_team(away_team)
+        regions sum to the champion's 1X2 probabilities exactly.
+
+        `allow_unseen` cold-starts a team with no history to the ensemble's
+        league-average prior (Elo 1500) instead of raising. It is OFF by default so
+        the interactive and CLI paths still catch a typo, and ON only for the FPL
+        projection layer, where the fixture list comes from FPL's own authoritative
+        team list and a "new" team is a genuine promotion (Coventry, Hull in 2026/27),
+        not a mistake.
+        """
+        self._check_team(home_team, allow_unseen)
+        self._check_team(away_team, allow_unseen)
         return self._model.scoreline_grid(home_team, away_team)
 
-    def _check_team(self, team: str) -> None:
+    def _check_team(self, team: str, allow_unseen: bool = False) -> None:
         if team not in set(self.teams):
+            if allow_unseen:
+                logger.warning("cold-starting unseen team '%s' at the league-average "
+                               "prior — expected for a newly promoted club", team)
+                return
             raise ValueError(
                 f"'{team}' is not a team in {self.league}. Closest known: "
                 + ", ".join(t for t in self.teams if team.lower() in t.lower()) or "none"

@@ -564,7 +564,7 @@ def render_markdown(artifact: dict) -> str:
 
 def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BUDGET,
                   prior_ppg: Optional[Dict[int, float]] = None,
-                  use_lineups: bool = True) -> dict:
+                  use_lineups: bool = True, dry_run: bool = False) -> dict:
     """Load live data, project the target gameweek, and return the squad artifact.
 
     Locks BOTH our squad and the `player_ppg` baseline squad (Section 3 of the
@@ -635,11 +635,19 @@ def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BU
             logger.warning("no last-season rates (%s); opening-week projections will be "
                            "weak", exc)
 
+    # Newly-promoted clubs have no Understat history, so the engine must cold-start
+    # them (grid to league-average Elo, rate to the league mean) instead of raising.
+    # FPL's fixture list is authoritative, so an unseen team here is a genuine
+    # promotion, never a typo — hence allow_unseen. Bound into the projector so the
+    # assembly and any injected test projector stay unchanged.
+    from functools import partial
+    projector = partial(project_fixture, allow_unseen=True)
+
     # The PRIMARY squad is always the proven recent-form champion, with no lineup
     # feed: docs/05 pre-registers it, and the backtest validated it. The Start %
     # variant below is a candidate under forward test, never the headline.
     frame = build_gameweek_frame(engine, players, fixtures,
-                                 minutes_history=minutes_history)
+                                 minutes_history=minutes_history, projector=projector)
     squad = pick_squad(frame, budget=budget)
     if squad is None:
         raise ValueError("no legal squad exists for gameweek %d" % gameweek)
@@ -656,7 +664,7 @@ def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BU
     if start_pct:
         lineup_frame = build_gameweek_frame(engine, players, fixtures,
                                             minutes_history=minutes_history,
-                                            start_pct=start_pct)
+                                            start_pct=start_pct, projector=projector)
         # Same fixtures and squad -> same rows, so the variant's projection joins onto
         # the primary frame and every squad indexes the identical player set.
         frame["expected_points_lineups"] = frame["player_id"].map(
@@ -696,7 +704,11 @@ def bank_gameweek(gameweek: Optional[int] = None, budget: float = TOTAL_SQUAD_BU
     try:
         opening_ids = [int(frame.loc[idx, "player_id"])
                        for idx in list(squad.xi) + list(squad.bench)]
-        carried_blocks = advance_tracks(frame, opening_ids, current_season(), gameweek)
+        # dry_run advances the tracks in memory but does NOT persist: a rehearsal must
+        # not write binding carried-squad state, or it would fix an opening squad from
+        # provisional data and the real pre-deadline lock would refuse to re-decide it.
+        carried_blocks = advance_tracks(frame, opening_ids, current_season(), gameweek,
+                                        persist=not dry_run)
     except Exception as exc:
         logger.warning("carried-squad tracks did not advance (%s); the primary "
                        "endpoint is unaffected", exc)
@@ -752,6 +764,10 @@ def _build_parser() -> argparse.ArgumentParser:
                              "so the Phase 6f Start %% signal gets a clean paired "
                              "forward test; only snapshots archived before the "
                              "deadline are ever read")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="rehearse without writing binding carried-squad state — "
+                             "advances the transfer tracks in memory only, so a "
+                             "rehearsal cannot fix an opening squad from provisional data")
     parser.set_defaults(lineups=True)
     return parser
 
@@ -762,7 +778,7 @@ def main(argv: List[str] = None) -> int:
 
     try:
         artifact = bank_gameweek(gameweek=args.gameweek, budget=args.budget,
-                                 use_lineups=args.lineups)
+                                 use_lineups=args.lineups, dry_run=args.dry_run)
     except ValueError as exc:
         print("error: %s" % exc, file=sys.stderr)
         return 1

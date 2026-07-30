@@ -47,7 +47,7 @@ class _StubEngine:
                                  "home_goals": 2 if i % 2 else 1, "away_goals": 1})
         self.matches = pd.DataFrame(rows)
 
-    def scoreline_grid(self, home, away):
+    def scoreline_grid(self, home, away, allow_unseen=False):
         grid = np.array([[0.06, 0.05, 0.02, 0.01, 0.00, 0.00],
                          [0.09, 0.08, 0.03, 0.01, 0.00, 0.00],
                          [0.08, 0.07, 0.03, 0.01, 0.00, 0.00],
@@ -120,6 +120,15 @@ def _last_season_minutes(players):
 
 class TestGw1ColdStart(unittest.TestCase):
     def setUp(self):
+        # Isolate the carried-track state dir: these tests advance the tracks, and must
+        # never read or write the real research/results/live/ (a stray dry-run there
+        # once leaked a real squad's ids into this synthetic test).
+        import tempfile
+        from pathlib import Path
+        from prediction_engine.fpl import carried
+        self._real_live_dir = carried.LIVE_DIR
+        carried.LIVE_DIR = Path(tempfile.mkdtemp())
+
         self.engine = _StubEngine(TEAMS)
         self.players = _zeroed_new_season_league(TEAMS)
         self.fixtures = [("Arsenal", "Chelsea"), ("Liverpool", "Everton"),
@@ -129,6 +138,12 @@ class TestGw1ColdStart(unittest.TestCase):
         self.prior_minutes = _last_season_minutes(self.players)
         # At GW1 there is no current-season minutes history at all: FPL wiped it.
         self.minutes_history = {}
+
+    def tearDown(self):
+        import shutil
+        from prediction_engine.fpl import carried
+        shutil.rmtree(str(carried.LIVE_DIR), ignore_errors=True)
+        carried.LIVE_DIR = self._real_live_dir
 
     def _frame(self, players, minutes_history="crude"):
         # Default "crude" mirrors the raw GW1 state (no history -> crude flat average
@@ -183,6 +198,39 @@ class TestGw1ColdStart(unittest.TestCase):
         self.assertGreater(forwards.loc[elite, "expected_points"].mean(),
                            forwards.loc[fringe, "expected_points"].mean(),
                            "cold-start should rank last season's elite above the fringe")
+
+    def test_recent_minutes_history_reads_the_current_season_not_the_last_ingested(self):
+        """The id-reassignment guard. `_recent_minutes_history` must query the CURRENT
+        season, not `ALL_SEASONS[-1]` (the last INGESTED one). At GW1 of a new season
+        those differ: the archive still ends at last season, whose element ids have
+        been reassigned, so keying this season's lookups by them hands each player a
+        different player's minutes (measured: Saka got a benchwarmer's). Reading the
+        current season returns {} until its data exists, letting the code-joined
+        cold-start take over."""
+        from prediction_engine.fpl import cli
+
+        asked = {}
+        real_load = cli.load_gameweeks
+        real_season = None
+        try:
+            import research.data.predicted_lineups as pl
+            real_season = pl.current_season
+            pl.current_season = lambda *a, **k: "2026-27"
+
+            def fake_load(season):
+                asked["season"] = season
+                raise FileNotFoundError("2026-27 not ingested yet")
+            cli.load_gameweeks = fake_load
+
+            result = cli._recent_minutes_history()
+            self.assertEqual(asked["season"], "2026-27",
+                             "must query the current season, not the last ingested one")
+            self.assertEqual(result, {},
+                             "no current-season data yet -> empty, so cold-start fires")
+        finally:
+            cli.load_gameweeks = real_load
+            if real_season is not None:
+                pl.current_season = real_season
 
     def test_minutes_coldstart_only_fills_players_without_current_history(self):
         """The prior must fade out: a player who has already featured this season keeps

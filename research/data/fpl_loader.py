@@ -34,6 +34,12 @@ TEAM_NAME_MAP = {
     "Spurs": "Tottenham",
     "West Brom": "West Bromwich Albion",
     "Wolves": "Wolverhampton Wanderers",
+    # Understat drops the "Town": FPL "Ipswich Town" is Understat "Ipswich", who have a
+    # real 2024/25 Premier League season on record. Without this mapping the engine
+    # would cold-start Ipswich to league average and throw away a season of actual
+    # results — worse than the promoted teams that genuinely have no history (Coventry,
+    # Hull), which correctly cold-start. Found in the 2026/27 promoted-club check.
+    "Ipswich Town": "Ipswich",
 }
 
 # Availability: FPL marks 'a' available; anything else is doubt/injury/suspension.

@@ -276,9 +276,23 @@ def _live_minutes_model(player: pd.Series, minutes_history: Dict[int, list],
     return recent      # None -> caller's crude fallback
 
 
+def _league_average_rate(rates: Dict[str, Dict[str, float]]) -> Dict[str, float]:
+    """The mean scored/conceded per match across the league — the cold-start a
+    newly-promoted team gets, matching the grid's league-average Elo prior. (League
+    scored and conceded are equal by construction: every goal scored is one conceded.)"""
+    if not rates:
+        return {"scored_per_match": 1.4, "conceded_per_match": 1.4}   # PL long-run mean
+    n = len(rates)
+    return {
+        "scored_per_match": sum(r["scored_per_match"] for r in rates.values()) / n,
+        "conceded_per_match": sum(r["conceded_per_match"] for r in rates.values()) / n,
+    }
+
+
 def project_fixture(engine, players: pd.DataFrame, home_team: str, away_team: str,
                     minutes_history: Dict[int, list] = None,
-                    start_pct: Dict[int, float] = None) -> pd.DataFrame:
+                    start_pct: Dict[int, float] = None,
+                    allow_unseen: bool = False) -> pd.DataFrame:
     """Expected points for every player in one fixture, best first.
 
     `minutes_history` maps FPL player id -> current-season per-match minutes. When
@@ -289,13 +303,24 @@ def project_fixture(engine, players: pd.DataFrame, home_team: str, away_team: st
     predicted lineup. UNPROVEN and off by default: it is the Phase 6f candidate, and
     unlike everything else here it cannot be backtested (nobody archived predicted
     XIs), so it can only ever be validated forward through Bank-It.
+
+    `allow_unseen` cold-starts a team with no history — the grid to league-average Elo,
+    the scoring rate to the league mean. OFF by default so the interactive CLI still
+    catches a mistyped team; the FPL pipeline turns it ON, because its fixtures come
+    from FPL's authoritative list and a "new" team is a real promotion (Coventry, Hull
+    in 2026/27). This only ever bites GW1-a few, until the promoted team has enough
+    current-season results to be known — the exploratory range, never the validated one.
     """
-    grid = engine.scoreline_grid(home_team, away_team)
+    grid = engine.scoreline_grid(home_team, away_team, allow_unseen=allow_unseen)
     rates = team_scoring_rates(engine.matches)
 
     for team in (home_team, away_team):
         if team not in rates:
-            raise ValueError(f"No recent scoring rate for '{team}'")
+            if not allow_unseen:
+                raise ValueError(f"No recent scoring rate for '{team}'")
+            logger.warning("cold-starting scoring rate for unseen team '%s' at the "
+                           "league average", team)
+            rates[team] = _league_average_rate(rates)
 
     rows = []
     for is_home, team in ((True, home_team), (False, away_team)):

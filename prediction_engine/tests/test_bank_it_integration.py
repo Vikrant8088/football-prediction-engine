@@ -37,7 +37,7 @@ class _StubEngine:
                              "home_goals": 2 if i % 2 else 1, "away_goals": 1})
         self.matches = pd.DataFrame(rows)
 
-    def scoreline_grid(self, home, away):
+    def scoreline_grid(self, home, away, allow_unseen=False):
         # A plausible 6x6 joint scoreline distribution, normalised.
         grid = np.array([[0.06, 0.05, 0.02, 0.01, 0.00, 0.00],
                          [0.09, 0.08, 0.03, 0.01, 0.00, 0.00],

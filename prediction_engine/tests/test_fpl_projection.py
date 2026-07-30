@@ -6,9 +6,11 @@ import numpy as np
 import pandas as pd
 
 from prediction_engine.fpl.projection import (
+    _league_average_rate,
     _live_minutes_model,
     expected_minutes,
     fixture_context,
+    project_fixture,
     project_player,
     team_scoring_rates,
 )
@@ -182,6 +184,65 @@ class TestLiveMinutesModel(unittest.TestCase):
         full = _live_minutes_model(self._player(chance=100.0), {1: [90, 90, 90]})
         doubt = _live_minutes_model(self._player(chance=50.0), {1: [90, 90, 90]})
         self.assertLess(doubt["expected_minutes"], full["expected_minutes"])
+
+
+class _ColdStartEngine:
+    """A stub engine that KNOWS one team and one fixture, so an unseen team exercises
+    the cold-start path without needing the data lake."""
+
+    def __init__(self):
+        self.matches = pd.DataFrame([
+            {"season": "2025-26", "home_team": "Arsenal", "away_team": "Chelsea",
+             "home_goals": 2, "away_goals": 1},
+        ])
+
+    def scoreline_grid(self, home, away, allow_unseen=False):
+        # Mirrors the real engine: raise on an unseen team unless cold-start is allowed.
+        for team in (home, away):
+            if team not in ("Arsenal", "Chelsea") and not allow_unseen:
+                raise ValueError("'%s' is not a team" % team)
+        return _grid({(1, 0): 0.4, (1, 1): 0.3, (0, 1): 0.3})
+
+
+class TestPromotedColdStart(unittest.TestCase):
+    """A newly-promoted club (Coventry, Hull in 2026/27) has no history. The FPL
+    pipeline must cold-start it rather than crash — the real GW1 blocker found in the
+    2026/27 refresh, which the stub-engine integration test could not catch."""
+
+    def _players(self):
+        rows = []
+        for team in ("Arsenal", "Coventry City"):
+            for pid, position in enumerate((GKP, DEF, MID, FWD), start=len(rows) + 1):
+                rows.append({"id": pid, "web_name": "P%d" % pid, "team": team,
+                             "position": position, "price": 5.0, "minutes": 900,
+                             "available": True, "chance_of_playing": 100.0,
+                             "xg_per_90": 0.2, "xa_per_90": 0.1, "saves_per_90": 0.0,
+                             "bonus_per_90": 0.1, "dc_per_90": 2.0, "cards_per_90": 0.1})
+        return pd.DataFrame(rows)
+
+    def test_unseen_team_raises_without_allow_unseen(self):
+        with self.assertRaises(ValueError):
+            project_fixture(_ColdStartEngine(), self._players(),
+                            "Arsenal", "Coventry City")
+
+    def test_unseen_team_cold_starts_with_allow_unseen(self):
+        frame = project_fixture(_ColdStartEngine(), self._players(),
+                                "Arsenal", "Coventry City", allow_unseen=True)
+        # Both clubs' players are projected; the promoted side is not dropped.
+        self.assertEqual(set(frame["team"]), {"Arsenal", "Coventry City"})
+        self.assertTrue((frame["expected_points"] >= 0).all())
+
+    def test_league_average_rate_is_the_mean(self):
+        rates = {"A": {"scored_per_match": 2.0, "conceded_per_match": 1.0},
+                 "B": {"scored_per_match": 1.0, "conceded_per_match": 2.0}}
+        avg = _league_average_rate(rates)
+        self.assertAlmostEqual(avg["scored_per_match"], 1.5)
+        self.assertAlmostEqual(avg["conceded_per_match"], 1.5)
+
+    def test_league_average_rate_has_a_sane_default_when_empty(self):
+        avg = _league_average_rate({})
+        self.assertGreater(avg["scored_per_match"], 0.5)
+        self.assertLess(avg["scored_per_match"], 3.0)
 
 
 if __name__ == "__main__":

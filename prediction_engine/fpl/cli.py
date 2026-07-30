@@ -19,15 +19,26 @@ logger = logging.getLogger(__name__)
 
 
 def _recent_minutes_history() -> Dict[int, list]:
-    """Per-player current-season minutes (chronological) for the recent-form
-    minutes model, keyed by FPL player id. Double-gameweeks are summed to the
-    gameweek total, matching how the model was proven. Returns {} on any failure
-    so the projection degrades gracefully to the crude flat average.
+    """Per-player CURRENT-season minutes (chronological) for the recent-form minutes
+    model, keyed by FPL player id. Double-gameweeks are summed to the gameweek total,
+    matching how the model was proven. Returns {} on any failure so the projection
+    degrades gracefully — at the opening weeks, to the code-joined last-season
+    cold-start (`bank_it.last_season_minutes`).
+
+    Must be the *current* season, not `ALL_SEASONS[-1]` (the most-recent INGESTED
+    season). Those diverge at GW1 of a new season: the archive still ends at last
+    season, whose element ids have since been REASSIGNED, so keying this season's
+    lookups by last season's ids silently hands each player a different player's
+    minutes (measured: 2026/27 Saka got a benchwarmer's 352 minutes instead of his
+    own 2218). Loading the real current season instead returns {} until its data
+    exists, which is exactly when the code-joined cold-start should take over.
     """
+    from research.data.predicted_lineups import current_season
     try:
-        frame = load_gameweeks(ALL_SEASONS[-1])
-    except Exception as exc:                      # data not ingested / off-season
-        logger.warning("no current-season minutes history (%s); using flat average", exc)
+        frame = load_gameweeks(current_season())
+    except Exception as exc:                      # data not ingested yet / off-season
+        logger.info("no current-season minutes history yet (%s); opening weeks will "
+                    "cold-start from last season", exc)
         return {}
     history = {}
     per_gw = frame.groupby(["player_id", "gameweek"])["minutes"].sum().reset_index()

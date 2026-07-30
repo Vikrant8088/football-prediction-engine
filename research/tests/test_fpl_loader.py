@@ -111,6 +111,18 @@ class TestParsingContract(unittest.TestCase):
         self._patch()
         self.assertIn("Tottenham", set(fpl_loader.load_teams()["team"]))
 
+    def test_ipswich_town_maps_to_ipswich(self):
+        # Understat drops the "Town", and Ipswich have a real 2024/25 Premier League
+        # season on record. Without this mapping the engine cold-starts them to league
+        # average and throws away a season of results (found in the 2026/27 refresh).
+        self.assertEqual(fpl_loader.canonical_team("Ipswich Town"), "Ipswich")
+
+    def test_genuinely_new_clubs_pass_through_unmapped(self):
+        # Coventry/Hull have no usable Understat history, so they correctly stay
+        # unmapped and cold-start at the engine rather than being forced onto a proxy.
+        self.assertEqual(fpl_loader.canonical_team("Coventry City"), "Coventry City")
+        self.assertEqual(fpl_loader.canonical_team("Hull City"), "Hull City")
+
     def test_next_gameweek_prefers_the_is_next_flag(self):
         self._patch(_payload(events=[
             {"id": 1, "deadline_time": "2026-08-21T17:30:00Z", "is_next": False,
