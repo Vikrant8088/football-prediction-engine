@@ -122,6 +122,17 @@ class TestResolveSnapshot(unittest.TestCase):
         self.assertEqual(result["start_pct"][1], 90)
         self.assertEqual(result["start_pct"][7], 10)
 
+    def test_pending_tbd_player_resolves_by_name_but_adds_no_numeric_signal(self):
+        # A 'TBD' Start % parses as start_pct=None. It must resolve as a NAME (so the
+        # match rate is honest) yet never enter the start_pct map — and never crash on
+        # int(None), which it used to on every early-season page.
+        snap = {"teams": [{"team": "Arsenal", "canonical_team": "Arsenal", "players": [
+            {"name": "David Raya", "position": "GK", "start_pct": None,
+             "predicted_xi": True}]}]}
+        result = lr.resolve_snapshot(snap, _players())
+        self.assertEqual(result["stats"]["matched"], 1, "the name still resolved")
+        self.assertEqual(result["start_pct"], {}, "but no numeric signal was added")
+
     def test_unmatched_are_reported_never_dropped_silently(self):
         result = lr.resolve_snapshot(self._snapshot(), _players())
         self.assertEqual(len(result["unmatched"]), 1)

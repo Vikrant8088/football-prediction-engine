@@ -97,6 +97,12 @@ MIN_PLAYERS_PER_TEAM = 11
 TEAM_NAME_FIXES = {
     "Nottingham Forest": "Nott'm Forest",
     "Tottenham": "Spurs",
+    # FFP drops the "City" the promoted clubs carry in FPL, so their whole squad's
+    # Start % was being dropped as an "unknown team" at resolution. Meet FPL's names.
+    # (Ipswich needs no entry here: FFP already says "Ipswich", which fpl_loader maps
+    # to the Understat "Ipswich" who have real history.)
+    "Coventry": "Coventry City",
+    "Hull": "Hull City",
 }
 
 
@@ -188,12 +194,19 @@ def parse(page: str) -> List[dict]:
             if len(cells) < 3:
                 continue
             name, position, pct = cells[0], cells[1], _PCT_RE.search(cells[2])
-            if not name or pct is None:
+            if not name:
                 continue
+            # A non-numeric Start % ("TBD", "—") is PENDING, not junk: early in the
+            # season FFP lists the predicted XI before it firms the percentages, and
+            # the season rolls over to TBD for weeks. Keep the player with
+            # start_pct=None — dropping him collapses the whole page to zero teams and
+            # fail-closes the archiver on a genuinely valid page (it did, for 8 days
+            # after the 2026/27 rollover). The membership of the predicted XI is itself
+            # signal; the percentage arrives later.
             players.append({
                 "name": name,
                 "position": position,
-                "start_pct": int(pct.group(1)),
+                "start_pct": int(pct.group(1)) if pct else None,
                 "predicted_xi": is_xi,
             })
         if not players:
@@ -245,6 +258,14 @@ def build_snapshot(page: str, season: str, gameweek: Optional[int] = None,
         "teams": teams,
         "team_count": len(teams),
         "player_count": sum(len(t["players"]) for t in teams),
+        # How many players carry a real percentage vs a pending "TBD". When every one
+        # is pending, the page is valid but its predictions have not firmed yet — worth
+        # archiving (it proves the feed is reachable and records when the numbers
+        # arrive) but carrying no Start % signal, so the consumer produces no variant.
+        "numeric_start_pcts": sum(1 for t in teams for p in t["players"]
+                                  if p.get("start_pct") is not None),
+        "predictions_pending": all(p.get("start_pct") is None
+                                   for t in teams for p in t["players"]) if teams else True,
         "health": parse_health(teams),
     }
 

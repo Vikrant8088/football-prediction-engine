@@ -168,9 +168,15 @@ def resolve_snapshot(snapshot: dict, players: pd.DataFrame,
                 continue
             record["player_id"] = player_id
             matched.append(record)
-            # A player can appear in both the XI and the alternatives table; keep the
-            # higher probability rather than whichever happened to parse last.
-            start_pct[player_id] = max(start_pct.get(player_id, 0), int(player["start_pct"]))
+            # A pending "TBD" percentage (start_pct is None) resolves as a NAME but
+            # carries no numeric signal, so it never enters the start_pct map — the
+            # consumer then keeps the recent-form minutes for that player. int(None)
+            # would otherwise crash the whole resolution on an early-season page.
+            if player.get("start_pct") is not None:
+                # A player can appear in both the XI and the alternatives table; keep
+                # the higher probability rather than whichever parsed last.
+                start_pct[player_id] = max(start_pct.get(player_id, 0),
+                                           int(player["start_pct"]))
 
     total = len(matched) + len(unmatched)
     stats = {

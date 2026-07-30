@@ -139,6 +139,70 @@ class TestParseHealth(unittest.TestCase):
         self.assertEqual(health["thin_teams"], ["C"])
 
 
+class TestPendingPredictions(unittest.TestCase):
+    """Early in a season (and for weeks after the rollover) FFP lists the predicted XI
+    with the Start % shown as 'TBD' before it firms the numbers. That is a VALID page,
+    not a failed fetch — treating it as junk collapsed the whole page to zero teams and
+    fail-closed the archiver for 8 days after the 2026/27 rollover."""
+
+    TBD_PAGE = """
+    <h2>Arsenal Predicted Lineup</h2>
+    <table><thead><tr><th>Player</th><th>Pos</th><th>Start %</th></tr></thead>
+    <tbody>
+    <tr><td>David Raya</td><td>GK</td><td>TBD</td></tr>
+    <tr><td>William Saliba</td><td>CB</td><td>TBD</td></tr>
+    </tbody></table>
+    """
+
+    def test_a_tbd_percentage_keeps_the_player_as_pending(self):
+        teams = pl.parse(self.TBD_PAGE)
+        self.assertEqual(len(teams), 1, "the team must not vanish just because % is TBD")
+        players = teams[0]["players"]
+        self.assertEqual(len(players), 2)
+        self.assertTrue(all(p["start_pct"] is None for p in players))
+        self.assertEqual(players[0]["name"], "David Raya")
+
+    def test_snapshot_flags_predictions_pending(self):
+        snap = pl.build_snapshot(self.TBD_PAGE, "2026-27")
+        self.assertEqual(snap["team_count"], 1)
+        self.assertTrue(snap["predictions_pending"])
+        self.assertEqual(snap["numeric_start_pcts"], 0)
+
+    def test_a_numeric_page_is_not_pending(self):
+        snap = pl.build_snapshot(FIXTURE, "2025-26")
+        self.assertFalse(snap["predictions_pending"])
+        self.assertGreater(snap["numeric_start_pcts"], 0)
+
+    def test_archiver_saves_a_pending_page_instead_of_failing_closed(self):
+        real = pl.fetch_html
+        pl.fetch_html = lambda *a, **k: self.TBD_PAGE + (
+            "<table><tr><td>x</td></tr></table>")  # a second, non-lineup table
+        try:
+            tmp = Path(tempfile.mkdtemp())
+            snap = pl.archive_now(season="2026-27", gameweek=1, archive_dir=tmp)
+            self.assertEqual(snap["team_count"], 1)
+            self.assertTrue(snap["predictions_pending"])
+        finally:
+            pl.fetch_html = real
+
+
+class TestPromotedFeedNames(unittest.TestCase):
+    """FFP drops the 'City' that the promoted clubs carry in FPL. Without a mapping
+    their whole squad's Start % is dropped as an unknown team."""
+
+    def test_coventry_and_hull_meet_fpls_names(self):
+        self.assertEqual(pl.TEAM_NAME_FIXES.get("Coventry"), "Coventry City")
+        self.assertEqual(pl.TEAM_NAME_FIXES.get("Hull"), "Hull City")
+
+    def test_the_fix_is_applied_in_the_parsed_canonical_team(self):
+        page = ("<h2>Coventry Predicted Lineup</h2>"
+                "<table><thead><tr><th>Player</th><th>Pos</th><th>Start %</th></tr>"
+                "</thead><tbody><tr><td>Ellis Simms</td><td>FW</td><td>80%</td></tr>"
+                "</tbody></table>")
+        teams = pl.parse(page)
+        self.assertEqual(teams[0]["canonical_team"], "Coventry City")
+
+
 class TestSnapshot(unittest.TestCase):
     def test_snapshot_records_provenance_and_counts(self):
         snap = pl.build_snapshot(FIXTURE, "2026-27", gameweek=1,
