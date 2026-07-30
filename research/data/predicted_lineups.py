@@ -127,30 +127,90 @@ def diagnose(page: str) -> str:
                "<table" in page.lower()))
 
 
+# FFP blocks datacenter IPs: from a residential IP the page is ~896 KB / 20 teams, but
+# from GitHub Actions it is a 204-byte stub — confirmed across retries. So a cloud run
+# needs a residential-IP transport. Two are supported, tried in order after a direct
+# attempt:
+#
+#   jina   r.jina.ai, a FREE keyless reader that fetches server-side and returns HTML
+#          our parser handles unchanged (verified: 20 teams / 403 players, identical to
+#          a direct residential fetch). This is the default cloud fallback — no signup.
+#   proxy  LINEUP_FETCH_PROXY, an optional URL template ("https://…/?api_key=KEY&url=
+#          {url}") for a paid scraping proxy, for anyone wanting more reliability than a
+#          free public service. Read ONLY from the environment so the key never touches
+#          the repo, exactly like the API-Football rule.
+#
+# Local runs (residential IP) succeed on the direct attempt and never reach a fallback,
+# so nothing changes off the cloud.
+PROXY_ENV_VAR = "LINEUP_FETCH_PROXY"
+JINA_READER_PREFIX = "https://r.jina.ai/"
+
+
+def _fetch_transports():
+    """Ordered (label, url_builder, extra_headers, timeout_multiplier) to try.
+
+    Direct first (fast, and all a residential run needs). Then, as a datacenter
+    fallback, the configured paid proxy if present, otherwise the free Jina reader.
+    """
+    import os
+    import urllib.parse
+
+    transports = [("direct", lambda u: u, {}, 1)]
+
+    template = os.environ.get(PROXY_ENV_VAR, "").strip()
+    if template:
+        if "{url}" not in template:
+            raise LineupFetchError(
+                "%s is set but has no {url} placeholder; expected e.g. "
+                "'https://proxy.example/?api_key=KEY&url={url}'" % PROXY_ENV_VAR)
+        transports.append(
+            ("proxy", lambda u: template.format(url=urllib.parse.quote(u, safe="")),
+             {}, 3))
+    else:
+        # Jina returns cleaned HTML (not markdown) when asked, which our parser reads
+        # directly; the third-party hop and server-side render want a longer ceiling.
+        transports.append(
+            ("jina", lambda u: JINA_READER_PREFIX + u, {"X-Return-Format": "html"}, 3))
+    return transports
+
+
 def fetch_html(url: str = SOURCE_URL, timeout: int = 30,
                attempts: int = FETCH_ATTEMPTS) -> str:
     """Fetch the team-news page, honouring the published crawl delay.
 
-    Retries while the response carries no lineups. The site intermittently answers
-    **200 with a challenge/consent page** instead of the real one — observed directly:
-    two CI runs three minutes apart returned 0 teams and then 20. A transient like that
-    would otherwise punch an unfillable hole in the archive on that day, so it is worth
-    a couple of extra polite attempts. Returns the last page regardless; the caller
-    raises with diagnostics if it still carries nothing.
+    Tries each transport (direct, then a residential-IP fallback) in a round per
+    attempt, returning the first response that actually carries lineups. The site — and
+    a free reader — intermittently answers **200 with a challenge/consent page** instead
+    of the real one (observed directly: two CI runs three minutes apart returned 0 teams
+    then 20), so a couple of polite rounds are worth it. Returns the last page
+    regardless; the caller raises with diagnostics if it still carries nothing.
     """
+    transports = _fetch_transports()
     page = None
     for attempt in range(1, attempts + 1):
-        gap = time.time() - _LAST_FETCH[0]
-        if gap < MIN_FETCH_GAP_SECONDS:
-            time.sleep(MIN_FETCH_GAP_SECONDS - gap)
-        response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=timeout)
-        _LAST_FETCH[0] = time.time()
-        response.raise_for_status()
-        page = response.text
-        if LINEUP_MARKER in page:
-            return page
-        logger.warning("attempt %d/%d carried no lineups (%s)",
-                       attempt, attempts, diagnose(page))
+        for label, build, headers, mult in transports:
+            gap = time.time() - _LAST_FETCH[0]
+            if gap < MIN_FETCH_GAP_SECONDS:
+                time.sleep(MIN_FETCH_GAP_SECONDS - gap)
+            merged = {"User-Agent": USER_AGENT}
+            merged.update(headers)
+            try:
+                response = requests.get(build(url), headers=merged,
+                                        timeout=timeout * mult)
+                response.raise_for_status()
+                page = response.text
+            except Exception as exc:                 # a dead transport must not abort
+                logger.warning("round %d: %s transport failed (%s)",
+                               attempt, label, str(exc)[:80])
+                _LAST_FETCH[0] = time.time()
+                continue
+            _LAST_FETCH[0] = time.time()
+            if LINEUP_MARKER in page:
+                if label != "direct":
+                    logger.info("fetched lineups via the %s transport", label)
+                return page
+            logger.warning("round %d: %s carried no lineups (%s)",
+                           attempt, label, diagnose(page))
     return page
 
 

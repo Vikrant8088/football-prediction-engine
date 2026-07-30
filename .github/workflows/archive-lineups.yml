@@ -50,9 +50,17 @@ jobs:
       # partial (say 18/20 clubs) is real, unrecoverable data and must still be
       # committed — but the job must go red so a degraded feed cannot rot the archive
       # unnoticed. An EMPTY parse saves nothing, so the commit step below no-ops.
+      #
+      # FFP blocks GitHub's datacenter IPs (a 204 stub, confirmed across retries), so
+      # the fetch falls back to the free keyless Jina reader (r.jina.ai), which returns
+      # HTML the parser reads unchanged — no secret needed. `LINEUP_FETCH_PROXY` is an
+      # OPTIONAL secret (a paid scraping-proxy template) for anyone who wants more
+      # reliability than a free public service; unset, Jina is used. See docs/06.
       - name: Archive snapshot
         id: archive
         continue-on-error: true
+        env:
+          LINEUP_FETCH_PROXY: ${{ secrets.LINEUP_FETCH_PROXY }}
         run: python -m research.data.predicted_lineups
 
       - name: Commit the snapshot
@@ -74,5 +82,5 @@ jobs:
       - name: Fail if the archive was empty or incomplete
         if: steps.archive.outcome != 'success'
         run: |
-          echo "::error::Archiver reported an empty or partial parse — see the 'Archive snapshot' step for diagnostics (title/markers reveal a bot challenge vs a layout change)."
+          echo "::error::Archiver reported an empty or partial parse — see the 'Archive snapshot' step for diagnostics (title/markers reveal a bot challenge vs a layout change). If both direct and Jina transports failed, the free reader may be rate-limited; a LINEUP_FETCH_PROXY secret is the reliable upgrade (docs/06)."
           exit 1

@@ -186,6 +186,55 @@ class TestPendingPredictions(unittest.TestCase):
             pl.fetch_html = real
 
 
+class TestFetchTransports(unittest.TestCase):
+    """FFP blocks datacenter IPs, so a cloud fetch falls back to a residential-IP
+    transport: the free Jina reader by default, or a paid proxy if one is configured
+    ONLY via the environment — the key must never reach the repo."""
+
+    def setUp(self):
+        import os
+        self._saved = os.environ.get(pl.PROXY_ENV_VAR)
+        os.environ.pop(pl.PROXY_ENV_VAR, None)
+
+    def tearDown(self):
+        import os
+        os.environ.pop(pl.PROXY_ENV_VAR, None)
+        if self._saved is not None:
+            os.environ[pl.PROXY_ENV_VAR] = self._saved
+
+    def _labels(self):
+        return [label for label, _, _, _ in pl._fetch_transports()]
+
+    def test_direct_is_always_first_so_local_runs_are_unchanged(self):
+        transports = pl._fetch_transports()
+        label, build, _, _ = transports[0]
+        self.assertEqual(label, "direct")
+        self.assertEqual(build(pl.SOURCE_URL), pl.SOURCE_URL)
+
+    def test_free_jina_reader_is_the_default_cloud_fallback(self):
+        self.assertEqual(self._labels(), ["direct", "jina"])
+        _, build, headers, _ = pl._fetch_transports()[1]
+        self.assertTrue(build("https://x.com").startswith(pl.JINA_READER_PREFIX))
+        self.assertEqual(headers.get("X-Return-Format"), "html",
+                         "Jina must return HTML so the existing parser reads it")
+
+    def test_a_configured_proxy_replaces_jina_and_encodes_the_target(self):
+        import os
+        os.environ[pl.PROXY_ENV_VAR] = "https://proxy.test/?api_key=SECRET&url={url}"
+        self.assertEqual(self._labels(), ["direct", "proxy"])
+        _, build, _, _ = pl._fetch_transports()[1]
+        routed = build("https://x.com/p?a=1")
+        self.assertIn("api_key=SECRET", routed)
+        self.assertIn("https%3A%2F%2Fx.com%2Fp%3Fa%3D1", routed,
+                      "the target must be URL-encoded as a query value")
+
+    def test_a_proxy_template_without_the_placeholder_is_rejected(self):
+        import os
+        os.environ[pl.PROXY_ENV_VAR] = "https://proxy.test/?api_key=SECRET"
+        with self.assertRaises(pl.LineupFetchError):
+            pl._fetch_transports()
+
+
 class TestPromotedFeedNames(unittest.TestCase):
     """FFP drops the 'City' that the promoted clubs carry in FPL. Without a mapping
     their whole squad's Start % is dropped as an unknown team."""
@@ -291,20 +340,29 @@ class TestFetchRetriesTransients(unittest.TestCase):
         pl.requests.get = self._real_get
         pl.time.sleep = self._real_sleep
 
-    def test_retries_until_the_real_page_arrives(self):
+    def setUpProxyClear(self):
+        import os
+        os.environ.pop(pl.PROXY_ENV_VAR, None)
+
+    def test_falls_through_to_the_next_transport_when_direct_is_blocked(self):
+        # A datacenter run: direct returns a challenge stub, the next transport (Jina)
+        # returns the real page. Exactly the FFP-blocks-CI case, in miniature.
+        self.setUpProxyClear()
         fake_get, calls = self._patch(["<html><title>Just a moment...</title></html>",
                                        FIXTURE])
         pl.requests.get = fake_get
         page = pl.fetch_html(attempts=3)
         self.assertIn(pl.LINEUP_MARKER, page)
-        self.assertEqual(len(calls), 2, "should have retried exactly once")
+        self.assertEqual(len(calls), 2, "direct blocked, fell through to the fallback")
 
-    def test_gives_up_after_attempts_and_returns_the_last_page(self):
+    def test_gives_up_after_every_transport_over_every_round(self):
+        self.setUpProxyClear()
         fake_get, calls = self._patch(["<html><title>Just a moment...</title></html>"])
         pl.requests.get = fake_get
         page = pl.fetch_html(attempts=3)
         self.assertNotIn(pl.LINEUP_MARKER, page)   # caller then raises LineupFetchError
-        self.assertEqual(len(calls), 3)
+        # 3 rounds x every transport (direct + the free Jina fallback).
+        self.assertEqual(len(calls), 3 * len(pl._fetch_transports()))
 
 
 class TestCurrentSeason(unittest.TestCase):
