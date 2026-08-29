@@ -1,0 +1,2476 @@
+{
+  "source": "fantasyfootballpundit",
+  "source_url": "https://www.fantasyfootballpundit.com/fantasy-premier-league-team-news/",
+  "parser_version": 2,
+  "fetched_at": "2026-08-29T14:19:06Z",
+  "season": "2026-27",
+  "gameweek": 3,
+  "deadline_time": "2026-09-04T17:30:00Z",
+  "teams": [
+    {
+      "team": "Arsenal",
+      "canonical_team": "Arsenal",
+      "players": [
+        {
+          "name": "David Raya",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "BEN WHITE",
+          "position": "RB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "RICCARDO CALAFIORI",
+          "position": "LB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Cristhian Mosquera",
+          "position": "CB",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "Gabriel Magalhaes",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Declan Rice",
+          "position": "DCM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MYLES LEWIS-SKELLY",
+          "position": "DCM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "Martin Odegaard",
+          "position": "ACM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Bukayo Saka",
+          "position": "RM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "CHRISTOS TZOLIS",
+          "position": "LM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kai Havertz",
+          "position": "CF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "EZRI KONSA",
+          "position": "CB",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "PIERO HINCAPIE",
+          "position": "CB",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "Martin Zubimendi",
+          "position": "CM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "Mikel Merino",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "BRUNO GUIMARAES",
+          "position": "CM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "Noni Madueke",
+          "position": "RM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "EBERECHI EZE",
+          "position": "LM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "VICTOR GYOKERES",
+          "position": "CF",
+          "start_pct": 20,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Aston Villa",
+      "canonical_team": "Aston Villa",
+      "players": [
+        {
+          "name": "ZION SUZUKI",
+          "position": "GK",
+          "start_pct": 50,
+          "predicted_xi": true
+        },
+        {
+          "name": "Matty Cash",
+          "position": "RB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ian Maatsen",
+          "position": "LB",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "Victor Lindelof",
+          "position": "CB",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "Pau Torres",
+          "position": "CB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "BOUBACAR KAMARA",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "JOHN MCGINN",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "ROSS BARKLEY",
+          "position": "ACM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "ALYSSON",
+          "position": "RM",
+          "start_pct": 50,
+          "predicted_xi": true
+        },
+        {
+          "name": "GEORGE HEMMINGS",
+          "position": "LM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "EMILIANO BUENDIA",
+          "position": "CF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MARCO BIZOT",
+          "position": "GK",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "AARON WAN-BISSAKA",
+          "position": "RB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "LAMARE BOGARDE",
+          "position": "RB",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "MATTEO RUGGERI",
+          "position": "LB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "TYRONE MINGS",
+          "position": "CB",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "LEON GORETZKA",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "ALEJANDRO GARNACHO",
+          "position": "LM",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "NICOLAS JACKSON",
+          "position": "CF",
+          "start_pct": 50,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Bournemouth",
+      "canonical_team": "Bournemouth",
+      "players": [
+        {
+          "name": "Djordje Petrovic",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "ADAM SMITH",
+          "position": "RB",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "Adrien Truffert",
+          "position": "LB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "James Hill",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "ANTONIO SILVA",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Alex Scott",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "LEWIS COOK",
+          "position": "DCM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "JUSTIN KLUIVERT",
+          "position": "ACM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "Rayan",
+          "position": "RM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MARCUS TAVERNIER",
+          "position": "LM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Evanilson",
+          "position": "CF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "JUANLU SANCHEZ",
+          "position": "RB",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "BAFODE DIAKITE",
+          "position": "CB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "Tyler Adams",
+          "position": "CM",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "RYAN CHRISTIE",
+          "position": "CM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "ALEX TOTH",
+          "position": "CM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "DAVID BROOKS",
+          "position": "RM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "BEN GANNON-DOAK",
+          "position": "RM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "DANIEL JEBBISON",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "ALVARO RODRIGUEZ",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Brentford",
+      "canonical_team": "Brentford",
+      "players": [
+        {
+          "name": "Caoimhin Kelleher",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "Michael Kayode",
+          "position": "RB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Keane Lewis-Potter",
+          "position": "LB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kristoffer Ajer",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nathan Collins",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Mathias Jensen",
+          "position": "DCM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MAMADOU SANGARE",
+          "position": "DCM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "VITALY JANELT",
+          "position": "ACM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Dango Ouattara",
+          "position": "RF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kevin Schade",
+          "position": "LF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Igor Thiago",
+          "position": "CF",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Aaron Hickey",
+          "position": "RB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "RICO HENRY",
+          "position": "LB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "JANNIK SCHUSTER",
+          "position": "CB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "Yehor Yarmoliuk",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "Mikkel Damsgaard",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "JAIDON ANTHONY",
+          "position": "RM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "CALLUM WILSON",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Brighton",
+      "canonical_team": "Brighton",
+      "players": [
+        {
+          "name": "Bart Verbruggen",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "MATS WIEFFER",
+          "position": "RB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "OLIVIER BOSCAGLI",
+          "position": "LB",
+          "start_pct": 50,
+          "predicted_xi": true
+        },
+        {
+          "name": "LUKA VUSKOVIC",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "LEWIS DUNK",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Yasin Ayari",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Pascal Gross",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "DIEGO GOMEZ",
+          "position": "ACM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "ZADOK YOHANNA",
+          "position": "RM",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "MAXIME DE CUYPER",
+          "position": "LM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Georginio Rutter",
+          "position": "CF",
+          "start_pct": 40,
+          "predicted_xi": true
+        },
+        {
+          "name": "COSTINHA",
+          "position": "RB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "Ferdi Kadioglu",
+          "position": "LB",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "MICHAEL SVOBODA",
+          "position": "CB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "PASCAL STRUIJK",
+          "position": "CB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "MALICK YALCOUYE",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "JACK HINSHELWOOD",
+          "position": "CM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "IBRAHIM OSMAN",
+          "position": "LM",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "Charalampos Kostoulas",
+          "position": "CF",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "PROMISE DAVID",
+          "position": "CF",
+          "start_pct": 20,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Chelsea",
+      "canonical_team": "Chelsea",
+      "players": [
+        {
+          "name": "Robert Sanchez",
+          "position": "GK",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MALO GUSTO",
+          "position": "RWB",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "JORREL HATO",
+          "position": "LWB",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "Josh Acheampong",
+          "position": "CB",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "LEVI COLWILL",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "MAXENCE LACROIX",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "REECE JAMES",
+          "position": "CM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "ROMEO LAVIA",
+          "position": "CM",
+          "start_pct": 40,
+          "predicted_xi": true
+        },
+        {
+          "name": "COLE PALMER",
+          "position": "RF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MORGAN ROGERS",
+          "position": "LF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Joao Pedro",
+          "position": "CF",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "MIKE PENDERS",
+          "position": "GK",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "MARCO PALESTRA",
+          "position": "RB",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "PEP CHAVARRIA",
+          "position": "LB",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "VALENTIN BARCO",
+          "position": "RB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "WESLEY FOFANA",
+          "position": "CB",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "MOISES CAICEDO",
+          "position": "CM",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "ENZO FERNANDEZ",
+          "position": "CM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "PEDRO NETO",
+          "position": "RM",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "GEOVANY QUENDA",
+          "position": "RM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "ESTEVAO",
+          "position": "RM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "JAMIE BYONE-GITTENS",
+          "position": "LM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "DANNY WELBECK",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Coventry",
+      "canonical_team": "Coventry City",
+      "players": [
+        {
+          "name": "CARL RUSHWORTH",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "MILAN VAN EWIJK",
+          "position": "RB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "JAY DASILVA",
+          "position": "LB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "BOBBY THOMAS",
+          "position": "CB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "AURELE AMENDA",
+          "position": "CB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "CALEB YIRENKYI",
+          "position": "CM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "FRANK ONYEKA",
+          "position": "CM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MATT GRIMES",
+          "position": "CM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "LOUM TCHAOUNA",
+          "position": "RF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "BRANDON THOMAS-ASANTE",
+          "position": "LF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "ELLIS SIMMS",
+          "position": "CF",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "KAINE KESLER-HAYDEN",
+          "position": "RB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "JAKE BIDWELL",
+          "position": "LB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "LIAM KITCHING",
+          "position": "CB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "ETHAN PINNOCK",
+          "position": "CB",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "JACK RUDONI",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "JOSH ECCLES",
+          "position": "CM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "GUSTAVO HAMER",
+          "position": "CM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "TATSUHIRO SAKAMOTO",
+          "position": "RM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "EPHRON MASON-CLARK",
+          "position": "LM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "Sidiki Cherif",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "TAIWO AWONIYI",
+          "position": "CF",
+          "start_pct": 20,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Crystal Palace",
+      "canonical_team": "Crystal Palace",
+      "players": [
+        {
+          "name": "Dean Henderson",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "DANIEL MUNOZ",
+          "position": "RWB",
+          "start_pct": 50,
+          "predicted_xi": true
+        },
+        {
+          "name": "Tyrick Mitchell",
+          "position": "LWB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jaydee Canvot",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "CHADI RIAD",
+          "position": "CB",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "CHRIS RICHARDS",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Adam Wharton",
+          "position": "CM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Daichi Kamada",
+          "position": "CM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ismaila Sarr",
+          "position": "RF",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "DWIGHT MCNEIL",
+          "position": "LF",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "JEAN-PHILIPPE MATETA",
+          "position": "CF",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "OSCAR MINGUEZA",
+          "position": "RB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "ANAN KHALAILI",
+          "position": "RB",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "BORNA SOSA",
+          "position": "LB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "TAKEHIRO TOMIYASU",
+          "position": "CB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "AXEL DISASI",
+          "position": "CB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "Jefferson Lerma",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "Will Hughes",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "EVANN GUESSAND",
+          "position": "RM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "Yeremy Pino",
+          "position": "LM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "EDDIE NKETIAH",
+          "position": "CF",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "JORGEN STRAND LARSEN",
+          "position": "CF",
+          "start_pct": 30,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Everton",
+      "canonical_team": "Everton",
+      "players": [
+        {
+          "name": "Jordan Pickford",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "MERLIN ROHL",
+          "position": "RB",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "Vitalii Mykolenko",
+          "position": "LB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "JAMES TARKOWSKI",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "JARRAD BRANTHWAITE",
+          "position": "CB",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "JAMES GARNER",
+          "position": "DCM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "HARRISON ARMSTRONG",
+          "position": "DCM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kiernan Dewsbury-Hall",
+          "position": "ACM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "BRENNAN JOHNSON",
+          "position": "RF",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "Tyrique George",
+          "position": "LF",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Thierno Barry",
+          "position": "CF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nathan Patterson",
+          "position": "RB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "Jake O’Brien",
+          "position": "RB",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "Michael Keane",
+          "position": "CB",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "HAYDEN HACKNEY",
+          "position": "CM",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "Carlos Alcaraz",
+          "position": "CM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "TYLER DIBLING",
+          "position": "RM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "Iliman Ndiaye",
+          "position": "LM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "BETO",
+          "position": "CF",
+          "start_pct": 20,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Fulham",
+      "canonical_team": "Fulham",
+      "players": [
+        {
+          "name": "Bernd Leno",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "Timothy Castagne",
+          "position": "RB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "ANTONEE ROBINSON",
+          "position": "LB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Calvin Bassey",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "JOACHIM ANDERSEN",
+          "position": "CB",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "Sander Berge",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Alex Iwobi",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "JOSH KING",
+          "position": "ACM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Oscar Bobb",
+          "position": "RM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "CESAR PALACIOS",
+          "position": "LM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "GONZALO GARCIA",
+          "position": "CF",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kenny Tete",
+          "position": "RB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "Ryan Sessegnon",
+          "position": "LB",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "JORGE CUENCA",
+          "position": "CB",
+          "start_pct": 60,
+          "predicted_xi": false
+        },
+        {
+          "name": "SHEA CHARLES",
+          "position": "CM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "Emile Smith Rowe",
+          "position": "CM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "KEVIN",
+          "position": "LM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "Rodrigo Muniz",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Hull",
+      "canonical_team": "Hull City",
+      "players": [
+        {
+          "name": "KONSTANTINOS TZOLAKIS",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "LEWIS COYLE",
+          "position": "RB",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "RYAN GILES",
+          "position": "LB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "SEMI AJAYI",
+          "position": "CB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "NOBEL MENDY",
+          "position": "CB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "JOHN EGAN",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "REGAN SLATER",
+          "position": "CM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MATT CROOKS",
+          "position": "CM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MOHAMED BELLOUMI",
+          "position": "RM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "ELLIOT STROUD",
+          "position": "LM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "OLIVER MCBURNIE",
+          "position": "CF",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "CODY DRAMEH",
+          "position": "RB",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "MATT TARGETT",
+          "position": "LB",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "PADDY MCNAIR",
+          "position": "CB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "LUCAS HERRINGTON",
+          "position": "CB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "LUCAS GOURNA-DOUATH",
+          "position": "CM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "KIERAN DOWELL",
+          "position": "CM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "JENS HJERTO-DAHL",
+          "position": "CM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "ABDULKADIR OMUR",
+          "position": "RM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "LIAM MILLAR",
+          "position": "LM",
+          "start_pct": 20,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Ipswich",
+      "canonical_team": "Ipswich",
+      "players": [
+        {
+          "name": "KJELL SCHERPEN",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "DARA O’SHEA",
+          "position": "RB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "LEIF DAVIS",
+          "position": "LB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "JACOB GREAVES",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "ISSA DIOP",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "SASA LUKIC",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "MARCELINO NUNEZ",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "JULIO ENCISO",
+          "position": "ACM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "ABDUL FATAWU",
+          "position": "RM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "DAIZEN MAEDA",
+          "position": "LM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "EMERSONN",
+          "position": "CF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "ABDOUL OUATTARA",
+          "position": "RB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "DARNELL FURLONG",
+          "position": "RB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "CEDRIC KIPRE",
+          "position": "CB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "FLORENTINO LUIS",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "KASEY MCATEER",
+          "position": "RM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "JACK CLARKE",
+          "position": "LM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "SINDRE WALLE EGELI",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "CHUBA AKPOM",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Leeds",
+      "canonical_team": "Leeds",
+      "players": [
+        {
+          "name": "JAMES TRAFFORD",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jayden Bogle",
+          "position": "RWB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "James Justin",
+          "position": "LWB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "JOE RODON",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "TARIK MUHAREMOVIC",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "JAKA BIJOL",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ethan Ampadu",
+          "position": "CM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "ANTON STACH",
+          "position": "CM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "HARRY WILSON",
+          "position": "RF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "BRENDEN AARONSON",
+          "position": "LF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Dominic Calvert-Lewin",
+          "position": "CF",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "GABRIEL GUDMUNDSSON",
+          "position": "LB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "NICO ELVEDI",
+          "position": "CB",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "SEAN LONGSTAFF",
+          "position": "CM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "AO TANAKA",
+          "position": "CM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "DANIEL JAMES",
+          "position": "RM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "NOAH OKAFOR",
+          "position": "LM",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "Lukas Nmecha",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Liverpool",
+      "canonical_team": "Liverpool",
+      "players": [
+        {
+          "name": "Alisson Becker",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jeremie Frimpong",
+          "position": "RB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MILOS KERKEZ",
+          "position": "LB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "JEREMY JACQUET",
+          "position": "CB",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "Virgil van Dijk",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ryan Gravenberch",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Dominik Szoboszlai",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Florian Wirtz",
+          "position": "ACM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "RIO NGUMOHA",
+          "position": "RM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "CODY GAKPO",
+          "position": "LM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "ALEXANDER ISAK",
+          "position": "CF",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "KOSTAS TSIMIKAS",
+          "position": "LB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "RONALD ARAUJO",
+          "position": "CB",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "WATARU ENDO",
+          "position": "CM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "ALEXIS MAC ALLISTER",
+          "position": "CM",
+          "start_pct": 60,
+          "predicted_xi": false
+        },
+        {
+          "name": "VICTOR MUNOZ",
+          "position": "LM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "LEWIS KOUMAS",
+          "position": "LM",
+          "start_pct": 10,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Man City",
+      "canonical_team": "Man City",
+      "players": [
+        {
+          "name": "Gigio Donnarumma",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "MATHEUS NUNES",
+          "position": "RB",
+          "start_pct": 50,
+          "predicted_xi": true
+        },
+        {
+          "name": "JOSKO GVARDIOL",
+          "position": "LB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "ABDUKODIR KHUSANOV",
+          "position": "CB",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "RUBEN DIAS",
+          "position": "CB",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "ELLIOT ANDERSON",
+          "position": "DCM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MARC GUEHI",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Phil Foden",
+          "position": "ACM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "Antoine Semenyo",
+          "position": "RM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "NICO O’REILLY",
+          "position": "LM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "Erling Haaland",
+          "position": "CF",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Rico Lewis",
+          "position": "RB",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "Rayan Ait-Nouri",
+          "position": "LB",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "MATEO KOVACIC",
+          "position": "CM",
+          "start_pct": 60,
+          "predicted_xi": false
+        },
+        {
+          "name": "Rayan Cherki",
+          "position": "CM",
+          "start_pct": 60,
+          "predicted_xi": false
+        },
+        {
+          "name": "JACK GREALISH",
+          "position": "LM",
+          "start_pct": 20,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Man Utd",
+      "canonical_team": "Man Utd",
+      "players": [
+        {
+          "name": "Senne Lammens",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "NOUSSAIR MAZRAOUI",
+          "position": "RB",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "Luke Shaw",
+          "position": "LB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Harry Maguire",
+          "position": "CB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "AYDEN HEAVEN",
+          "position": "CB",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "ANDREY SANTOS",
+          "position": "DCM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "YOURI TIELEMANS",
+          "position": "DCM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "Bruno Fernandes",
+          "position": "ACM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "BRYAN MBEUMO",
+          "position": "RM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MARCUS RASHFORD",
+          "position": "LM",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "MATHEUS CUNHA",
+          "position": "CF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "DIOGO DALOT",
+          "position": "RB",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "LISANDRO MARTINEZ",
+          "position": "CB",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "Leny Yoro",
+          "position": "CB",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "KOBBIE MAINOO",
+          "position": "CM",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "Mason Mount",
+          "position": "CM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "PATRICK DORGU",
+          "position": "LM",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "Benjamin Sesko",
+          "position": "CF",
+          "start_pct": 20,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Newcastle",
+      "canonical_team": "Newcastle",
+      "players": [
+        {
+          "name": "LUKAS HORNICEK",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "AMAR DEDIC",
+          "position": "RB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "LEWIS HALL",
+          "position": "LB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Malick Thiaw",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Sven Botman",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "SEAN STEUR",
+          "position": "DCM",
+          "start_pct": 40,
+          "predicted_xi": true
+        },
+        {
+          "name": "LEWIS MILEY",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "JOE WILLOCK",
+          "position": "ACM",
+          "start_pct": 40,
+          "predicted_xi": true
+        },
+        {
+          "name": "ANTHONY ELANGA",
+          "position": "RM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "HARVEY BARNES",
+          "position": "LM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Yoane Wissa",
+          "position": "CF",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "TINO LIVRAMENTO",
+          "position": "RB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "FABIAN SCHAR",
+          "position": "CB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "NICO GONZALEZ",
+          "position": "CM",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "ALDJI BAMBA",
+          "position": "CM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "NICO GONZALEZ",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "JACOB RAMSEY",
+          "position": "CM",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "JACOB MURPHY",
+          "position": "RM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "Bazoumana TouRE",
+          "position": "LM",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "NICK WOLTEMADE",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Nottingham Forest",
+      "canonical_team": "Nott'm Forest",
+      "players": [
+        {
+          "name": "Matz Sels",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "OLA AINA",
+          "position": "RWB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Neco Williams",
+          "position": "LWB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "JAIR CUNHA",
+          "position": "CB",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "MURILLO",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nikola Milenkovic",
+          "position": "CB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "JAMES MCATEE",
+          "position": "CM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "XAVER SCHALGER",
+          "position": "CM",
+          "start_pct": 50,
+          "predicted_xi": true
+        },
+        {
+          "name": "Dan Ndoye",
+          "position": "RF",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "MORGAN GIBBS-WHITE",
+          "position": "LF",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "IGOR JESUS",
+          "position": "CF",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Zach Abbott",
+          "position": "RB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "LUCA NETZ",
+          "position": "RB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "OUSMANE DIOMANDE",
+          "position": "CB",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "Morato",
+          "position": "CB",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "RYAN YATES",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "NICOLAS DOMINGUEZ",
+          "position": "CM",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "OMARI HUTCHINSON",
+          "position": "RM",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "CALLUM HUDSOn-ODOI",
+          "position": "LM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "ARNAUD KALIMUENDO",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "Chris Wood",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Sunderland",
+      "canonical_team": "Sunderland",
+      "players": [
+        {
+          "name": "Robin Roefs",
+          "position": "GK",
+          "start_pct": 95,
+          "predicted_xi": true
+        },
+        {
+          "name": "THOMAS MEUINER",
+          "position": "RB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Reinildo",
+          "position": "LB",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "DANIEL BALLARD",
+          "position": "CB",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "OMAR ALDERETE",
+          "position": "CB",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "Granit Xhaka",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Noah Sadiki",
+          "position": "DCM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Enzo Le Fee",
+          "position": "ACM",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "TRAI HUME",
+          "position": "RM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "NILSON ANGULO",
+          "position": "LM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "Brian Brobbey",
+          "position": "CF",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nordi Mukiele",
+          "position": "CB",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "Luke O’Nien",
+          "position": "CB",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "HABIB DIARRA",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "Chris Rigg",
+          "position": "RM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "ROMAINE MUNDLE",
+          "position": "RM",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "CHEMSDINE TALBI",
+          "position": "RM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "Wilson Isidor",
+          "position": "CF",
+          "start_pct": 10,
+          "predicted_xi": false
+        }
+      ]
+    },
+    {
+      "team": "Tottenham",
+      "canonical_team": "Spurs",
+      "players": [
+        {
+          "name": "Antonin Kinsky",
+          "position": "GK",
+          "start_pct": 90,
+          "predicted_xi": true
+        },
+        {
+          "name": "PEDRO PORRO",
+          "position": "RB",
+          "start_pct": 50,
+          "predicted_xi": true
+        },
+        {
+          "name": "ANDREW ROBERTSON",
+          "position": "LB",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "JAN PAUL VAN HECKE",
+          "position": "CB",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "MARCOS SENESI",
+          "position": "CB",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "SANDRO TONALI",
+          "position": "DCM",
+          "start_pct": 80,
+          "predicted_xi": true
+        },
+        {
+          "name": "MATEUS FERNANDES",
+          "position": "DCM",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "CONOR GALLAGHER",
+          "position": "ACM",
+          "start_pct": 60,
+          "predicted_xi": true
+        },
+        {
+          "name": "SAVIO",
+          "position": "RM",
+          "start_pct": 50,
+          "predicted_xi": true
+        },
+        {
+          "name": "Mathys Tel",
+          "position": "LM",
+          "start_pct": 70,
+          "predicted_xi": true
+        },
+        {
+          "name": "RICHARLISON",
+          "position": "CF",
+          "start_pct": 50,
+          "predicted_xi": true
+        },
+        {
+          "name": "MARTIN DUBRAVKA",
+          "position": "GK",
+          "start_pct": 10,
+          "predicted_xi": false
+        },
+        {
+          "name": "ARCHIE GRAY",
+          "position": "RB",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "DESTINY UDOGIE",
+          "position": "LB",
+          "start_pct": 20,
+          "predicted_xi": false
+        },
+        {
+          "name": "KEVIN DANSO",
+          "position": "CB",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "MICKY VAN DE VEN",
+          "position": "CB",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "RODRIGO BENTANCUR",
+          "position": "CM",
+          "start_pct": 50,
+          "predicted_xi": false
+        },
+        {
+          "name": "Lucas Bergvall",
+          "position": "CM",
+          "start_pct": 40,
+          "predicted_xi": false
+        },
+        {
+          "name": "James Maddison",
+          "position": "CM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "MIKEY MOORE",
+          "position": "RM",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "OMAR MARMOUSH",
+          "position": "CF",
+          "start_pct": 30,
+          "predicted_xi": false
+        },
+        {
+          "name": "DOMINIC SOLANKE",
+          "position": "CF",
+          "start_pct": 50,
+          "predicted_xi": false
+        }
+      ]
+    }
+  ],
+  "team_count": 20,
+  "player_count": 389,
+  "numeric_start_pcts": 389,
+  "predictions_pending": false,
+  "health": {
+    "min_players_per_team": 16,
+    "median_players_per_team": 19,
+    "max_players_per_team": 23,
+    "thin_teams": [],
+    "degraded": false
+  }
+}
