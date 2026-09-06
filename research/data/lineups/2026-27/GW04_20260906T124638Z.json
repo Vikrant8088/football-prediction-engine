@@ -1,0 +1,2398 @@
+{
+  "source": "fantasyfootballpundit",
+  "source_url": "https://www.fantasyfootballpundit.com/fantasy-premier-league-team-news/",
+  "parser_version": 2,
+  "fetched_at": "2026-09-06T12:46:38Z",
+  "season": "2026-27",
+  "gameweek": 4,
+  "deadline_time": "2026-09-12T12:30:00Z",
+  "teams": [
+    {
+      "team": "Arsenal",
+      "canonical_team": "Arsenal",
+      "players": [
+        {
+          "name": "David RayaRaya",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Benjamin WhiteWhite",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Riccardo CalafioriCalafiori",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "GabrielGabriel",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ezri KonsaKonsa",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Myles Lewis-SkellyLewis-Skelly",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Declan RiceRice",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Martin ØdegaardØdegaard",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Bukayo SakaSaka",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Christos TzolisTzolis",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kai HavertzHavertz",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jurriën TimberJ.TimberDoubt",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Piero HincapieHincapie",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Cristhian MosqueraMosqueraDoubt",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Bruno G.Bruno G.Doubt",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Mikel MerinoMerino",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Noni MaduekeMadueke",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Eberechi EzeEze",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Viktor GyökeresGyökeres",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Aston Villa",
+      "canonical_team": "Aston Villa",
+      "players": [
+        {
+          "name": "Zion SuzukiSuzuki",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Matty CashCash",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ian MaatsenMaatsen",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "PauPau",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Victor LindelöfLindelöf",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ross BarkleyBarkley",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Boubacar KamaraKamara",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Emiliano BuendíaBuendía",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "John McGinnMcGinn",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "George HemmingsGeorge Hemmings",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nicolas JacksonN.Jackson",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Aaron Wan-BissakaWan-Bissaka",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Matteo RuggeriRuggeri",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Tyrone MingsMings",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Lamare BogardeBogarde",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Leon GoretzkaGoretzka",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "AlyssonAlysson",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Alejandro GarnachoGarnacho",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Tammy AbrahamAbraham",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Bournemouth",
+      "canonical_team": "Bournemouth",
+      "players": [
+        {
+          "name": "Đorđe PetrovićPetrović",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Adam SmithSmith",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Adrien TruffertTruffert",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "James HillHill",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "António João SilvaSilva",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Lewis CookCook",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Alex ScottScott",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Justin KluivertKluivert",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "RayanRayan",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Marcus TavernierTavernier",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "EvanilsonEvanilson",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Michele Di GregorioDi Gregorio",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Juanlu SanchezSanchez",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Bafodé DiakitéDiakité",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Tyler AdamsAdams",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ryan ChristieChristie",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Alex Tóth.ATóth.A",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "David BrooksBrooks",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ben Gannon-DoakGannon-Doak",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Daniel JebbisonJebbison",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Álvaro RodríguezRodríguez",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Brentford",
+      "canonical_team": "Brentford",
+      "players": [
+        {
+          "name": "Caoimhín KelleherKelleher",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Michael KayodeKayode",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Keane Lewis-PotterLewis-Potter",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kristoffer AjerAjer",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nathan CollinsCollins",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Mamadou SangaréM.Sangaré",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Vitaly JaneltJanelt",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Mikkel DamsgaardDamsgaard",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "O.DangoO.Dango",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kevin SchadeSchade",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "ThiagoThiago",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Aaron HickeyHickey",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Rico HenryHenry",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "El Hadji Malick DioufDiouf",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jannik SchusterSchuster",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Yehor YarmoliukYarmoliuk",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jaidon AnthonyAnthony",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Callum WilsonWilson",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Brighton",
+      "canonical_team": "Brighton",
+      "players": [
+        {
+          "name": "Bart VerbruggenVerbruggen",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "João Pedro CostinhaCostinha",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ferdi KadıoğluF.Kadıoğlu",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Luka VuskovicVuskovic",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Lewis DunkDunk",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Pascal GroßGroß",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Yasin AyariAyariDoubt",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Malick YalcouyéYalcouyé",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Diego GomezGomez",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Maxim De CuyperDe Cuyper",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "GeorginioGeorginioDoubt",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Olivier BoscagliBoscagli",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Pascal StruijkStruijk",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Michael SvobodaSvoboda",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Matt O'RileyO'Riley",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Zadok YohannaYohanna",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ibrahim OsmanOsman",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Promise DavidDavid",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Charalampos KostoulasKostoulas",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Chelsea",
+      "canonical_team": "Chelsea",
+      "players": [
+        {
+          "name": "Emiliano MartinezMartinez",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Pedro NetoNeto",
+          "position": "RWB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jorrel HatoHato",
+          "position": "LWB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Levi ColwillColwill",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Maxence LacroixLacroix",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Wesley FofanaFofana",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Roméo LaviaLavia",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Reece JamesJames",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Cole PalmerPalmer",
+          "position": "RF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Morgan RogersRogers",
+          "position": "LF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "João PedroJoão Pedro",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Malo GustoGusto",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Marco PalestraPalestraDoubt",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Valentín BarcoBarco",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Pep ChavarriaChavarria",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Josh AcheampongAcheampong",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Moisés CaicedoCaicedoDoubt",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Geovany QuendaQuenda",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "EstêvãoEstêvão",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jamie GittensGittens",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Danny WelbeckWelbeck",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Coventry",
+      "canonical_team": "Coventry City",
+      "players": [
+        {
+          "name": "Carl RushworthRushworth",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Milan van Ewijkvan Ewijk",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jay DasilvaDasilva",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Aurèle AmendaAmenda",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Bobby ThomasThomas",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Matt GrimesGrimes",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Caleb YirenkyiYirenkyi",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Frank OnyekaOnyeka",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Loum TchaounaTchaouna",
+          "position": "RF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Brandon Thomas-AsanteThomas-Asante",
+          "position": "LF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Taiwo AwoniyiAwoniyi",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jake BidwellBidwell",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ethan PinnockPinnock",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jack RudoniRudoni",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Josh EcclesEccles",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Gustavo HamerHamer",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Tatsuhiro SakamotoSakamoto",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ephron Mason-ClarkMason-Clark",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Sidiki CherifCherif",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ellis SimmsSimms",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Crystal Palace",
+      "canonical_team": "Crystal Palace",
+      "players": [
+        {
+          "name": "Dean HendersonHenderson",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Anan KhalailiKhalaili",
+          "position": "RWB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Tyrick MitchellMitchell",
+          "position": "LWB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Axel DisasiDisasi",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Chris RichardsRichards",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jaydee CanvotCanvot",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Daichi KamadaKamada",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Adam WhartonWharton",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Yéremy YeremyYeremy",
+          "position": "RF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Dwight McNeilMcNeil",
+          "position": "LF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jørgen Strand LarsenStrand Larsen",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Oscar MinguezaMingueza",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ben ChilwellChilwell",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Takehiro TomiyasuTomiyasu",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Will HughesHughes",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jefferson LermaLerma",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Evann GuessandGuessand",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Zavier GozoGozo",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Eddie NketiahNketiah",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Everton",
+      "canonical_team": "Everton",
+      "players": [
+        {
+          "name": "Jordan PickfordPickford",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Merlin RöhlRöhl",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Vitalii MykolenkoMykolenko",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jarrad BranthwaiteBranthwaite",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "James TarkowskiTarkowski",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Harrison ArmstrongArmstrong",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "James GarnerGarner",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kiernan Dewsbury-HallDewsbury-Hall",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Tyrique GeorgeGeorge",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jack GrealishGrealish",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Thierno BarryBarry",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jake O'BrienO'Brien",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ainsley Maitland-NilesMaitland-Niles",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Michael KeaneKeane",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Hayden HackneyHackney",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Carlos AlcarazAlcaraz",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Tyler DiblingDibling",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Brennan JohnsonJohnson",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Fulham",
+      "canonical_team": "Fulham",
+      "players": [
+        {
+          "name": "Bernd LenoLeno",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Timothy CastagneCastagne",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Antonee RobinsonRobinson",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Joachim AndersenAndersen",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Calvin BasseyBassey",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Sander BergeBerge",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Alex IwobiIwobi",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Josh KingKing",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Oscar BobbBobb",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "César PalaciosPalacios",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "GonzaloGonzalo",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kenny TeteTete",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ryan SessegnonSessegnon",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jorge CuencaJ.Cuenca",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Shea CharlesCharles",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Emile Smith RoweSmith Rowe",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "KevinKevin",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Rodrigo MunizMuniz",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Hull",
+      "canonical_team": "Hull City",
+      "players": [
+        {
+          "name": "Konstantinos TzolakisTzolakis",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Lewie CoyleCoyleDoubt",
+          "position": "RWB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ryan GilesGiles",
+          "position": "LWB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nobel MendyMendy",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "John EganEgan",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Semi AjayiAjayi",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Regan SlaterSlater",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Matt CrooksCrooksDoubt",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Mohamed BelloumiBelloumi",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Elliot StroudStroud",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Oli McBurnieMcBurnie",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Matt TargettTargett",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Paddy McNairMcNair",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Lucas HerringtonHerrington",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Lucas Gourna-DouathGourna-Douath",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Hidemasa MoritaMorita",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jens Hjertø-DahlHjertø-Dahl",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Ipswich",
+      "canonical_team": "Ipswich",
+      "players": [
+        {
+          "name": "Kjell ScherpenScherpen",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Dara O'SheaO'Shea",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Leif DavisDavis",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jacob GreavesGreaves",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Issa DiopDiop",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Saša LukićLukić",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Marcelino NúñezNúñez",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Julio EncisoEnciso",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Abdul FatawuFatawu",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Daizen MaedaMaeda",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "EmersonnEmersonn",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Darnell FurlongFurlong",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Abdoul OuattaraOuattara",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Cédric KipréKipré",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "FlorentinoFlorentino",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Exequiel PalaciosPalacios",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kasey McAteerMcAteer",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jack ClarkeClarke",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Sindre Walle EgeliWalle Egeli",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Chuba AkpomAkpom",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Leeds",
+      "canonical_team": "Leeds",
+      "players": [
+        {
+          "name": "James TraffordTrafford",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jayden BogleBogle",
+          "position": "RWB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "James JustinJustin",
+          "position": "LWB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Tarik MuharemovićMuharemović",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jaka BijolBijol",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nico ElvediElvedi",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Anton StachStach",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ethan AmpaduAmpadu",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Harry WilsonWilson",
+          "position": "RF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Noah OkaforOkafor",
+          "position": "LF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Dominic Calvert-LewinCalvert-Lewin",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Gabriel GudmundssonGudmundsson",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "TanakaTanaka",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Daniel JamesJames",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Brenden AaronsonAaronson",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Lukas NmechaNmecha",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Liverpool",
+      "canonical_team": "Liverpool",
+      "players": [
+        {
+          "name": "Alisson BeckerA.Becker",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jeremie FrimpongFrimpong",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Milos KerkezKerkez",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "VirgilVirgil",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jeremy JacquetJacquet",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Alexis Mac AllisterMac Allister",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Dominik SzoboszlaiSzoboszlai",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Florian WirtzWirtz",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Cody GakpoGakpo",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Victor MunozMunoz",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Alexander IsakIsak",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kostas TsimikasTsimikas",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ronald AraujoAraujo",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ryan GravenberchGravenberch",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Trey NyoniNyoni",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Rio NgumohaNgumoha",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Bradley BarcolaBarcola",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Lewis KoumasKoumas",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Man City",
+      "canonical_team": "Man City",
+      "players": [
+        {
+          "name": "Gianluigi DonnarummaDonnarumma",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Abdukodir KhusanovKhusanov",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Joško GvardiolGvardiol",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "RúbenRúben",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Marc GuéhiGuéhi",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nico O'ReillyO'Reilly",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Elliot AndersonAnderson",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Rayan CherkiCherki",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Phil FodenFoden",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Antoine SemenyoSemenyo",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Erling HaalandHaaland",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Matheus N.Matheus N.",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Rico LewisLewis",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Rayan Aït-NouriAït-Nouri",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Mateo KovačićKovačić",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "EnzoEnzo",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ayyoub BouaddiBouaddi",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "AllanAllan",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Iliman NdiayeNdiaye",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Man Utd",
+      "canonical_team": "Man Utd",
+      "players": [
+        {
+          "name": "Senne LammensLammens",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Diogo DalotDalot",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Luke ShawShaw",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Lisandro MartinezMartinez",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Harry MaguireMaguire",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Youri TielemansTielemans",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Kobbie MainooMainoo",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Bruno FernandesB.Fernandes",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Bryan MbeumoMbeumo",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Marcus RashfordRashford",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Matheus CunhaCunha",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Noussair MazraouiMazraoui",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ayden HeavenHeaven",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Leny YoroYoro",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Andrey SantosAndrey Santos",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Mason MountMountDoubt",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Patrick DorguDorgu",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Benjamin ŠeškoŠeško",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Newcastle",
+      "canonical_team": "Newcastle",
+      "players": [
+        {
+          "name": "Lukás HorníčekHorníček",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Amar DedićDedić",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Lewis HallHall",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Sven BotmanBotman",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Malick ThiawThiaw",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Lewis MileyL.Miley",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nico GonzalezN.Gonzalez",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Joe WillockWillock",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Anthony ElangaElanga",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Harvey BarnesBarnes",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Yoane WissaWissa",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Leo ShaharShahar",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Fabian SchärSchär",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Aladji BambaBamba",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Sean SteurSteur",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jacob RamseyJ.Ramsey",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jacob MurphyJ.Murphy",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Bazoumana TouréTouré",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "William OsulaOsulaInjured",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Nottingham Forest",
+      "canonical_team": "Nott'm Forest",
+      "players": [
+        {
+          "name": "Matz SelsSels",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ola AinaAina",
+          "position": "RWB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Neco WilliamsN.Williams",
+          "position": "LWB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "MurilloMurillo",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nikola MilenkovićMilenković",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jair CunhaJair Cunha",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Xaver SchlagerSchlager",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "James McAteeMcAtee",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Dan NdoyeNdoye",
+          "position": "RF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Morgan Gibbs-WhiteGibbs-White",
+          "position": "LF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Igor JesusIgor Jesus",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Daniel MuñozMuñoz",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ousmane DiomandeDiomande",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Ryan YatesYates",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nicolás DominguezDominguez",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Callum Hudson-OdoiHudson-Odoi",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Arnaud KalimuendoKalimuendo",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Liam DelapDelap",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Sunderland",
+      "canonical_team": "Sunderland",
+      "players": [
+        {
+          "name": "Robin RoefsRoefs",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Thomas MeunierMeunier",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "ReinildoReinildo",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Daniel BallardBallard",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nordi MukieleMukiele",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Granit XhakaXhaka",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Noah SadikiSadiki",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Enzo Le FéeE.Le Fée",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Trai HumeHume",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Nilson AnguloN.Angulo",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Brian BrobbeyBrobbey",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Omar AldereteAlderete",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Luke O'NienO'Nien",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Chris RiggRigg",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Romaine MundleMundle",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Chemsdine TalbiTalbi",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Malick FofanaFofana",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Wilson IsidorIsidor",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    },
+    {
+      "team": "Tottenham",
+      "canonical_team": "Spurs",
+      "players": [
+        {
+          "name": "Antonín KinskyKinsky",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Pedro PorroPedro Porro",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Andrew RobertsonRobertson",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Micky Van de VenVan de Ven",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Jan Paul Van HeckeVan Hecke",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Rodrigo BentancurBentancur",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Sandro TonaliTonali",
+          "position": "DCM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Mateus FernandesFernandes",
+          "position": "ACM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "SávioSávio",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Mathys TelTel",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Omar MarmoushMarmoush",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Martin DubravkaDubravka",
+          "position": "GK",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Archie GrayGray",
+          "position": "RB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Destiny UdogieUdogie",
+          "position": "LB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Marcos SenesiSenesi",
+          "position": "CB",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Lucas BergvallBergvall",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Conor GallagherGallagher",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "James MaddisonMaddisonDoubt",
+          "position": "CM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Mohammed KudusKudus",
+          "position": "RM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Mykhailo MudrykMudryk",
+          "position": "LM",
+          "start_pct": null,
+          "predicted_xi": true
+        },
+        {
+          "name": "Dominic SolankeSolanke",
+          "position": "CF",
+          "start_pct": null,
+          "predicted_xi": true
+        }
+      ]
+    }
+  ],
+  "team_count": 20,
+  "player_count": 376,
+  "numeric_start_pcts": 0,
+  "predictions_pending": true,
+  "health": {
+    "min_players_per_team": 16,
+    "median_players_per_team": 19,
+    "max_players_per_team": 21,
+    "thin_teams": [],
+    "degraded": false
+  }
+}
